@@ -1,0 +1,1653 @@
+{
+  "common": {
+    "appName": "Alastria Verifiable Credentials",
+    "consortium": "Alastria Consortium",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "back": "Back",
+    "backToHome": "Back to Home",
+    "next": "Next",
+    "submit": "Submit",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "download": "Download",
+    "upload": "Upload",
+    "connect": "Connect",
+    "disconnect": "Disconnect",
+    "language": "Language",
+    "theme": "Theme",
+    "lightMode": "Light Mode",
+    "darkMode": "Dark Mode"
+  },
+  "nav": {
+    "home": "Home",
+    "signCredential": "Sign Credential",
+    "verifyCredential": "Verify Credential",
+    "verifyPresentation": "Verify Presentation",
+    "issuerPortal": "Issuer Portal",
+    "documentation": "Documentation",
+    "apply": "Request Credential",
+    "myCredentials": "My Wallet",
+    "myKeysEmittedByMe": "Keys Issued by Me"
+  },
+  "landing": {
+    "hero": {
+      "title": "Alastria Verifiable Credentials",
+      "subtitle": "Decentralized digital identity infrastructure for the Spanish enterprise ecosystem",
+      "cta": {
+        "verify": "Verify Credential",
+        "issue": "Issuer Portal"
+      }
+    },
+    "features": {
+      "title": "Why Verifiable Credentials?",
+      "subtitle": "International W3C standard for a secure, portable digital identity that is instantly verifiable in any system or global ecosystem.",
+      "security": {
+        "title": "Cryptographic Security",
+        "description": "Digitally signed credentials with W3C standards and on-chain verification."
+      },
+      "privacy": {
+        "title": "Privacy by Design",
+        "description": "User controls their data. Selective disclosure of information."
+      },
+      "interop": {
+        "title": "Interoperability",
+        "description": "Compatible with European EBSI ecosystem and international standards."
+      },
+      "custody": {
+        "title": "True Self-Custody",
+        "description": "No central databases. Your credentials live in your wallet, fully portable and under your sole control."
+      }
+    },
+    "snap": {
+      "title": "MetaMask Snap",
+      "description": "Manage your verifiable credentials directly from MetaMask",
+      "install": "Install Snap"
+    }
+  },
+  "workflow": {
+    "title": "How does it work?",
+    "step1": {
+      "title": "Secure Invitation",
+      "description": "You receive a unique cryptographic link authorized by the issuing entity."
+    },
+    "step2": {
+      "title": "Cryptographic Binding",
+      "description": "Connect your Wallet and sign to permanently bind the credential to your identity (DID)."
+    },
+    "step3": {
+      "title": "Smart PDF Generation",
+      "description": "The system generates an Official PDF with your Verifiable Credential (VC) embedded and sealed."
+    },
+    "recommended": "Recommended",
+    "routeA": {
+      "title": "Instant Import",
+      "description": "Save the credential to your MetaMask Snap with one click. Generate automatic VPs without uploading files."
+    },
+    "routeB": {
+      "title": "Cold Storage",
+      "description": "Download the PDF and store it. Works like a physical document: you custody it, you present it."
+    },
+    "step4": {
+      "title": "Universal Verification",
+      "description": "Anyone can validate the PDF or VP instantly against the Alastria Blockchain."
+    }
+  },
+  "apply": {
+    "title": "Request Credential",
+    "subtitle": "Complete the form to request a verifiable credential",
+    "form": {
+      "email": "Email",
+      "emailPlaceholder": "your@email.com",
+      "fullName": "Full Name",
+      "fullNamePlaceholder": "John Smith",
+      "organization": "Organization (optional)",
+      "organizationPlaceholder": "Your company or organization name",
+      "walletAddress": "Wallet Address",
+      "walletAddressPlaceholder": "0x...",
+      "reason": "Reason (optional)",
+      "reasonPlaceholder": "Briefly explain why you're requesting this credential...",
+      "terms": "I accept the terms and conditions and privacy policy",
+      "emailLabel": "Email *",
+      "fullNameLabel": "Full Name *",
+      "organizationLabel": "Organization (optional)",
+      "walletAddressLabel": "Wallet Address *",
+      "useConnected": "Use connected",
+      "reasonLabel": "Reason (optional)",
+      "acceptTermsText": "I accept the",
+      "termsLink": "terms and conditions",
+      "and": "and the",
+      "privacyLink": "privacy policy",
+      "submitting": "Submitting...",
+      "submitButton": "Submit Application"
+    },
+    "success": {
+      "title": "Application Submitted",
+      "description": "Your application has been registered. You'll receive an email when it's reviewed.",
+      "applicationId": "Application ID"
+    },
+    "errors": {
+      "invalidEmail": "Enter a valid email",
+      "invalidName": "Name must be at least 3 characters",
+      "invalidWallet": "Enter a valid wallet address (0x...)",
+      "termsRequired": "You must accept the terms and conditions",
+      "submitFailed": "Error submitting application. Please try again."
+    }
+  },
+  "verify": {
+    "title": "Verify Credential",
+    "subtitle": "Check the integrity and authenticity of a verifiable credential",
+    "dropzone": {
+      "title": "Drop your credential here",
+      "subtitle": "or click to select a PDF/JSON file",
+      "formats": "Supported formats: PDF, JSON"
+    },
+    "scanQR": "Scan QR",
+    "analyzing": "Analyzing credential...",
+    "result": {
+      "valid": {
+        "title": "Valid Credential",
+        "description": "This credential has been successfully verified"
+      },
+      "invalid": {
+        "title": "Invalid Credential",
+        "description": "This credential could not be verified"
+      },
+      "revoked": {
+        "title": "Revoked Credential",
+        "description": "This credential was revoked by the issuer"
+      }
+    },
+    "details": {
+      "issuer": "Issuer",
+      "holder": "Holder",
+      "issuedAt": "Issue Date",
+      "expiresAt": "Expiration Date",
+      "type": "Credential Type",
+      "hash": "Cryptographic Hash"
+    },
+    "attributes": "Attributes",
+    "verifyAnother": "Verify another credential"
+  },
+  "presentation": {
+    "title": "Present Credential",
+    "subtitle": "Upload your credential (PDF) to generate a Verifiable Presentation (VP) signed with your wallet to prove you are the legitimate holder",
+    "howItWorks": {
+      "title": "How does it work?",
+      "step1": "Upload the <strong>PDF of your credential</strong> that you received from the issuer",
+      "step2": "Connect your wallet and <strong>sign the presentation</strong> to prove you are the holder",
+      "step3": "The system <strong>verifies the VP</strong> and confirms the authenticity of the credential",
+      "step1Plain": "Upload the PDF of your credential that you received from the issuer",
+      "step2Plain": "Connect your wallet and sign the presentation to prove you are the holder",
+      "step3Plain": "The system verifies the VP and confirms the authenticity of the credential"
+    },
+    "wallet": {
+      "connectFirst": "Connect your wallet first",
+      "requiredToSign": "Required to sign the presentation and prove you are the holder",
+      "connect": "Connect Wallet",
+      "connected": "Wallet connected"
+    },
+    "dropzone": {
+      "title": "Drag your credential (PDF) here",
+      "subtitle": "or click to select the file",
+      "pdfFormat": "PDF with embedded credential",
+      "jsonFormat": "JSON (direct VP)"
+    },
+    "status": {
+      "verifying": "Verifying presentation...",
+      "verifyingSubtitle": "Checking signatures and credential status",
+      "signingRequired": "Signature required",
+      "signingSubtitle": "Check your wallet and sign the presentation to prove you are the holder",
+      "signingTip": "You will see a readable message with your credential data"
+    },
+    "result": {
+      "valid": {
+        "title": "Credential Verified!",
+        "description": "You have proven to be the legitimate holder of this credential"
+      },
+      "invalid": {
+        "title": "Verification Failed",
+        "description": "The credential or signature could not be verified"
+      },
+      "revoked": {
+        "title": "Revoked Credential",
+        "description": "This credential has been revoked by the issuer"
+      }
+    },
+    "identity": {
+      "title": "Identity Details",
+      "holder": "Holder",
+      "issuer": "Issuer",
+      "presentationHash": "Presentation Hash",
+      "includedCredentials": "Included Credentials",
+      "credentialNumber": "Credential #{number}",
+      "validBadge": "Valid"
+    },
+    "presentAnother": "Present another credential"
+  },
+  "walletPage": {
+    "title": "My Credentials",
+    "subtitle": "Manage your verifiable credentials",
+    "wallet": {
+      "notConnected": "Wallet not connected",
+      "connectToView": "Connect your wallet to view and manage your credentials",
+      "restrictedAccess": "Restricted access",
+      "onlyYourCredentials": "You can only view credentials that belong to your connected wallet.",
+      "connected": "Wallet connected",
+      "credentials": "{count} credential",
+      "credentialsPlural": "{count} credentials"
+    },
+    "tabs": {
+      "server": "Server",
+      "snap": "MetaMask Snap"
+    },
+    "server": {
+      "description": "Credentials stored securely on the server",
+      "refresh": "Refresh",
+      "loading": "Loading credentials...",
+      "empty": {
+        "title": "No credentials on the server",
+        "description": "New credentials will appear here when you claim them",
+        "requestCredential": "Request a credential"
+      }
+    },
+    "snap": {
+      "notInstalled": "MetaMask Snap not installed",
+      "installDescription": "Install the MetaMask Snap to store credentials locally",
+      "install": "Install MetaMask Snap",
+      "description": "Credentials stored in your local MetaMask Snap",
+      "refresh": "Refresh",
+      "clear": "Clear",
+      "clearConfirm": "Are you sure? This action will delete ALL credentials from the MetaMask Snap and cannot be undone.",
+      "loading": "Loading credentials from Snap...",
+      "empty": {
+        "title": "No credentials in Snap",
+        "description": "No credentials stored locally for this wallet"
+      }
+    },
+    "credential": {
+      "signed": "Signed",
+      "issuer": "Issuer",
+      "issuedAt": "Issued",
+      "expiresAt": "Expires",
+      "email": "Email",
+      "present": "Present",
+      "pdf": "PDF",
+      "details": "Details",
+      "saveToSnap": "Snap"
+    }
+  },
+  "claim": {
+    "title": "Claim Credential",
+    "subtitle": "Complete the process to obtain your verifiable credential",
+    "steps": {
+      "validate": {
+        "title": "Validate",
+        "description": "Enter verification code"
+      },
+      "connect": {
+        "title": "Connect",
+        "description": "Connect your wallet"
+      },
+      "sign": {
+        "title": "Sign",
+        "description": "Sign and claim"
+      }
+    },
+    "otp": {
+      "title": "Verification Code",
+      "description": "Enter the 6-digit code sent to your email",
+      "placeholder": "000000",
+      "expiresIn": "Expires in",
+      "resend": "Resend Code",
+      "attemptsLeft": "attempts left",
+      "verifyCode": "Verify Code",
+      "minute": "minute",
+      "minutes": "minutes",
+      "second": "second",
+      "seconds": "seconds",
+      "and": "and",
+      "expired": "Expired"
+    },
+    "claiming": {
+      "title": "Finalizing your Credential",
+      "description": "Do not close this window..."
+    },
+    "wallet": {
+      "title": "Connect Wallet",
+      "description": "Connect your MetaMask wallet to continue",
+      "connect": "Connect MetaMask",
+      "credentialFor": "This credential is for:",
+      "changeWallet": "Change Wallet",
+      "connectedWallet": "Connected wallet:",
+      "incorrectWallet": "Incorrect Wallet",
+      "pleaseConnectCorrect": "Please connect the correct wallet to continue.",
+      "switchNetwork": "Switch to Alastria Network",
+      "switchingNetwork": "Switching network..."
+    },
+    "preview": {
+      "title": "Preview your credential",
+      "signAndClaim": "Sign and Claim",
+      "signatureInfo": "By signing, you link this credential to your blockchain identity.",
+      "signatureTitle": "EIP-712 Signature",
+      "issuedBy": "Issued by",
+      "validUntil": "Valid until",
+      "requiredNetwork": "Required network",
+      "attributes": {
+        "status": "Status",
+        "expiresAt": "Valid until",
+        "issuanceId": "Issuance ID"
+      },
+      "status": {
+        "DRAFT": "Draft",
+        "ISSUED": "Issued",
+        "CLAIMED": "Claimed",
+        "REVOKED": "Revoked"
+      }
+    },
+    "success": {
+      "title": "Credential Claimed",
+      "description": "Your credential has been successfully issued",
+      "downloadJSON": "Download JSON",
+      "downloadPDF": "Download PDF",
+      "saveToSnap": "Save to MetaMask Snap",
+      "copyVerifyLink": "Copy Verification Link",
+      "verify": "Verify",
+      "downloadAgain": "Download Again",
+      "signed": "Signed",
+      "issuer": "Issuer",
+      "holder": "Holder"
+    },
+    "errors": {
+      "invalidToken": "Invalid or expired invitation token",
+      "expiredToken": "This claim link has expired",
+      "alreadyClaimed": "This credential has already been claimed",
+      "notIssued": "This credential has not been issued yet. Contact the issuer.",
+      "invalidOTP": "Incorrect verification code",
+      "maxAttemptsReached": "Too many attempts. Please request a new code.",
+      "walletRequired": "You must connect your wallet to continue",
+      "walletMismatch": "This credential is for another wallet",
+      "signatureFailed": "Error signing the credential",
+      "signatureCancelled": "Signature cancelled by user",
+      "resendFailed": "Error resending code",
+      "issuanceIdNotFound": "Issuance ID not found. Please refresh the page.",
+      "networkSwitchCancelled": "Network switch cancelled. Please manually switch to Alastria network.",
+      "networkSwitchFailed": "Failed to switch network. Please manually switch to Alastria network (Chain ID: 2020)."
+    },
+    "invalid": {
+      "title": "Invalid Link",
+      "description": "This link is invalid or has expired.",
+      "requestNew": "Request New Credential",
+      "reasons": {
+        "title": "Possible reasons:",
+        "expired": "The link is older than 15 minutes",
+        "alreadyClaimed": "You have already claimed this credential",
+        "incorrect": "The link was copied incorrectly"
+      }
+    },
+    "expired": {
+      "title": "Expired Link",
+      "description": "This claim link has expired. Links are valid for 15 minutes.",
+      "requestNew": "Request New Link"
+    },
+    "alreadyClaimed": {
+      "title": "Credential Already Claimed",
+      "description": "This credential was previously claimed."
+    },
+    "messages": {
+      "otpResent": "New OTP code sent to your email",
+      "credentialDownloaded": "Credential downloaded",
+      "pdfDownloaded": "PDF downloaded",
+      "credentialSavedToSnap": "Credential saved to MetaMask Snap",
+      "linkCopied": "Link copied to clipboard"
+    },
+    "manual": {
+      "title": "Claim Credential",
+      "description": "Enter your invitation data manually if you don't have access to the magic link",
+      "issuanceId": "Issuance ID",
+      "issuanceIdPlaceholder": "iss_abc123xyz",
+      "claimToken": "Claim Token",
+      "tokenPlaceholder": "Your claim token",
+      "otpCode": "OTP Code",
+      "validating": "Validating...",
+      "continue": "Continue",
+      "noInvitation": "Don't have an invitation?",
+      "requestCredential": "Request a credential",
+      "completeAllFields": "Please complete all fields",
+      "invalidData": "Invalid data. Please verify and try again."
+    }
+  },
+  "issuer": {
+    "authGate": {
+      "title": "Issuer Portal",
+      "connectDescription": "Connect your wallet to access the credential issuance panel.",
+      "connecting": "Connecting...",
+      "authenticating": "Authenticating...",
+      "signMessage": "Please sign the message in your wallet",
+      "accessDenied": "Access Denied",
+      "noPermissions": "This wallet does not have issuer permissions.",
+      "backToHome": "Back to Home"
+    },
+    "title": "Issuer Portal",
+    "subtitle": "Manage the issuance and lifecycle of verifiable credentials",
+    "requiresAuth": "Restricted Access",
+    "authDescription": "Connect the authorized Alastria Consortium wallet to access",
+    "unauthorized": "Wallet not authorized to access this portal",
+    "unauthorizedDescription": "The connected wallet does not have permission to access this portal.",
+    "connecting": "Connecting...",
+    "tabs": {
+      "new": "New Issuance",
+      "history": "History"
+    },
+    "new": {
+      "title": "Issue New Credential",
+      "form": {
+        "email": "Holder's email address",
+        "emailPlaceholder": "holder@example.com",
+        "wallet": "Wallet address (optional)",
+        "walletPlaceholder": "0x...",
+        "walletTooltip": "Valid Ethereum address (0x...)",
+        "credentialType": "Credential type",
+        "credentialTypePlaceholder": "Select a credential type",
+        "companyName": "Company name",
+        "companyNamePlaceholder": "E.g: Alastria Blockchain Ecosystem",
+        "attributes": "Attributes",
+        "addAttribute": "Add attribute",
+        "submit": "Send Invitation"
+      },
+      "success": "Invitation sent successfully",
+      "error": "Error sending invitation",
+      "errors": {
+        "invalidWallet": "Invalid wallet address. Must be a valid Ethereum address (0x...)",
+        "walletRequired": "You must connect your wallet to sign the credential"
+      },
+      "successMessage": "OTP sent to {email}. ID: {id}",
+      "authenticating": "Authenticating issuer...",
+      "signingPrompt": "Please sign the credential in your wallet...",
+      "credentialSignedAndSent": "Credential signed and sent to {email}. ID: {id}",
+      "formDescription": "Complete the data to send a credential invitation",
+      "companyNameLabel": "Company Name",
+      "walletRequiredNote": "Ethereum address of the recipient (required)"
+    },
+    "history": {
+      "title": "Issuance History",
+      "subtitle": "Manage issued credentials and their status",
+      "exportCSV": "Export CSV",
+      "stats": {
+        "total": "Total Issued",
+        "pending": "Pending",
+        "claimed": "Claimed",
+        "revoked": "Revoked"
+      },
+      "table": {
+        "email": "Email",
+        "date": "Date",
+        "status": "Status",
+        "hash": "Hash",
+        "actions": "Actions"
+      },
+      "status": {
+        "pending": "Pending",
+        "claimed": "Claimed",
+        "revoked": "Revoked"
+      },
+      "actions": {
+        "revoke": "Revoke",
+        "view": "View details"
+      },
+      "revokeConfirm": {
+        "title": "Confirm Revocation",
+        "description": "This action is irreversible. The credential will be permanently invalidated.",
+        "confirm": "Confirm Revocation",
+        "signing": "Signing TX..."
+      },
+      "messages": {
+        "revoked": "Credential revoked successfully",
+        "csvExported": "CSV exported"
+      }
+    }
+  },
+  "admin": {
+    "authGate": {
+      "title": "Administration Panel",
+      "connectDescription": "Connect your admin wallet to access the control panel.",
+      "connecting": "Connecting...",
+      "accessDenied": "Access Denied",
+      "noPermissions": "This wallet does not have administrator permissions.",
+      "accessAvailableFor": "Admin access available for:",
+      "diamondOwner": "Diamond Contract Owner",
+      "configuredAddresses": "Addresses configured in NEXT_PUBLIC_ADMIN_ADDRESSES"
+    },
+    "layout": {
+      "dashboard": "Dashboard",
+      "issuers": "Issuers",
+      "revoke": "Revoke",
+      "config": "Configuration",
+      "admin": "Admin",
+      "administrator": "Administrator",
+      "connectedAs": "Connected as"
+    },
+    "revoke": {
+      "searchPlaceholder": "Search by credential ID, holder email or hash..."
+    },
+    "config": {
+      "pauseDescription": "This will pause the issuance of new credentials. Verifications will continue to work normally.",
+      "resumeDescription": "This will reactivate credential issuance in the system.",
+      "signatureRequired": "Your MetaMask signature will be required to confirm the change."
+    },
+    "issuers": {
+      "title": "Issuers",
+      "subtitle": "Manage authorized credential issuers",
+      "newIssuer": "New Issuer",
+      "searchPlaceholder": "Search issuer...",
+      "table": {
+        "name": "Name",
+        "walletAddress": "Wallet Address",
+        "email": "Email",
+        "status": "Status",
+        "addedBy": "Added By",
+        "date": "Date",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "dialog": {
+        "title": "Register Issuer",
+        "description": "Add a new authorized issuer to the system. The issuer will be registered on the smart contract.",
+        "nameLabel": "Issuer Name",
+        "namePlaceholder": "E.g: National Bank",
+        "emailLabel": "Contact Email",
+        "emailPlaceholder": "admin@company.com",
+        "walletLabel": "Wallet Address",
+        "addressPlaceholder": "0x...",
+        "cancel": "Cancel",
+        "submit": "Register",
+        "signing": "Signing TX..."
+      },
+      "deactivate": {
+        "title": "Deactivate Issuer",
+        "description": "This will revoke access for {name} to issue new credentials. Existing credentials will not be affected.",
+        "cancel": "Cancel",
+        "confirm": "Deactivate"
+      },
+      "messages": {
+        "registered": "Issuer registered successfully. Waiting for blockchain confirmation...",
+        "confirmed": "Issuer confirmed on blockchain",
+        "deactivated": "Issuer deactivated successfully",
+        "loadError": "Failed to load issuers",
+        "registerError": "Failed to register issuer",
+        "deactivateError": "Failed to deactivate issuer",
+        "noIssuers": "No issuers found"
+      },
+      "pendingSync": "Pending blockchain sync...",
+      "viewOnExplorer": "View on Explorer"
+    },
+    "applications": {
+      "title": "Application Management",
+      "subtitle": "Review and manage credential applications",
+      "stats": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "filters": {
+        "all": "All statuses",
+        "search": "Search by email, name or wallet..."
+      },
+      "table": {
+        "applicant": "Applicant",
+        "organization": "Organization",
+        "wallet": "Wallet",
+        "date": "Date",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "status": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "autoApproved": "Auto-Approved",
+        "expired": "Expired"
+      },
+      "actions": {
+        "view": "View details",
+        "approve": "Approve",
+        "reject": "Reject",
+        "reopen": "Reopen",
+        "resendEmail": "Resend email"
+      },
+      "detail": {
+        "title": "Application Details",
+        "reason": "Reason",
+        "rejectionReason": "Rejection reason"
+      },
+      "reject": {
+        "title": "Reject Application",
+        "description": "Provide a rejection reason. The applicant will be notified via email.",
+        "reasonLabel": "Rejection reason",
+        "reasonPlaceholder": "Explain why this application is being rejected...",
+        "confirm": "Reject Application"
+      },
+      "messages": {
+        "approved": "Application approved. Magic link sent.",
+        "rejected": "Application rejected.",
+        "reopened": "Application reopened.",
+        "emailResent": "Email resent."
+      }
+    },
+    "myKeys": {
+      "title": "Keys Issued by Me",
+      "subtitle": "Manage credentials you have issued with your wallet",
+      "loading": "Loading...",
+      "noCredentials": "You have not issued any credentials with this wallet.",
+      "issued": "Issued",
+      "status": {
+        "active": "Active",
+        "revoked": "Revoked",
+        "suspended": "Suspended"
+      },
+      "actions": {
+        "revoke": "Revoke",
+        "suspend": "Suspend",
+        "unsuspend": "Reactivate"
+      },
+      "dialogs": {
+        "revokeTitle": "Revoke Credential",
+        "suspendTitle": "Suspend Credential",
+        "unsuspendTitle": "Reactivate Credential",
+        "revokeDescription": "This action is irreversible. The credential will become permanently invalid.",
+        "suspendDescription": "The credential will be temporarily invalid until you reactivate it.",
+        "unsuspendDescription": "The credential will become valid again.",
+        "cancel": "Cancel",
+        "confirm": "Confirm"
+      },
+      "messages": {
+        "revokeSent": "Revocation transaction sent",
+        "suspendSent": "Suspension transaction sent",
+        "unsuspendSent": "Reactivation transaction sent",
+        "error": "Error executing blockchain action"
+      }
+    }
+  },
+  "vc": {
+    "info": {
+      "invalidParam": "The VC parameter in the URL is not valid",
+      "linkCopied": "Link copied to clipboard",
+      "title": "Credential Inspector",
+      "subtitle": "Analyze any Verifiable Credential and view all its information in a readable format",
+      "parsing": "Parsing JSON...",
+      "validating": "Validating structure...",
+      "analyzing": "Analyzing credential...",
+      "analyzeAnother": "Analyze another credential",
+      "unknownParseError": "Unknown error parsing JSON",
+      "invalidStructure": "Invalid structure: {errors}",
+      "analysisError": "Error analyzing credential"
+    },
+    "status": {
+      "today": "today",
+      "daysAgo": "{count} day ago",
+      "daysAgo_plural": "{count} days ago",
+      "monthsAgo": "{count} month ago",
+      "monthsAgo_plural": "{count} months ago",
+      "yearsAgo": "{count} year ago",
+      "yearsAgo_plural": "{count} years ago"
+    },
+    "issuer": {
+      "verified": "This issuer is registered in Alastria's trusted registry",
+      "unverified": "This issuer is not in any public trust registry",
+      "unknown": "Could not verify issuer status"
+    },
+    "holder": {
+      "yes": "Yes",
+      "no": "No",
+      "highPrivacy": "High - Most data protected"
+    },
+    "proofs": {
+      "assertionMethod": "Issuance Signature",
+      "authentication": "Acceptance Signature"
+    },
+    "timeline": {
+      "unknownDate": "Unknown date"
+    },
+    "parser": {
+      "invalidJson": "Invalid JSON: Syntax error in document",
+      "missingContext": "Missing required field: @context",
+      "missingType": "Missing required field: type",
+      "oldStandard": "Uses old v1.0 standard",
+      "noExpiration": "No expiration date",
+      "issuerVerified": "Issuer verified on blockchain",
+      "issuerNotVerified": "Issuer not in public registry",
+      "hasEvidence": "Includes verification evidence",
+      "noEvidence": "No evidence included",
+      "usesEip712": "Uses EIP-712 signature (more secure)",
+      "noEip712": "Does not use EIP-712",
+      "validStructure": "Valid Structure",
+      "w3cCompliant": "Complies with W3C standard",
+      "structureErrors": "Structure errors",
+      "holderShouldSign": "Holder should sign the credential for greater security",
+      "expiringSoon": "Credential expiring soon, request renewal",
+      "considerEip712": "Consider using EIP-712 for more secure signatures",
+      "expired": "Expired credential",
+      "active": "Current status: Active"
+    },
+    "verify": {
+      "loading": "Loading credential...",
+      "verifying": "Verifying credential...",
+      "credentialNotFound": "Credential not found",
+      "verificationFailed": "Failed to verify credential",
+      "retry": "Retry",
+      "issuer": "Issuer",
+      "holder": "Holder",
+      "issuedAt": "Issued on",
+      "expiresAt": "Expires on",
+      "credentialId": "Credential ID",
+      "noExpiration": "No expiration date",
+      "checks": "Verification Checks",
+      "attributes": "Attributes",
+      "verifyAnother": "Verify another credential",
+      "personalData": "Personal Data",
+      "holderAccess": "Holder access",
+      "personalDataProtected": "The personal data in this credential is protected.",
+      "connectToViewDetails": "If you are the holder, connect your wallet to view full details.",
+      "connectWallet": "Connect Wallet",
+      "viewMyDetails": "View my details",
+      "onlyHolderCanView": "Only the holder of this credential can view personal data.",
+      "accessDenied": "Access denied",
+      "status": {
+        "valid": "Valid Credential",
+        "validDesc": "This credential has been cryptographically verified and is active.",
+        "invalid": "Invalid Credential",
+        "invalidDesc": "The credential could not be verified.",
+        "error": "Verification Error",
+        "errorDesc": "Could not verify the credential. Please try again."
+      },
+      "check": {
+        "signature": "Signature",
+        "notExpired": "Not expired",
+        "notRevoked": "Not revoked",
+        "trustedIssuer": "Trusted issuer",
+        "onChain": "On blockchain"
+      }
+    }
+  },
+  "snap": {
+    "notInstalled": "MetaMask is not installed",
+    "installed": "Snap installed successfully",
+    "installError": "Error installing Snap",
+    "communicationError": "Error communicating with Snap",
+    "serverNotAvailable": "Snap server is not available. Make sure it's running.",
+    "connectionError": "Could not connect to Snap. Check your internet connection."
+  },
+  "env": {
+    "invalidUrl": "NEXT_PUBLIC_API_URL must be a valid URL",
+    "invalidVariables": "Invalid environment variables. Check the console."
+  },
+  "wallet": {
+    "authError": "Authentication error"
+  },
+  "api": {
+    "verificationFailed": "Verification failed",
+    "invalidAction": "Invalid action"
+  },
+  "images": {
+    "alastriaCredential": "Alastria Verifiable Credential",
+    "alastria": "Alastria"
+  },
+  "login": {
+    "title": "Corporate Access",
+    "description": "Connect your wallet to access the Alastria VC platform",
+    "roles": {
+      "holder": "Holder",
+      "issuer": "Issuer",
+      "admin": "Admin"
+    },
+    "buttons": {
+      "connectWallet": "Connect Wallet",
+      "connecting": "Connecting...",
+      "signToAuth": "Sign to Authenticate",
+      "authenticating": "Authenticating..."
+    },
+    "accessNote": "Access is automatically determined based on your role"
+  },
+  "aria": {
+    "switchToLight": "Switch to light mode",
+    "switchToDark": "Switch to dark mode"
+  },
+  "footer": {
+    "copyright": "© 2026 Alastria Consortium. All rights reserved.",
+    "links": {
+      "privacy": "Privacy",
+      "terms": "Terms",
+      "docs": "Documentation"
+    }
+  },
+  "docs": {
+    "title": "Documentation",
+    "search": "Search docs...",
+    "nav": {
+      "introduction": "Introduction",
+      "whatIs": "What is Alastria?",
+      "coreConcepts": "Core Concepts",
+      "architecture": "Architecture",
+      "overview": "Overview",
+      "diamondPattern": "Diamond Pattern",
+      "quickstart": "Quick Start",
+      "installation": "Installation",
+      "firstCredential": "First Credential",
+      "api": "API Reference",
+      "issuerApi": "Issuer API",
+      "verifierApi": "Verifier API",
+      "smartContracts": "Smart Contracts",
+      "facets": "Facets Reference",
+      "security": "Security",
+      "eip712": "EIP-712",
+      "siwa": "SIWA Auth"
+    },
+    "home": {
+      "title": "Alastria Credentials Documentation",
+      "subtitle": "Everything you need to integrate and use Verifiable Credentials in the Alastria ecosystem",
+      "cards": {
+        "introduction": {
+          "title": "Introduction",
+          "description": "Learn the fundamental concepts of decentralized digital identity and verifiable credentials."
+        },
+        "architecture": {
+          "title": "Architecture",
+          "description": "Understand how the system works: Diamond Pattern, Facets and data flow."
+        },
+        "quickstart": {
+          "title": "Quick Start",
+          "description": "Set up your development environment and issue your first credential in minutes."
+        },
+        "api": {
+          "title": "API Reference",
+          "description": "Complete documentation of Issuer and Verifier APIs with examples."
+        },
+        "smartContracts": {
+          "title": "Smart Contracts",
+          "description": "Reference of smart contracts: facets, functions and events."
+        },
+        "security": {
+          "title": "Security",
+          "description": "EIP-712, SIWA and security best practices for credentials."
+        }
+      }
+    },
+    "introduction": {
+      "breadcrumb": "Introduction",
+      "badge": "Fundamentals",
+      "title": "What is Alastria Credentials?",
+      "subtitle": "Decentralized digital identity platform based on W3C standards for the Spanish enterprise ecosystem.",
+      "whatIs": {
+        "title": "What is it?",
+        "description": "Alastria Credentials is a digital identity infrastructure that enables organizations to issue, and users to carry and present, verifiable credentials in a secure and private way.",
+        "points": {
+          "1": "Implements W3C standards for Verifiable Credentials and DIDs",
+          "2": "Uses Alastria blockchain for decentralized verification",
+          "3": "Compatible with European EBSI ecosystem",
+          "4": "Designed for regulatory compliance (eIDAS, GDPR)"
+        }
+      },
+      "did": {
+        "title": "Decentralized Identifiers (DIDs)",
+        "description": "DIDs are globally unique identifiers that do not depend on any central authority. In Alastria we use the did:ethr method based on Ethereum.",
+        "example": "DID Example"
+      },
+      "vc": {
+        "title": "Verifiable Credentials (VCs)",
+        "description": "VCs are the digital equivalent of physical documents like university degrees, ID cards or certificates. They are:",
+        "tamperProof": "Tamper-proof",
+        "tamperProofDesc": "Cryptographically signed",
+        "verifiable": "Verifiable",
+        "verifiableDesc": "Anyone can check their authenticity",
+        "portable": "Portable",
+        "portableDesc": "User controls them"
+      },
+      "ecosystem": {
+        "title": "Ecosystem",
+        "issuer": {
+          "title": "Issuer",
+          "description": "Authorized organization that issues credentials. Example: university, government, company."
+        },
+        "holder": {
+          "title": "Holder",
+          "description": "Person or entity that receives and stores credentials in their wallet."
+        },
+        "verifier": {
+          "title": "Verifier",
+          "description": "Entity that requests and verifies credentials to grant access or services."
+        }
+      },
+      "nav": {
+        "next": "Core Concepts"
+      }
+    },
+    "concepts": {
+      "breadcrumb": "Core Concepts",
+      "badge": "Fundamentals",
+      "title": "Core Concepts",
+      "subtitle": "The fundamental pillars of self-sovereign identity and verifiable credentials.",
+      "ssiTriangle": {
+        "title": "The SSI Trust Triangle",
+        "description": "Self-Sovereign Identity (SSI) is based on a triangular trust model where three actors interact in a decentralized way.",
+        "howItWorks": "How does it work?",
+        "steps": {
+          "1": "The Issuer verifies the Holder's identity and issues a signed credential",
+          "2": "The Holder stores the credential in their wallet (e.g., MetaMask Snap)",
+          "3": "The Verifier requests a credential to grant access to a service",
+          "4": "The Holder presents a Verifiable Presentation (VP) with the credentials",
+          "5": "The Verifier validates the signature and on-chain status"
+        }
+      },
+      "vcLifecycle": {
+        "title": "Credential Lifecycle",
+        "issuance": {
+          "title": "Issuance",
+          "description": "The issuer creates and signs the VC"
+        },
+        "storage": {
+          "title": "Storage",
+          "description": "The holder stores in their wallet"
+        },
+        "presentation": {
+          "title": "Presentation",
+          "description": "The holder presents to verifier"
+        },
+        "verification": {
+          "title": "Verification",
+          "description": "Signature and status verified"
+        },
+        "revocation": {
+          "title": "Revocation",
+          "description": "The issuer can invalidate"
+        }
+      },
+      "components": {
+        "title": "VC Components",
+        "vcJson": "Verifiable Credential Example",
+        "context": "@context - Defines the vocabulary and semantics of the document",
+        "type": "type - Credential type (always includes VerifiableCredential)",
+        "issuer": "issuer - DID of the credential issuer",
+        "subject": "credentialSubject - Holder data and claims",
+        "proof": "proof - Cryptographic signature of the issuer"
+      },
+      "nav": {
+        "prev": "Introduction",
+        "next": "Architecture"
+      }
+    },
+    "architecture": {
+      "overview": {
+        "breadcrumb": "Overview",
+        "badge": "Architecture",
+        "title": "Architecture Overview",
+        "subtitle": "How all the components of the Alastria verifiable credentials system connect.",
+        "components": {
+          "title": "System Components",
+          "frontend": {
+            "title": "Frontend (Next.js)",
+            "description": "Web application for end users, issuers and verifiers.",
+            "tech": "Next.js 15, React 19, TailwindCSS, wagmi"
+          },
+          "issuer": {
+            "title": "Issuer Backend",
+            "description": "Service for credential issuance and management.",
+            "tech": "Fastify, TypeScript, PDF-lib, SIWA"
+          },
+          "verifier": {
+            "title": "Verifier Backend",
+            "description": "Service for credential and presentation verification.",
+            "tech": "Fastify, TypeScript, ethers.js"
+          },
+          "contracts": {
+            "title": "Smart Contracts",
+            "description": "Diamond contracts for on-chain registration.",
+            "tech": "Solidity, Hardhat, EIP-2535"
+          },
+          "snap": {
+            "title": "MetaMask Snap",
+            "description": "Extension for credential storage.",
+            "tech": "MetaMask Snaps API, TypeScript"
+          }
+        },
+        "dataFlow": {
+          "title": "Data Flow",
+          "step1": {
+            "title": "1. Invitation",
+            "description": "The issuer generates a magic link with OTP and sends it by email to the future holder."
+          },
+          "step2": {
+            "title": "2. Claim",
+            "description": "The holder validates OTP, connects wallet, and signs with EIP-712 to bind the VC to their DID."
+          },
+          "step3": {
+            "title": "3. Registration",
+            "description": "The VC hash is registered on-chain in CredentialStatusFacet for future verification."
+          },
+          "step4": {
+            "title": "4. Verification",
+            "description": "Anyone can verify: EIP-712 signature, issuer in registry, and non-revoked status."
+          }
+        },
+        "techStack": {
+          "title": "Tech Stack",
+          "blockchain": "Blockchain",
+          "backend": "Backend",
+          "frontend": "Frontend",
+          "storage": "Storage"
+        },
+        "nav": {
+          "prev": "Core Concepts",
+          "next": "Diamond Pattern"
+        }
+      },
+      "diamond": {
+        "breadcrumb": "Diamond Pattern",
+        "badge": "Smart Contracts",
+        "badgeEip": "EIP-2535",
+        "title": "Diamond Pattern (EIP-2535)",
+        "subtitle": "Modular and upgradeable architecture for Alastria Credentials smart contracts.",
+        "whatIs": {
+          "title": "What is the Diamond Pattern?",
+          "description": "The Diamond Pattern (EIP-2535) is a standard that allows creating modular and upgradeable smart contracts. Instead of a monolithic contract, functionality is divided into \"facets\" that can be added, replaced or removed without losing state.",
+          "why": "Why do we use Diamond?",
+          "reasons": {
+            "1": "Overcomes the 24KB contract code limit",
+            "2": "Allows granular upgrades without migrating data",
+            "3": "Each facet can be audited independently",
+            "4": "Reuse of facets between different diamonds"
+          }
+        },
+        "structure": {
+          "title": "Diamond Structure",
+          "diamondProxy": {
+            "title": "Diamond Proxy",
+            "description": "Main contract that receives all calls and delegates to the correct facet."
+          },
+          "diamondCut": {
+            "title": "DiamondCutFacet",
+            "description": "Special facet to add, replace or remove functions."
+          },
+          "diamondLoupe": {
+            "title": "DiamondLoupeFacet",
+            "description": "Allows inspecting what functions the diamond has and in which facets."
+          },
+          "business": {
+            "title": "Business Facets",
+            "description": "Facets with business logic: TrustedIssuer, CredentialStatus, etc."
+          }
+        },
+        "facets": {
+          "title": "Alastria Credentials Facets",
+          "trustedIssuer": {
+            "title": "TrustedIssuerFacet",
+            "description": "Manages the registry of authorized issuers.",
+            "functions": "addTrustedIssuer, removeTrustedIssuer, isTrustedIssuer, getIssuerInfo"
+          },
+          "credentialStatus": {
+            "title": "CredentialStatusFacet",
+            "description": "Manages credential status (active, revoked, suspended).",
+            "functions": "registerCredential, revokeCredential, getCredentialStatus, isCredentialActive"
+          },
+          "proof": {
+            "title": "ProofFacet",
+            "description": "On-chain EIP-712 signature verification.",
+            "functions": "verifyCredentialSignature, verifyCredentialProof, getDomainSeparator"
+          },
+          "attestationBatch": {
+            "title": "AttestationBatchFacet",
+            "description": "Batch operations for gas optimization.",
+            "functions": "batchRegister, batchRevoke, createBatchAttestation"
+          }
+        },
+        "upgrade": {
+          "title": "Upgrade Process",
+          "step1": "Develop and audit the new facet",
+          "step2": "Deploy the new facet to the network",
+          "step3": "Prepare DiamondCut with functions to add/replace",
+          "step4": "Execute diamondCut() (owner/multisig only)",
+          "step5": "Verify with DiamondLoupe that changes are correct"
+        },
+        "storage": {
+          "title": "Diamond Storage",
+          "description": "Each facet uses its own isolated storage slot to avoid collisions. The slot is calculated as the hash of the facet namespace."
+        },
+        "nav": {
+          "prev": "Overview",
+          "next": "Installation"
+        }
+      }
+    },
+    "quickstart": {
+      "installation": {
+        "breadcrumb": "Installation",
+        "badge": "Quick Start",
+        "title": "Installation and Setup",
+        "subtitle": "Step-by-step guide to set up the Alastria Credentials development environment.",
+        "prerequisites": {
+          "title": "Prerequisites",
+          "items": {
+            "node": "Node.js 20+ installed",
+            "pnpm": "pnpm 8+ installed",
+            "docker": "Docker and Docker Compose",
+            "metamask": "MetaMask installed in browser",
+            "git": "Git to clone the repository"
+          }
+        },
+        "clone": {
+          "title": "1. Clone the Repository"
+        },
+        "install": {
+          "title": "2. Install Dependencies",
+          "description": "The project uses pnpm workspaces to manage the monorepo."
+        },
+        "env": {
+          "title": "3. Configure Environment Variables",
+          "description": "The project includes scripts that automatically configure environment variables for development."
+        },
+        "start": {
+          "title": "4. Start in Development Mode",
+          "description": "This command starts the entire stack: Hardhat node, contract deploy, backends (issuer and verifier), frontend, and MetaMask Snap.",
+          "services": "Available services:"
+        },
+        "metamask": {
+          "title": "5. Configure MetaMask",
+          "description": "Add the local Hardhat network to MetaMask:",
+          "steps": {
+            "1": "Open MetaMask → Networks → Add network",
+            "2": "Name: Hardhat Local",
+            "3": "RPC URL: http://localhost:8545",
+            "4": "Chain ID: 31337",
+            "5": "Symbol: ETH"
+          },
+          "importAccount": "Import test account:",
+          "warning": "This private key is for local development only. NEVER use in production."
+        },
+        "verify": {
+          "title": "6. Verify Installation",
+          "description": "Check that everything works correctly:",
+          "checks": {
+            "1": "Open http://localhost:3000 - You should see the landing page",
+            "2": "Connect MetaMask with the imported account",
+            "3": "Go to /issuer - You should be able to access the issuer portal"
+          }
+        },
+        "troubleshooting": {
+          "title": "Troubleshooting",
+          "portInUse": {
+            "title": "Port in use",
+            "description": "If a port is busy, kill the process:"
+          },
+          "dockerIssues": {
+            "title": "Docker issues",
+            "description": "Restart containers:"
+          },
+          "metamaskReset": {
+            "title": "MetaMask won't connect",
+            "description": "Reset account in MetaMask: Settings → Advanced → Clear activity data"
+          }
+        },
+        "nav": {
+          "prev": "Diamond Pattern",
+          "next": "First Credential"
+        }
+      }
+    },
+    "api": {
+      "issuer": {
+        "breadcrumb": "Issuer API",
+        "badge": "REST API",
+        "port": "Port 8001",
+        "title": "Issuer API",
+        "subtitle": "REST API for Verifiable Credential issuance. Includes SIWA (Sign-In with Alastria) authentication and issuance flow management.",
+        "baseUrl": {
+          "title": "Base URL",
+          "development": "Development:",
+          "production": "Production:"
+        },
+        "auth": {
+          "title": "Authentication",
+          "description": "The Issuer uses SIWA (Sign-In with Alastria) based on EIP-4361 to authenticate users. The flow consists of getting a challenge, signing it with MetaMask, and sending it to get a session.",
+          "challenge": {
+            "description": "Gets a challenge (nonce) to start SIWA authentication."
+          },
+          "verify": {
+            "description": "Verifies the challenge signature and creates an authenticated session."
+          }
+        },
+        "credentials": {
+          "title": "Credential Issuance",
+          "prepare": {
+            "description": "Prepares a credential to be signed. Generates the VC document and EIP-712 data.",
+            "requiresAuth": "Requires authentication"
+          },
+          "finalize": {
+            "description": "Finalizes the credential by adding the issuer's EIP-712 signature.",
+            "requiresAuth": "Requires authentication"
+          }
+        },
+        "management": {
+          "title": "Credential Management",
+          "list": {
+            "description": "Lists credentials issued by the authenticated issuer.",
+            "requiresAuth": "Requires authentication"
+          },
+          "revoke": {
+            "description": "Revokes a credential. Updates on-chain status in CredentialStatusFacet.",
+            "requiresAuth": "Requires authentication"
+          }
+        },
+        "errors": {
+          "title": "Error Codes",
+          "400": "Bad Request - Invalid parameters",
+          "401": "Unauthorized - Not authenticated",
+          "403": "Forbidden - Not a Trusted Issuer",
+          "404": "Not Found - Resource doesn't exist",
+          "500": "Internal Error - Server error"
+        },
+        "nav": {
+          "prev": "Blockchain Sync",
+          "next": "Verifier API"
+        }
+      },
+      "verifier": {
+        "breadcrumb": "Verifier API",
+        "badge": "REST API",
+        "port": "Port 8002",
+        "title": "Verifier API",
+        "subtitle": "REST API for Credential and Verifiable Presentation verification. Includes on-chain signature and revocation status verification.",
+        "baseUrl": {
+          "title": "Base URL",
+          "development": "Development:",
+          "production": "Production:"
+        },
+        "process": {
+          "title": "Verification Process",
+          "step1": {
+            "title": "Verify Signature",
+            "description": "Recover signer address from EIP-712 signature."
+          },
+          "step2": {
+            "title": "Verify Issuer",
+            "description": "Check that the signer is a Trusted Issuer on-chain."
+          },
+          "step3": {
+            "title": "Verify Status",
+            "description": "Check that the credential is not revoked on-chain."
+          }
+        },
+        "credentials": {
+          "title": "Credential Verification",
+          "verify": {
+            "description": "Verifies a complete Verifiable Credential with its EIP-712 signature."
+          },
+          "tabs": {
+            "request": "Request",
+            "valid": "✅ Valid",
+            "invalid": "❌ Invalid"
+          }
+        },
+        "presentations": {
+          "title": "Presentation Verification",
+          "verify": {
+            "description": "Verifies a Verifiable Presentation (VP) containing one or more credentials."
+          },
+          "challenge": {
+            "description": "Generates a challenge to request a presentation. The holder must include this challenge in their VP signature to prevent replay attacks."
+          }
+        },
+        "status": {
+          "title": "Status Query",
+          "description": "Queries the revocation status of a credential by its ID."
+        },
+        "batch": {
+          "title": "Batch Verification",
+          "description": "Verifies multiple credentials in a single call. Optimizes on-chain queries by grouping them."
+        },
+        "errors": {
+          "title": "Error Codes",
+          "400": "Bad Request - Invalid credential format",
+          "404": "Not Found - Credential not found",
+          "422": "Unprocessable - Invalid credential (verification failed)",
+          "500": "Internal Error - Server or blockchain error"
+        },
+        "sdk": {
+          "title": "SDK Example"
+        },
+        "nav": {
+          "prev": "Issuer API",
+          "next": "Smart Contract Facets"
+        }
+      }
+    },
+    "smartContracts": {
+      "facets": {
+        "breadcrumb": "Facets Reference",
+        "badge": "Solidity",
+        "badgeEip": "EIP-2535",
+        "title": "Smart Contract Facets",
+        "subtitle": "Complete reference of Diamond Pattern Facets. Each facet implements a specific functionality of the verifiable credentials system.",
+        "overview": {
+          "title": "Facets Architecture",
+          "trustedIssuer": {
+            "title": "TrustedIssuerFacet",
+            "description": "Management of authorized issuer registry."
+          },
+          "credentialStatus": {
+            "title": "CredentialStatusFacet",
+            "description": "Credential states: active, revoked, suspended."
+          },
+          "proof": {
+            "title": "ProofFacet",
+            "description": "On-chain EIP-712 signature verification."
+          },
+          "attestationBatch": {
+            "title": "AttestationBatchFacet",
+            "description": "Batch attestations for gas efficiency."
+          }
+        },
+        "trustedIssuer": {
+          "title": "TrustedIssuerFacet",
+          "description": "Manages the trusted issuer registry (Trusted Issuers). Only registered issuers can issue valid verifiable credentials in the Alastria ecosystem.",
+          "usage": "JavaScript Usage"
+        },
+        "credentialStatus": {
+          "title": "CredentialStatusFacet",
+          "description": "Manages on-chain credential status. Allows registering, revoking and suspending credentials immutably and verifiably.",
+          "considerations": {
+            "title": "Important Considerations",
+            "revoke": "Revocation is permanent: Once revoked, it cannot be reversed",
+            "suspend": "Suspension is temporary: Can be reactivated with unsuspendCredential",
+            "onlyIssuer": "Issuer only: Only the original issuer can change the status",
+            "hash": "Deterministic hash: Calculated from credential content"
+          }
+        },
+        "proof": {
+          "title": "ProofFacet",
+          "description": "Verifies EIP-712 signatures on-chain. Allows validating that a signature was made by a certain issuer without relying on a centralized server.",
+          "domain": "EIP-712 Domain"
+        },
+        "attestationBatch": {
+          "title": "AttestationBatchFacet",
+          "description": "Optimizes registration of multiple credentials in a single transaction. Significantly reduces gas costs when issuing credentials in batch.",
+          "gasComparison": {
+            "title": "Gas Comparison",
+            "operation": "Operation",
+            "individual": "Individual Gas",
+            "batch": "Batch Gas (10)",
+            "savings": "Savings",
+            "register": "Register",
+            "revoke": "Revocation"
+          }
+        },
+        "storage": {
+          "title": "Diamond Storage Pattern",
+          "description": "Each facet uses its own isolated storage slot to avoid collisions. The slot is calculated as the hash of the facet namespace."
+        },
+        "nav": {
+          "prev": "Verifier API",
+          "next": "EIP-712 Security"
+        }
+      }
+    },
+    "security": {
+      "eip712": {
+        "breadcrumb": "EIP-712",
+        "badge": "Security",
+        "badgeEip": "EIP-712",
+        "title": "EIP-712 Typed Signatures",
+        "subtitle": "Structured signature system for verifiable credentials. EIP-712 provides readable, secure and on-chain verifiable signatures.",
+        "why": {
+          "title": "Why EIP-712?",
+          "readable": {
+            "title": "Readable Signatures",
+            "description": "MetaMask shows exactly what the user is signing in a structured and understandable format."
+          },
+          "onchain": {
+            "title": "On-chain Verifiable",
+            "description": "Signatures can be verified directly in smart contracts without relying on external services."
+          },
+          "domain": {
+            "title": "Domain Binding",
+            "description": "Signatures are bound to a specific domain, preventing cross-chain replay attacks."
+          },
+          "schema": {
+            "title": "Schema Validation",
+            "description": "Structured types ensure signed data has the expected format."
+          }
+        },
+        "domainSeparator": {
+          "title": "Domain Separator",
+          "description": "The Domain Separator binds signatures to a specific context, preventing a valid signature in one context from being used in another.",
+          "security": {
+            "title": "Domain Security",
+            "description": "Each domain component is critical:",
+            "chainId": "chainId: Prevents replay attacks between networks",
+            "verifyingContract": "verifyingContract: Binds to the specific contract",
+            "version": "version: Allows migration to new schema versions"
+          }
+        },
+        "types": {
+          "title": "Type Definitions",
+          "description": "EIP-712 types define the exact structure of data to sign. Alastria uses specific types for Verifiable Credentials."
+        },
+        "signing": {
+          "title": "Signing Process",
+          "step1": "Prepare the data",
+          "step2": "Request signature via MetaMask",
+          "step3": "Verify the signature"
+        },
+        "securityConsiderations": {
+          "title": "Security Considerations",
+          "replay": {
+            "title": "Replay Attacks",
+            "description": "A valid signature could be maliciously reused.",
+            "mitigations": "Mitigations:",
+            "items": {
+              "1": "ChainId in domain prevents cross-chain replay",
+              "2": "Unique nonce per credential",
+              "3": "Challenge in presentations for freshness"
+            }
+          },
+          "frontrunning": {
+            "title": "Front-running",
+            "description": "An attacker could see the transaction in mempool and front-run it.",
+            "mitigations": "Mitigations:",
+            "items": {
+              "1": "Operations are idempotent",
+              "2": "Verifications bound to original issuer",
+              "3": "Private mempools in Alastria T-Network"
+            }
+          },
+          "malleability": {
+            "title": "Signature Malleability",
+            "description": "ECDSA signatures can be modified while remaining valid.",
+            "mitigations": "Mitigations:",
+            "items": {
+              "1": "OpenZeppelin ECDSA normalizes s-value",
+              "2": "v range verification (27/28)",
+              "3": "Hash included in on-chain registry"
+            }
+          }
+        },
+        "bestPractices": {
+          "title": "Best Practices",
+          "do": {
+            "title": "Do ✓",
+            "items": {
+              "1": "Validate the domain before signing",
+              "2": "Include timestamps with reasonable margin",
+              "3": "Verify on-chain when possible",
+              "4": "Use unique challenges in presentations",
+              "5": "Store the signature hash, not the signature"
+            }
+          },
+          "dont": {
+            "title": "Avoid ✗",
+            "items": {
+              "1": "Sign data without verifying the domain",
+              "2": "Reuse nonces or challenges",
+              "3": "Rely only on off-chain verification",
+              "4": "Expose private keys in logs",
+              "5": "Ignore verification errors"
+            }
+          }
+        },
+        "example": {
+          "title": "Complete Example"
+        },
+        "nav": {
+          "prev": "Smart Contract Facets",
+          "next": "SIWA Authentication"
+        }
+      },
+      "siwa": {
+        "breadcrumb": "SIWA Auth",
+        "badge": "Authentication",
+        "badgeEip": "EIP-4361",
+        "title": "Sign-In with Alastria (SIWA)",
+        "subtitle": "Decentralized authentication system based on EIP-4361 (SIWE). Users authenticate by signing a message with their wallet, without needing passwords or centralized identity servers.",
+        "howItWorks": {
+          "title": "How does it work?",
+          "step1": {
+            "title": "Request Challenge",
+            "description": "Frontend requests a unique nonce from backend"
+          },
+          "step2": {
+            "title": "Sign Message",
+            "description": "User signs the SIWA message with MetaMask"
+          },
+          "step3": {
+            "title": "Verify Signature",
+            "description": "Backend verifies signature and recovers address"
+          },
+          "step4": {
+            "title": "Create Session",
+            "description": "JWT session established with secure cookie"
+          }
+        },
+        "messageFormat": {
+          "title": "SIWA Message Format",
+          "description": "The SIWA message follows the EIP-4361 standard format, structured to be human-readable and machine-parseable.",
+          "example": "Message Example",
+          "fields": {
+            "title": "Message Fields",
+            "domain": "domain - Origin requesting the signature",
+            "address": "address - User's address",
+            "statement": "statement - Readable description",
+            "uri": "uri - Resource URI",
+            "version": "version - Protocol version",
+            "chainId": "chainId - Blockchain network ID",
+            "nonce": "nonce - Unique anti-replay value",
+            "issuedAt": "issuedAt - Issuance timestamp",
+            "expirationTime": "expirationTime - Challenge expiration"
+          },
+          "nonceSecurity": {
+            "title": "Nonce Security",
+            "description": "The nonce is critical for security:",
+            "items": {
+              "1": "Cryptographically secure generation",
+              "2": "Stored on server with short TTL",
+              "3": "Invalidated after first use",
+              "4": "Bound to requesting address"
+            }
+          }
+        },
+        "implementation": {
+          "title": "Implementation",
+          "frontend": "Frontend (React)",
+          "backend": "Backend (Fastify)"
+        },
+        "sessions": {
+          "title": "Session Management",
+          "jwt": {
+            "title": "JWT Token"
+          },
+          "cookie": {
+            "title": "Secure Cookie",
+            "httpOnly": "HttpOnly: Not accessible from JS",
+            "secure": "Secure: HTTPS only in production",
+            "sameSite": "SameSite=Strict: Anti-CSRF",
+            "path": "Path=/: Available throughout app"
+          }
+        },
+        "protectedRoutes": {
+          "title": "Protected Routes",
+          "middleware": "Authentication Middleware"
+        },
+        "bestPractices": {
+          "title": "Best Practices",
+          "recommendations": {
+            "title": "Recommendations",
+            "items": {
+              "1": "Single-use nonces with short TTL",
+              "2": "Verify message domain and chainId",
+              "3": "Use HttpOnly + Secure cookies",
+              "4": "Implement rate limiting",
+              "5": "Rotate JWT secrets regularly",
+              "6": "Log authentication attempts"
+            }
+          },
+          "avoid": {
+            "title": "Avoid",
+            "items": {
+              "1": "Storing tokens in localStorage",
+              "2": "Reusing nonces",
+              "3": "Very long expirations",
+              "4": "Relying only on client-side validation",
+              "5": "Exposing detailed errors to client",
+              "6": "Ignoring SIWA message expiration"
+            }
+          }
+        },
+        "errors": {
+          "title": "Error Handling",
+          "table": {
+            "error": "Error",
+            "cause": "Cause",
+            "solution": "Solution"
+          },
+          "invalidNonce": {
+            "error": "Invalid nonce",
+            "cause": "Expired or used nonce",
+            "solution": "Request new challenge"
+          },
+          "addressMismatch": {
+            "error": "Address mismatch",
+            "cause": "Signed with different wallet",
+            "solution": "Verify connected wallet"
+          },
+          "invalidSignature": {
+            "error": "Invalid signature",
+            "cause": "Modified message or incorrect signature",
+            "solution": "Restart authentication flow"
+          },
+          "sessionExpired": {
+            "error": "Session expired",
+            "cause": "JWT expired",
+            "solution": "Re-authenticate"
+          },
+          "notTrustedIssuer": {
+            "error": "Not a Trusted Issuer",
+            "cause": "Address not registered",
+            "solution": "Contact admin for registration"
+          }
+        },
+        "nav": {
+          "prev": "EIP-712 Security",
+          "next": "Back to Docs"
+        }
+      }
+    }
+  }
+}

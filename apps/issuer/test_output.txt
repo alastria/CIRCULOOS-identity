@@ -1,0 +1,251 @@
+
+> @circuloos/issuer@0.0.0 test /home/tony/dev/alastria/circuloos/vc_vp/vc-vp-alastria/backend/issuer
+> pnpm exec vitest tests/siwa.spec.ts
+
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+ DEV  v0.34.6 /home/tony/dev/alastria/circuloos/vc_vp/vc-vp-alastria/backend/issuer
+
+stdout | tests/siwa.spec.ts > SIWA Authentication Flow > should reject access to protected route without cookie
+[DEBUG] authenticateJWT - Cookies: {}
+[DEBUG] authenticateJWT - Token: [90mundefined[39m
+
+stdout | tests/siwa.spec.ts > SIWA Authentication Flow > should allow access to protected route with cookie
+Using authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3YWxsZXQiOiIweDMyMDMyZGJiYzAzMzMyYmZkYWVlNWMxMWM5OTUyM2IzZGI0ZTJkOGYiLCJyb2xlIjoiaG9sZGVyIiwiaWF0IjoxNzY0NDE3NjY4LCJleHAiOjE3NjQ0MjEyNjh9.E1AEws7HGO3zMk_tv200djMv0bHbMQAom9tHmoABqkg
+[DEBUG] authenticateJWT - Cookies: {
+  auth_token: [32m'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3YWxsZXQiOiIweDMyMDMyZGJiYzAzMzMyYmZkYWVlNWMxMWM5OTUyM2IzZGI0ZTJkOGYiLCJyb2xlIjoiaG9sZGVyIiwiaWF0IjoxNzY0NDE3NjY4LCJleHAiOjE3NjQ0MjEyNjh9.E1AEws7HGO3zMk_tv200djMv0bHbMQAom9tHmoABqkg'[39m
+}
+[DEBUG] authenticateJWT - Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3YWxsZXQiOiIweDMyMDMyZGJiYzAzMzMyYmZkYWVlNWMxMWM5OTUyM2IzZGI0ZTJkOGYiLCJyb2xlIjoiaG9sZGVyIiwiaWF0IjoxNzY0NDE3NjY4LCJleHAiOjE3NjQ0MjEyNjh9.E1AEws7HGO3zMk_tv200djMv0bHbMQAom9tHmoABqkg
+Protected route response: [33m401[39m {"error":"Unauthorized: No session found"}
+
+ ❯ tests/siwa.spec.ts  (4 tests | 1 failed) 206ms
+   ❯ tests/siwa.spec.ts > SIWA Authentication Flow > should allow access to protected route with cookie
+     → expected 401 to be 200 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/siwa.spec.ts > SIWA Authentication Flow > should allow access to protected route with cookie
+AssertionError: expected 401 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 401
+
+ ❯ tests/siwa.spec.ts:138:37
+    136| 
+    137|         console.log('Protected route response:', response.statusCode, …
+    138|         expect(response.statusCode).toBe(200)
+       |                                     ^
+    139|     })
+    140| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  13:01:07
+   Duration  870ms (transform 96ms, setup 7ms, collect 313ms, tests 206ms, environment 0ms, prepare 105ms)
+
+
+ FAIL  Tests failed. Watching for file changes...
+       press h to show help, press q to quit
+[3Jc
+ RERUN  src/controllers/issueController.ts x1
+
+stdout | tests/siwa.spec.ts > SIWA Authentication Flow > should reject access to protected route without cookie
+[DEBUG] authenticateJWT - Cookies: {}
+[DEBUG] authenticateJWT - Token: [90mundefined[39m
+
+stdout | tests/siwa.spec.ts > SIWA Authentication Flow > should allow access to protected route with cookie
+Using authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3YWxsZXQiOiIweDU2ZTlkZTYzMjc3MTJhZGZiYmYwMTgwMjkzZjBhN2U0MTZkYzAxMDgiLCJyb2xlIjoiaG9sZGVyIiwiaWF0IjoxNzY0NDE3NjkxLCJleHAiOjE3NjQ0MjEyOTF9.Hd4aXtbu7eH3Ipu8oGwkfB2L2l6RSMctlZF0YmnJFxA
+[DEBUG] authenticateJWT - Cookies: {
+  auth_token: [32m'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3YWxsZXQiOiIweDU2ZTlkZTYzMjc3MTJhZGZiYmYwMTgwMjkzZjBhN2U0MTZkYzAxMDgiLCJyb2xlIjoiaG9sZGVyIiwiaWF0IjoxNzY0NDE3NjkxLCJleHAiOjE3NjQ0MjEyOTF9.Hd4aXtbu7eH3Ipu8oGwkfB2L2l6RSMctlZF0YmnJFxA'[39m
+}
+[DEBUG] authenticateJWT - Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3YWxsZXQiOiIweDU2ZTlkZTYzMjc3MTJhZGZiYmYwMTgwMjkzZjBhN2U0MTZkYzAxMDgiLCJyb2xlIjoiaG9sZGVyIiwiaWF0IjoxNzY0NDE3NjkxLCJleHAiOjE3NjQ0MjEyOTF9.Hd4aXtbu7eH3Ipu8oGwkfB2L2l6RSMctlZF0YmnJFxA
+Protected route response: [33m200[39m {"issuances":[],"total":0}
+
+ ✓ tests/siwa.spec.ts  (4 tests) 381ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  13:01:30
+   Duration  1.06s
+
+
+ PASS  Waiting for file changes...
+       press h to show help, press q to quit
+       rerun x1
+[2K[1A[2K[G[3Jc
+ RERUN  src/middleware/auth.middleware.ts x2
+
+stdout | tests/siwa.spec.ts > SIWA Authentication Flow > should allow access to protected route with cookie
+Using authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3YWxsZXQiOiIweDEzMjBmODg2MTA1NWM5ZDkyNzQ0ZWRiYzk2OGIxMDhmOGM3ZGMyNTAiLCJyb2xlIjoiaG9sZGVyIiwiaWF0IjoxNzY0NDE3NzEyLCJleHAiOjE3NjQ0MjEzMTJ9.w3A6yC7WtptYanlFmqA2YVMrMe6k62wTxZuS3BOJRh0
+Protected route response: [33m200[39m {"issuances":[],"total":0}
+
+ ✓ tests/siwa.spec.ts  (4 tests) 437ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  13:01:51
+   Duration  1.12s
+
+
+ PASS  Waiting for file changes...
+       press h to show help, press q to quit
+       rerun x2
+[2K[1A[2K[G[3Jc
+ RERUN  src/controllers/issueController.ts x3
+
+stdout | tests/siwa.spec.ts > SIWA Authentication Flow > should allow access to protected route with cookie
+Using authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3YWxsZXQiOiIweDVjOWYzYTk4ZjZmOWQwODBiMTc2NTE0MmExZDRkODk2NzlkYzVkMDciLCJyb2xlIjoiaG9sZGVyIiwiaWF0IjoxNzY0NDIwOTU0LCJleHAiOjE3NjQ0MjQ1NTR9.iAJOu0pYhdKKjiTtlUWyz9bv-Ra7BjiZId20S-d06ys
+Protected route response: [33m200[39m {"issuances":[],"total":0}
+
+ ✓ tests/siwa.spec.ts  (4 tests) 1407ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  13:55:51
+   Duration  2.82s
+
+
+ PASS  Waiting for file changes...
+       press h to show help, press q to quit
+       rerun x3
+[2K[1A[2K[G[3Jc
+ RERUN  src/routes/issue.ts x4
+
+stdout | tests/siwa.spec.ts > SIWA Authentication Flow > should allow access to protected route with cookie
+Using authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3YWxsZXQiOiIweDhlMGE3NzVjMDFlNjE4OWNiNzU1Y2ZmMWFhMmFkMzdkNWFlYjIzMjkiLCJyb2xlIjoiaG9sZGVyIiwiaWF0IjoxNzY0NDIwOTg5LCJleHAiOjE3NjQ0MjQ1ODl9.AkGNMFJsnaPj6u1g-67d_sE8ekueHBjf9RRGM0GBEE4
+Protected route response: [33m200[39m {"issuances":[],"total":0}
+
+ ✓ tests/siwa.spec.ts  (4 tests) 1117ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  13:56:26
+   Duration  2.25s
+
+
+ PASS  Waiting for file changes...
+       press h to show help, press q to quit
+       rerun x4
+[2K[1A[2K[G[3Jc
+ RERUN  src/controllers/authController.ts x5
+
+stdout | tests/siwa.spec.ts > SIWA Authentication Flow > should allow access to protected route with cookie
+Using authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3YWxsZXQiOiIweDMyNzViNTQ5ZTNmN2VlN2UzMTU5ZWUwMzY4MDVjYmIyNjVmODVkOTkiLCJyb2xlIjoiaG9sZGVyIiwiaWF0IjoxNzY0NDIxNjU5LCJleHAiOjE3NjQ0MjUyNTl9.OOTq6hrx9hPEfgqH1OjKpkiqtTJcGKHd6HaY113hIoA
+Protected route response: [33m200[39m {"issuances":[],"total":0}
+
+ ✓ tests/siwa.spec.ts  (4 tests) 896ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  14:07:36
+   Duration  3.09s
+
+
+ PASS  Waiting for file changes...
+       press h to show help, press q to quit
+       rerun x5
+[2K[1A[2K[G[3Jc
+ RERUN  src/controllers/authController.ts x6
+
+stdout | tests/siwa.spec.ts > SIWA Authentication Flow > should verify SIWA signature and set cookie
+[DEBUG] SIWA Verification
+[DEBUG] Domain: localhost
+[DEBUG] ChainID: 2020
+[DEBUG] IssuedAt: 2025-11-29T13:23:41.000Z
+[DEBUG] SIWE Message: localhost wants you to sign in with your Ethereum account:
+0x682cd8D0670Df85523838dE56b3E00928f167aE1
+
+Quiero autenticarme en Alastria VC Platform
+
+URI: https://localhost
+Version: 1
+Chain ID: 2020
+Nonce: 05f9b187a11661ef0fe765d6491cee59
+Issued At: 2025-11-29T13:23:41.000Z
+[DEBUG] Received Signature: 0xe860603155e33086c88de4ff636746791e32c9d03cf77d47c249ce22ed582e2e6c1823b0c0f3fd2d1991b7351a5f0baafc3b346d1063ddf25d52204a15bb61ba1c
+[DEBUG] Recovered Address: 0x682cd8D0670Df85523838dE56b3E00928f167aE1
+[DEBUG] Expected Address: 0x682cd8D0670Df85523838dE56b3E00928f167aE1
+
+stdout | tests/siwa.spec.ts > SIWA Authentication Flow > should allow access to protected route with cookie
+Using authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3YWxsZXQiOiIweDY4MmNkOGQwNjcwZGY4NTUyMzgzOGRlNTZiM2UwMDkyOGYxNjdhZTEiLCJyb2xlIjoiaG9sZGVyIiwiaWF0IjoxNzY0NDIyNjIxLCJleHAiOjE3NjQ0MjYyMjF9.sLqumJDKzEoL135ZhkcF8hh1yL9eEJzYLXYXMVvIwtw
+Protected route response: [33m200[39m {"issuances":[],"total":0}
+
+ ✓ tests/siwa.spec.ts  (4 tests) 1005ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  14:23:38
+   Duration  3.21s
+
+
+ PASS  Waiting for file changes...
+       press h to show help, press q to quit
+       rerun x6
+[2K[1A[2K[G[3Jc
+ RERUN  src/controllers/authController.ts x7
+
+stdout | tests/siwa.spec.ts > SIWA Authentication Flow > should allow access to protected route with cookie
+Using authToken: [90mundefined[39m
+Protected route response: [33m401[39m {"error":"Session expired or invalid"}
+
+ ❯ tests/siwa.spec.ts  (4 tests | 2 failed) 1098ms
+   ❯ tests/siwa.spec.ts > SIWA Authentication Flow > should verify SIWA signature and set cookie
+     → expected 401 to be 200 // Object.is equality
+   ❯ tests/siwa.spec.ts > SIWA Authentication Flow > should allow access to protected route with cookie
+     → expected 401 to be 200 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/siwa.spec.ts > SIWA Authentication Flow > should verify SIWA signature and set cookie
+AssertionError: expected 401 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 401
+
+ ❯ tests/siwa.spec.ts:105:38
+    103|         })
+    104| 
+    105|         expect(verifyRes.statusCode).toBe(200)
+       |                                      ^
+    106|         expect(verifyRes.headers['set-cookie']).toBeDefined()
+    107| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/siwa.spec.ts > SIWA Authentication Flow > should allow access to protected route with cookie
+AssertionError: expected 401 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 401
+
+ ❯ tests/siwa.spec.ts:138:37
+    136| 
+    137|         console.log('Protected route response:', response.statusCode, …
+    138|         expect(response.statusCode).toBe(200)
+       |                                     ^
+    139|     })
+    140| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  14:28:25
+   Duration  2.98s
+
+
+ FAIL  Tests failed. Watching for file changes...
+       press h to show help, press q to quit
+       rerun x7
+[2K[1A[2K[G ELIFECYCLE  Test failed. See above for more details.

@@ -1,0 +1,42 @@
+{
+    "name": "@circuloos/snap",
+    "version": "0.1.0",
+    "description": "MetaMask Snap for Secure VC Storage and VP Generation",
+    "main": "src/index.ts",
+    "files": [
+        "dist/",
+        "images/",
+        "snap.manifest.json"
+    ],
+    "scripts": {
+        "build": "mm-snap build",
+        "build:clean": "pnpm clean && pnpm build",
+        "clean": "rimraf dist",
+        "lint": "eslint . --ext .js,.ts",
+        "lint:fix": "eslint . --ext .js,.ts --fix",
+        "serve": "mm-snap serve",
+        "start": "mm-snap watch",
+        "test": "vitest"
+    },
+    "dependencies": {
+        "@metamask/snaps-sdk": "^6.0.0",
+        "ethers": "^5.7.2"
+    },
+    "devDependencies": {
+        "@metamask/key-tree": "^10.1.1",
+        "@metamask/snaps-cli": "^6.0.0",
+        "@types/node": "^20.0.0",
+        "eslint": "^8.0.0",
+        "prettier": "^3.6.2",
+        "rimraf": "^5.0.0",
+        "typescript": "^5.0.0",
+        "vitest": "^1.0.0"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    },
+    "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org/"
+    }
+}

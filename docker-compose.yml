@@ -1,0 +1,213 @@
+volumes:
+  shared-config:
+    driver: local
+
+networks:
+  alastria-net:
+    driver: bridge
+
+services:
+  hardhat:
+    build:
+      context: .
+      dockerfile: apps/contracts/Dockerfile
+    container_name: alastria-hardhat
+    networks:
+      - alastria-net
+    ports:
+      - "8545:8545"
+    env_file:
+      - .env.docker
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - HARDHAT_RPC=${HARDHAT_RPC:-http://0.0.0.0:8545}
+      - RPC_PORT=${RPC_PORT:-8545}
+      - SHARED_CONFIG_PATH=/shared/diamond-config.json
+    volumes:
+      # Mount only source files, not node_modules (which is built in the image)
+      - ./apps/contracts/contracts:/app/apps/contracts/contracts
+      - ./apps/contracts/scripts:/app/apps/contracts/scripts
+      - shared-config:/shared
+    restart: unless-stopped
+
+  deployer:
+    build:
+      context: .
+      dockerfile: apps/contracts/Dockerfile.deployer
+    container_name: alastria-deployer
+    networks:
+      - alastria-net
+    depends_on:
+      hardhat:
+        condition: service_healthy
+    env_file:
+      - .env.docker
+    environment:
+      - RPC_URL=http://hardhat:8545
+      - SHARED_CONFIG_PATH=/shared/diamond-config.json
+      - DEPLOY_INIT=true
+    volumes:
+      - shared-config:/shared
+    # This container runs once and exits
+    restart: no
+
+  issuer:
+    build:
+      context: .
+      dockerfile: apps/issuer/Dockerfile
+    container_name: alastria-issuer
+    networks:
+      - alastria-net
+    depends_on:
+      hardhat:
+        condition: service_healthy
+      deployer:
+        condition: service_completed_successfully
+    # Fix permissions for bind mounts in Linux
+    user: "0:0"
+    command: [ "/bin/sh", "-lc", "chown -R 1001:1001 /app/apps/issuer/tmp-filestore /app/apps/issuer/data || true; exec node dist/index.js" ]
+    env_file:
+      - .env.docker
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - HTTP_HOST=0.0.0.0
+      - HTTP_PORT=8001
+      - ISSUER_PORT=8001
+      # Override RPC_URL to point to internal docker service
+      - RPC_URL=http://hardhat:8545
+      # Chain ID for EIP-712 domain (should match Hardhat network)
+      - CHAIN_ID=${CHAIN_ID:-31337}
+      - FILESTORE_BASE_DIR=/app/apps/issuer/tmp-filestore
+      - ISSUANCE_AUDIT_PATH=/app/apps/issuer/data/issuance_audit.json
+      - DB_PATH=/app/apps/issuer/data/alastria.db
+      # SIWE Configuration - Must match frontend NEXT_PUBLIC_APP_URL
+      - APP_PUBLIC_URL=http://localhost:3000
+      # Shared config from hardhat deployment
+      - SHARED_CONFIG_PATH=/shared/diamond-config.json
+    ports:
+      - "8001:8001"
+    healthcheck:
+      test: [ "CMD", "node", "-e", "http=require('http');req=http.request({method:'GET',host:'127.0.0.1',port:8001,path:'/health'}, r=>process.exit(r.statusCode===200?0:1));req.on('error',()=>process.exit(1));req.end();" ]
+      interval: 20s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    volumes:
+      # Only mount data directories, not source code (dist is built in the image)
+      - ./data/issuer/tmp-filestore:/app/apps/issuer/tmp-filestore
+      - ./data/issuer/data:/app/apps/issuer/data
+      - shared-config:/shared:ro
+    restart: unless-stopped
+
+  verifier:
+    build:
+      context: .
+      dockerfile: apps/verifier/Dockerfile
+    container_name: alastria-verifier
+    networks:
+      - alastria-net
+    depends_on:
+      hardhat:
+        condition: service_healthy
+      deployer:
+        condition: service_completed_successfully
+    # Fix permissions for bind mounts in Linux
+    user: "0:0"
+    command: [ "/bin/sh", "-lc", "chown -R 1001:1001 /app/apps/verifier/tmp-filestore /app/apps/verifier/data || true; exec node dist/index.js" ]
+    env_file:
+      - .env.docker
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - HTTP_HOST=0.0.0.0
+      - HTTP_PORT=8002
+      - VERIFIER_PORT=8002
+      # App URL for config validation
+      - APP_PUBLIC_URL=http://localhost:3000
+      # CORS - Allow frontend origin
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8001,http://localhost:8002
+      # Override RPC_URL to point to internal docker service
+      - RPC_URL=http://hardhat:8545
+      # Chain ID for EIP-712 domain (should match Hardhat network)
+      - CHAIN_ID=${CHAIN_ID:-31337}
+      - FILESTORE_BASE_DIR=/app/apps/verifier/tmp-filestore
+      # Shared config from hardhat deployment
+      - SHARED_CONFIG_PATH=/shared/diamond-config.json
+    ports:
+      - "8002:8002"
+    healthcheck:
+      test: [ "CMD", "node", "-e", "http=require('http');req=http.request({method:'GET',host:'127.0.0.1',port:8002,path:'/health'}, r=>process.exit(r.statusCode===200?0:1));req.on('error',()=>process.exit(1));req.end();" ]
+      interval: 20s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    volumes:
+      # Only mount data directories, not source code (dist is built in the image)
+      - ./data/verifier/tmp-filestore:/app/apps/verifier/tmp-filestore
+      - ./data/verifier/data:/app/apps/verifier/data
+      - shared-config:/shared:ro
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        # Variables are injected at BUILD TIME for Next.js (NEXT_PUBLIC_* is embedded)
+        # Defaults are for local Docker development; override in .env or environment
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+        NEXT_PUBLIC_ISSUER_URL: ${NEXT_PUBLIC_ISSUER_URL:-http://localhost:8001}
+        NEXT_PUBLIC_VERIFIER_URL: ${NEXT_PUBLIC_VERIFIER_URL:-http://localhost:8002}
+        NEXT_PUBLIC_EIP712_DOMAIN_NAME: ${NEXT_PUBLIC_EIP712_DOMAIN_NAME:-Alastria}
+        NEXT_PUBLIC_EIP712_DOMAIN_VERSION: ${NEXT_PUBLIC_EIP712_DOMAIN_VERSION:-1}
+        NEXT_PUBLIC_EIP712_CHAIN_ID: ${NEXT_PUBLIC_EIP712_CHAIN_ID:-${CHAIN_ID:-31337}}
+        NEXT_PUBLIC_CHAIN_ID: ${NEXT_PUBLIC_CHAIN_ID:-${CHAIN_ID:-31337}}
+        NEXT_PUBLIC_DIAMOND_ADDRESS: ${NEXT_PUBLIC_DIAMOND_ADDRESS:-}
+        NEXT_PUBLIC_RPC_URL: ${NEXT_PUBLIC_RPC_URL:-http://localhost:8545}
+        NEXT_PUBLIC_NETWORK_NAME: ${NEXT_PUBLIC_NETWORK_NAME:-Hardhat Local}
+    container_name: alastria-web
+    # Use standard port mapping for Windows compatibility
+    ports:
+      - "3000:3000"
+    networks:
+      - alastria-net
+    # network_mode: host
+    depends_on:
+      issuer:
+        condition: service_healthy
+      verifier:
+        condition: service_healthy
+    env_file:
+      - apps/web/.env.docker
+    environment:
+      - PORT=3000
+      # SIWE Configuration - Must match backend APP_PUBLIC_URL
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+      # Services are accessible at localhost when using host network
+      - NEXT_PUBLIC_ISSUER_URL=http://localhost:8001
+      - NEXT_PUBLIC_VERIFIER_URL=http://localhost:8002
+      # Chain ID for frontend (should match backend CHAIN_ID)
+      - NEXT_PUBLIC_CHAIN_ID=${NEXT_PUBLIC_CHAIN_ID:-${CHAIN_ID:-31337}}
+      - NEXT_PUBLIC_EIP712_CHAIN_ID=${NEXT_PUBLIC_EIP712_CHAIN_ID:-${CHAIN_ID:-31337}}
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3000" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  # Mailpit - Local SMTP server for email testing (development only)
+  # Web UI: http://localhost:8025
+  # SMTP: localhost:1025
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: alastria-mailpit
+    networks:
+      - alastria-net
+    ports:
+      - "8025:8025" # Web UI
+      - "1025:1025" # SMTP server
+    environment:
+      - MP_SMTP_BIND_ADDR=0.0.0.0:1025
+      - MP_WEB_BIND_ADDR=0.0.0.0:8025
+    restart: unless-stopped

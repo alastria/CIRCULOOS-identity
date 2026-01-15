@@ -1,0 +1,14 @@
+{
+  "name": "@circuloos/test-utils",
+  "version": "0.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json || true"
+  },
+  "dependencies": {
+    "@circuloos/common": "workspace:*",
+    "fastify": "^4.17.0"
+  }
+}

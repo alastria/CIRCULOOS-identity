@@ -1,0 +1,43 @@
+# ========================================
+# Dockerfile for Deployer Service
+# ========================================
+
+# ----------------------------------------
+# Stage 1: Dependencies
+# ----------------------------------------
+FROM node:20-alpine AS deps
+RUN npm install -g pnpm@10.15.0
+WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/hardhat-node/package.json ./packages/hardhat-node/
+COPY scripts ./scripts
+RUN pnpm install --frozen-lockfile --filter @circuloos/hardhat-node
+
+# ----------------------------------------
+# Stage 2: Builder
+# ----------------------------------------
+FROM node:20-alpine AS builder
+RUN npm install -g pnpm@10.15.0
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages/hardhat-node/node_modules ./packages/hardhat-node/node_modules
+COPY packages/hardhat-node ./packages/hardhat-node
+
+# ----------------------------------------
+# Stage 3: Runner
+# ----------------------------------------
+FROM node:20-alpine AS runner
+RUN npm install -g pnpm@10.15.0
+WORKDIR /app
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 deployer
+
+COPY --from=builder --chown=deployer:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=deployer:nodejs /app/packages/hardhat-node ./packages/hardhat-node
+
+# USER deployer
+WORKDIR /app/packages/hardhat-node
+
+# Default command: Deploy to local network (docker)
+# This expects RPC_URL to be set to point to the hardhat container
+CMD ["pnpm", "deploy:docker:init"]

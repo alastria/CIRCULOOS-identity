@@ -1,0 +1,51 @@
+{
+    "name": "alastria-vcvp",
+    "private": true,
+    "version": "0.0.0",
+    "license": "MIT",
+    "workspaces": [
+        "apps/*",
+        "libs/*",
+        "tools/*"
+    ],
+    "scripts": {
+        "dev": "node tools/scripts/core/dev-runner.mjs --default",
+        "dev:init": "node tools/scripts/core/dev-runner.mjs --default --init",
+        "dev:init:test": "node tools/scripts/core/dev-runner.mjs --default --init --test",
+        "dev:local": "node tools/scripts/core/dev-runner.mjs --local",
+        "dev:local:init": "node tools/scripts/core/dev-runner.mjs --local --init",
+        "dev:local:init:test": "node tools/scripts/core/dev-runner.mjs --local --init --test",
+        "dev:docker": "node tools/scripts/core/dev-runner.mjs --docker",
+        "dev:docker:init": "node tools/scripts/core/dev-runner.mjs --docker --init",
+        "dev:docker:init:test": "node tools/scripts/core/dev-runner.mjs --docker --init --test",
+        "dev:frontend": "node tools/scripts/core/dev-runner.mjs --default --service frontend",
+        "dev:frontend:local": "node tools/scripts/core/dev-runner.mjs --local --service frontend",
+        "dev:frontend:docker": "node tools/scripts/core/dev-runner.mjs --docker --service frontend",
+        "dev:issuer": "node tools/scripts/core/dev-runner.mjs --default --service issuer",
+        "dev:issuer:local": "node tools/scripts/core/dev-runner.mjs --local --service issuer",
+        "dev:issuer:docker": "node tools/scripts/core/dev-runner.mjs --docker --service issuer",
+        "dev:verifier": "node tools/scripts/core/dev-runner.mjs --default --service verifier",
+        "dev:verifier:local": "node tools/scripts/core/dev-runner.mjs --local --service verifier",
+        "dev:verifier:docker": "node tools/scripts/core/dev-runner.mjs --docker --service verifier",
+        "apps:dev": "concurrently -k -n \"FRONTEND,ISSUER,VERIFIER\" -c \"green,cyan,yellow\" \"pnpm --filter apps/web dev\" \"pnpm --filter @circuloos/issuer dev\" \"pnpm --filter @circuloos/verifier dev\"",
+        "build": "turbo run build",
+        "test": "turbo run test",
+        "lint": "turbo run lint",
+        "docker:build": "docker compose build",
+        "docker:start": "docker compose up -d && echo '\n🚀 Services started successfully!\n'",
+        "docker:stop": "docker compose down",
+        "docker:logs": "docker compose logs -f",
+        "docker:clean": "bash tools/scripts/docker/clean-start.sh --no-init",
+        "docker:clean:init": "bash tools/scripts/docker/clean-start.sh",
+        "docker:clean:init:test": "bash tools/scripts/docker/clean-start.sh --test",
+        "docker:reset": "bash tools/scripts/docker/clean-start.sh --volumes"
+    },
+    "devDependencies": {
+        "@types/node": "^20.19.16",
+        "concurrently": "^8.2.0",
+        "dotenv": "^16.1.4",
+        "turbo": "^1.10.12",
+        "typescript": "^5.9.2",
+        "vitest": "^0.34.6"
+    }
+}

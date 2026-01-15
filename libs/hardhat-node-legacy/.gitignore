@@ -1,0 +1,29 @@
+# Hardhat
+artifacts/
+cache/
+coverage/
+coverage.json
+typechain-types/
+deployments/
+
+# Node
+node_modules/
+.env
+.env.*
+!.env.example
+!.env.docker.example
+!.env.local.example
+
+# Checkpoints
+.checkpoint.*.json
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# System
+.DS_Store
+Thumbs.db
+

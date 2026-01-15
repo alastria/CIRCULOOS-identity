@@ -1,0 +1,41 @@
+node_modules
+dist
+.turbo
+.next
+out
+build
+coverage
+
+# Environment files (generated - DO NOT commit)
+.env
+.env.local
+.env.test
+.env.production
+.env.docker
+
+# Allow templates
+!*.example
+*.backup
+*.log
+.DS_Store
+
+# SQLite
+*.db
+*.db-journal
+*.sqlite
+*.sqlite-journal
+
+# Temporary storage
+tmp/
+tmp-*/
+tmp-filestore/
+tmp-filestore-*/
+data/
+**/tmp-*/
+**/tmp-filestore*/
+**/coverage/
+**/dist/
+**/artifacts/
+**/cache/
+*.db
+*.db-journal

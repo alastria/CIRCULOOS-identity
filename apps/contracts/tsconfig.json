@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": false,
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "outDir": "dist"
+  },
+  "include": ["hardhat.config.ts", "scripts/**/*", "src/**/*", "test/**/*"],
+  "files": ["hardhat.config.ts"]
+}

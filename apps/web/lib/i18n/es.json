@@ -1,0 +1,1660 @@
+{
+  "common": {
+    "appName": "Credenciales Verificables de Alastria",
+    "consortium": "Consorcio de Alastria",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "close": "Cerrar",
+    "back": "Volver",
+    "backToHome": "Volver al Inicio",
+    "next": "Siguiente",
+    "submit": "Enviar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "export": "Exportar",
+    "download": "Descargar",
+    "upload": "Subir",
+    "connect": "Conectar",
+    "disconnect": "Desconectar",
+    "language": "Idioma",
+    "theme": "Tema",
+    "lightMode": "Modo Claro",
+    "darkMode": "Modo Oscuro"
+  },
+  "nav": {
+    "home": "Inicio",
+    "signCredential": "Firmar Credencial",
+    "verifyCredential": "Verificar Credencial",
+    "verifyPresentation": "Verificar Presentación",
+    "issuerPortal": "Portal Emisor",
+    "documentation": "Documentación",
+    "apply": "Solicitar Credencial",
+    "myCredentials": "Mi Cartera",
+    "myKeysEmittedByMe": "Claves emitidas por mí"
+  },
+  "landing": {
+    "hero": {
+      "title": "Credenciales Verificables de Alastria",
+      "subtitle": "Infraestructura de identidad digital descentralizada para el ecosistema empresarial español",
+      "cta": {
+        "verify": "Verificar Credencial",
+        "issue": "Portal Emisor"
+      }
+    },
+    "features": {
+      "title": "¿Por qué Credenciales Verificables?",
+      "subtitle": "Estándar internacional W3C para una identidad digital segura, portable y verificable instantáneamente en cualquier sistema o ecosistema global.",
+      "security": {
+        "title": "Seguridad Criptográfica",
+        "description": "Credenciales firmadas digitalmente con estándares W3C y verificación on-chain."
+      },
+      "privacy": {
+        "title": "Privacidad por Diseño",
+        "description": "El usuario controla sus datos. Divulgación selectiva de información."
+      },
+      "interop": {
+        "title": "Interoperabilidad",
+        "description": "Compatible con el ecosistema europeo EBSI y estándares internacionales."
+      },
+      "custody": {
+        "title": "Verdadera Auto-Custodia",
+        "description": "Sin bases de datos centrales. Tus credenciales viven en tu wallet, totalmente portables y bajo tu único control."
+      }
+    },
+    "snap": {
+      "title": "MetaMask Snap",
+      "description": "Gestiona tus credenciales verificables directamente desde MetaMask",
+      "install": "Instalar Snap"
+    }
+  },
+  "workflow": {
+    "title": "¿Cómo funciona?",
+    "step1": {
+      "title": "Invitación Segura",
+      "description": "Recibes un enlace único criptográfico autorizado por la entidad emisora."
+    },
+    "step2": {
+      "title": "Vinculación Criptográfica",
+      "description": "Conectas tu Wallet y firmas para vincular la credencial a tu identidad (DID) para siempre."
+    },
+    "step3": {
+      "title": "Generación Smart PDF",
+      "description": "El sistema genera un PDF Oficial con tu Credencial Verificable (VC) incrustada y sellada."
+    },
+    "recommended": "Recomendado",
+    "routeA": {
+      "title": "Importación Instantánea",
+      "description": "Guarda la credencial en tu MetaMask Snap con un clic. Genera VPs automáticas sin subir archivos."
+    },
+    "routeB": {
+      "title": "Almacenamiento Frío",
+      "description": "Descarga el PDF y guárdalo. Funciona como un documento físico: tú lo custodias, tú lo presentas."
+    },
+    "step4": {
+      "title": "Verificación Universal",
+      "description": "Cualquiera puede validar el PDF o la VP instantáneamente contra la Blockchain de Alastria."
+    }
+  },
+  "apply": {
+    "title": "Solicitar Credencial",
+    "subtitle": "Completa el formulario para solicitar una credencial verificable",
+    "form": {
+      "email": "Email",
+      "emailPlaceholder": "tu@email.com",
+      "fullName": "Nombre Completo",
+      "fullNamePlaceholder": "Juan García López",
+      "organization": "Organización (opcional)",
+      "organizationPlaceholder": "Nombre de tu empresa u organización",
+      "walletAddress": "Dirección Wallet",
+      "walletAddressPlaceholder": "0x...",
+      "reason": "Motivo (opcional)",
+      "reasonPlaceholder": "Explica brevemente por qué solicitas esta credencial...",
+      "terms": "Acepto los términos y condiciones y la política de privacidad",
+      "emailLabel": "Email *",
+      "fullNameLabel": "Nombre Completo *",
+      "organizationLabel": "Organización (opcional)",
+      "walletAddressLabel": "Dirección Wallet *",
+      "useConnected": "Usar conectada",
+      "reasonLabel": "Motivo (opcional)",
+      "acceptTermsText": "Acepto los",
+      "termsLink": "términos y condiciones",
+      "and": "y la",
+      "privacyLink": "política de privacidad",
+      "submitting": "Enviando...",
+      "submitButton": "Enviar Solicitud"
+    },
+    "success": {
+      "title": "Solicitud Enviada",
+      "description": "Tu solicitud ha sido registrada correctamente. Recibirás un email cuando sea revisada.",
+      "applicationId": "ID de Solicitud"
+    },
+    "errors": {
+      "invalidEmail": "Introduce un email válido",
+      "invalidName": "El nombre debe tener al menos 3 caracteres",
+      "invalidWallet": "Introduce una dirección wallet válida (0x...)",
+      "termsRequired": "Debes aceptar los términos y condiciones",
+      "submitFailed": "Error al enviar la solicitud. Por favor, inténtalo de nuevo."
+    }
+  },
+  "verify": {
+    "title": "Verificar Credencial",
+    "subtitle": "Comprueba la integridad y autenticidad de una credencial verificable",
+    "dropzone": {
+      "title": "Arrastra tu credencial aquí",
+      "subtitle": "o haz clic para seleccionar un archivo PDF/JSON",
+      "formats": "Formatos soportados: PDF, JSON"
+    },
+    "scanQR": "Escanear QR",
+    "analyzing": "Analizando credencial...",
+    "result": {
+      "valid": {
+        "title": "Credencial Válida",
+        "description": "Esta credencial ha sido verificada correctamente"
+      },
+      "invalid": {
+        "title": "Credencial Inválida",
+        "description": "No se ha podido verificar esta credencial"
+      },
+      "revoked": {
+        "title": "Credencial Revocada",
+        "description": "Esta credencial fue revocada por el emisor"
+      }
+    },
+    "details": {
+      "issuer": "Emisor",
+      "holder": "Titular",
+      "issuedAt": "Fecha de emisión",
+      "expiresAt": "Fecha de expiración",
+      "type": "Tipo de credencial",
+      "hash": "Hash criptográfico"
+    },
+    "attributes": "Atributos",
+    "verifyAnother": "Verificar otra credencial"
+  },
+  "presentation": {
+    "title": "Presentar Credencial",
+    "subtitle": "Sube tu credencial (PDF) para generar una Presentación Verificable (VP) firmada con tu wallet y demostrar que eres el legítimo titular",
+    "howItWorks": {
+      "title": "¿Cómo funciona?",
+      "step1": "Sube el <strong>PDF de tu credencial</strong> que recibiste del emisor",
+      "step2": "Conecta tu wallet y <strong>firma la presentación</strong> para demostrar que eres el titular",
+      "step3": "El sistema <strong>verifica la VP</strong> y confirma la autenticidad de la credencial",
+      "step1Plain": "Sube el PDF de tu credencial que recibiste del emisor",
+      "step2Plain": "Conecta tu wallet y firma la presentación para demostrar que eres el titular",
+      "step3Plain": "El sistema verifica la VP y confirma la autenticidad de la credencial"
+    },
+    "wallet": {
+      "connectFirst": "Conecta tu wallet primero",
+      "requiredToSign": "Necesaria para firmar la presentación y demostrar que eres el titular",
+      "connect": "Conectar Wallet",
+      "connected": "Wallet conectada"
+    },
+    "dropzone": {
+      "title": "Arrastra tu credencial (PDF) aquí",
+      "subtitle": "o haz clic para seleccionar el archivo",
+      "pdfFormat": "PDF con credencial embebida",
+      "jsonFormat": "JSON (VP directa)"
+    },
+    "status": {
+      "verifying": "Verificando presentación...",
+      "verifyingSubtitle": "Comprobando firmas y estado de la credencial",
+      "signingRequired": "Firma requerida",
+      "signingSubtitle": "Revisa tu wallet y firma la presentación para demostrar que eres el titular",
+      "signingTip": "Verás un mensaje legible con los datos de tu credencial"
+    },
+    "result": {
+      "valid": {
+        "title": "¡Credencial Verificada!",
+        "description": "Has demostrado ser el legítimo titular de esta credencial"
+      },
+      "invalid": {
+        "title": "Verificación Fallida",
+        "description": "No se ha podido verificar la credencial o la firma"
+      },
+      "revoked": {
+        "title": "Credencial Revocada",
+        "description": "Esta credencial ha sido revocada por el emisor"
+      }
+    },
+    "identity": {
+      "title": "Detalles de la Identidad",
+      "holder": "Titular (Holder)",
+      "issuer": "Emisor (Issuer)",
+      "presentationHash": "Hash de Presentación",
+      "includedCredentials": "Credenciales Incluidas",
+      "credentialNumber": "Credencial #{number}",
+      "validBadge": "Válida"
+    },
+    "presentAnother": "Presentar otra credencial"
+  },
+  "walletPage": {
+    "title": "Mis Credenciales",
+    "subtitle": "Gestiona tus Credenciales Verificables de forma segura",
+    "wallet": {
+      "notConnected": "Wallet no conectada",
+      "connectToView": "Conecta tu wallet para ver y gestionar tus credenciales",
+      "restrictedAccess": "Acceso restringido",
+      "onlyYourCredentials": "Solo puedes ver las credenciales que pertenecen a tu wallet conectada.",
+      "connected": "Wallet conectada",
+      "credentials": "{count} credencial",
+      "credentialsPlural": "{count} credenciales"
+    },
+    "tabs": {
+      "server": "Servidor",
+      "snap": "MetaMask Snap"
+    },
+    "server": {
+      "description": "Credenciales almacenadas de forma segura en el servidor",
+      "refresh": "Actualizar",
+      "loading": "Cargando credenciales...",
+      "empty": {
+        "title": "Sin credenciales en el servidor",
+        "description": "Las nuevas credenciales aparecerán aquí cuando las reclames",
+        "requestCredential": "Solicitar una credencial"
+      }
+    },
+    "snap": {
+      "notInstalled": "MetaMask Snap no instalado",
+      "installDescription": "Instala el MetaMask Snap para almacenar credenciales localmente",
+      "install": "Instalar MetaMask Snap",
+      "description": "Credenciales almacenadas en tu MetaMask Snap local",
+      "refresh": "Actualizar",
+      "clear": "Limpiar",
+      "clearConfirm": "¿Estás seguro? Esta acción eliminará TODAS las credenciales del MetaMask Snap y no se puede deshacer.",
+      "loading": "Cargando credenciales del Snap...",
+      "empty": {
+        "title": "Sin credenciales en el Snap",
+        "description": "No hay credenciales almacenadas localmente para este wallet"
+      }
+    },
+    "credential": {
+      "signed": "Firmada",
+      "issuer": "Emisor",
+      "issuedAt": "Emisión",
+      "expiresAt": "Expira",
+      "email": "Email",
+      "present": "Presentar",
+      "pdf": "PDF",
+      "details": "Detalles",
+      "saveToSnap": "Snap"
+    }
+  },
+  "claim": {
+    "title": "Reclamar Credencial",
+    "subtitle": "Completa el proceso para obtener tu credencial verificable",
+    "steps": {
+      "validate": {
+        "title": "Validar",
+        "description": "Introduce el código de verificación"
+      },
+      "connect": {
+        "title": "Conectar",
+        "description": "Conecta tu wallet"
+      },
+      "sign": {
+        "title": "Firmar",
+        "description": "Firma y reclama"
+      }
+    },
+    "otp": {
+      "title": "Código de verificación",
+      "description": "Introduce el código de 6 dígitos enviado a tu correo electrónico",
+      "placeholder": "000000",
+      "expiresIn": "Expira en",
+      "resend": "Reenviar Código",
+      "attemptsLeft": "intentos restantes",
+      "verifyCode": "Verificar Código",
+      "minute": "minuto",
+      "minutes": "minutos",
+      "second": "segundo",
+      "seconds": "segundos",
+      "and": "y",
+      "expired": "Expirado"
+    },
+    "claiming": {
+      "title": "Finalizando tu Credencial",
+      "description": "No cierres esta ventana..."
+    },
+    "wallet": {
+      "title": "Conectar Wallet",
+      "description": "Conecta tu wallet de MetaMask para continuar",
+      "connect": "Conectar MetaMask",
+      "credentialFor": "Esta credencial es para:",
+      "changeWallet": "Cambiar Wallet",
+      "connectedWallet": "Wallet conectado:",
+      "incorrectWallet": "Wallet Incorrecto",
+      "pleaseConnectCorrect": "Por favor conecta el wallet correcto para continuar.",
+      "switchNetwork": "Cambiar a Red Alastria",
+      "switchingNetwork": "Cambiando de red..."
+    },
+    "preview": {
+      "title": "Vista previa de tu credencial",
+      "signAndClaim": "Firmar y Reclamar",
+      "signatureInfo": "Al firmar, vinculas esta credencial a tu identidad blockchain.",
+      "signatureTitle": "Firma EIP-712",
+      "issuedBy": "Emitido por",
+      "validUntil": "Válida hasta",
+      "requiredNetwork": "Red requerida",
+      "attributes": {
+        "status": "Estado",
+        "expiresAt": "Válida hasta",
+        "issuanceId": "ID de Emisión"
+      },
+      "status": {
+        "DRAFT": "Borrador",
+        "ISSUED": "Emitida",
+        "CLAIMED": "Reclamada",
+        "REVOKED": "Revocada"
+      }
+    },
+    "success": {
+      "title": "Credencial Reclamada",
+      "description": "Tu credencial ha sido emitida correctamente",
+      "downloadJSON": "Descargar JSON",
+      "downloadPDF": "Descargar PDF",
+      "saveToSnap": "Guardar en MetaMask Snap",
+      "copyVerifyLink": "Copiar Link de Verificación",
+      "verify": "Verificar",
+      "downloadAgain": "Descargar de Nuevo",
+      "signed": "Firmada",
+      "issuer": "Emisor",
+      "holder": "Titular"
+    },
+    "errors": {
+      "invalidToken": "Token de invitación inválido o expirado",
+      "expiredToken": "Este enlace de claim ha expirado",
+      "alreadyClaimed": "Esta credencial ya fue reclamada",
+      "notIssued": "Esta credencial aún no ha sido emitida. Contacta al emisor.",
+      "invalidOTP": "Código de verificación incorrecto",
+      "maxAttemptsReached": "Demasiados intentos. Por favor, solicita un nuevo código.",
+      "walletRequired": "Debes conectar tu wallet para continuar",
+      "walletMismatch": "Esta credencial es para otro wallet",
+      "signatureFailed": "Error al firmar la credencial",
+      "signatureCancelled": "Firma cancelada por el usuario",
+      "resendFailed": "Error al reenviar el código",
+      "issuanceIdNotFound": "ID de emisión no encontrado. Por favor, recarga la página.",
+      "networkSwitchCancelled": "Cambio de red cancelado. Por favor, cambia manualmente a la red Alastria.",
+      "networkSwitchFailed": "Error al cambiar de red. Por favor, cambia manualmente a la red Alastria (Chain ID: 2020).",
+      "tokenValidationError": "Error al validar el token"
+    },
+    "invalid": {
+      "title": "Enlace Inválido",
+      "description": "Este enlace no es válido o ha expirado.",
+      "requestNew": "Solicitar Nueva Credencial",
+      "reasons": {
+        "title": "Posibles razones:",
+        "expired": "El enlace tiene más de 15 minutos",
+        "alreadyClaimed": "Ya reclamaste esta credencial",
+        "incorrect": "El enlace fue copiado incorrectamente"
+      }
+    },
+    "expired": {
+      "title": "Enlace Expirado",
+      "description": "Este enlace de claim ha expirado. Los enlaces son válidos por 15 minutos.",
+      "requestNew": "Solicitar Nuevo Enlace"
+    },
+    "alreadyClaimed": {
+      "title": "Credencial Ya Reclamada",
+      "description": "Esta credencial fue reclamada anteriormente."
+    },
+    "messages": {
+      "otpResent": "Nuevo código OTP enviado a tu email",
+      "credentialDownloaded": "Credencial descargada",
+      "pdfDownloaded": "PDF descargado",
+      "credentialSavedToSnap": "Credencial guardada en MetaMask Snap",
+      "linkCopied": "Link copiado al portapapeles"
+    },
+    "manual": {
+      "title": "Reclamar Credencial",
+      "description": "Introduce los datos de tu invitación manualmente si no tienes acceso al magic link",
+      "issuanceId": "ID de Emisión",
+      "issuanceIdPlaceholder": "iss_abc123xyz",
+      "claimToken": "Token de Claim",
+      "tokenPlaceholder": "Tu token de claim",
+      "otpCode": "Código OTP",
+      "validating": "Validando...",
+      "continue": "Continuar",
+      "noInvitation": "¿No tienes una invitación?",
+      "requestCredential": "Solicita una credencial",
+      "completeAllFields": "Por favor completa todos los campos",
+      "invalidData": "Datos inválidos. Por favor verifica e intenta de nuevo."
+    }
+  },
+  "issuer": {
+    "authGate": {
+      "title": "Panel de Emisor",
+      "connectDescription": "Conecta tu wallet para acceder al panel de emisión de credenciales.",
+      "connecting": "Conectando...",
+      "authenticating": "Autenticando...",
+      "signMessage": "Por favor, firma el mensaje en tu wallet",
+      "accessDenied": "Acceso Denegado",
+      "noPermissions": "Esta wallet no tiene permisos de emisor.",
+      "backToHome": "Volver al Inicio"
+    },
+    "title": "Portal del Emisor",
+    "subtitle": "Gestiona la emisión y ciclo de vida de credenciales verificables",
+    "requiresAuth": "Acceso restringido",
+    "authDescription": "Conecta la wallet autorizada del Consorcio de Alastria para acceder",
+    "unauthorized": "Wallet no autorizada para acceder a este portal",
+    "unauthorizedDescription": "La wallet conectada no tiene permisos para acceder a este portal.",
+    "connecting": "Conectando...",
+    "tabs": {
+      "new": "Nueva Emisión",
+      "history": "Historial"
+    },
+    "new": {
+      "title": "Emitir Nueva Credencial",
+      "form": {
+        "email": "Correo electrónico del titular",
+        "emailPlaceholder": "titular@ejemplo.com",
+        "wallet": "Dirección wallet (opcional)",
+        "walletPlaceholder": "0x...",
+        "walletTooltip": "Dirección Ethereum válida (0x...)",
+        "credentialType": "Tipo de credencial",
+        "credentialTypePlaceholder": "Selecciona un tipo de credencial",
+        "companyName": "Nombre de la empresa",
+        "companyNamePlaceholder": "Ej: Alastria Blockchain Ecosystem",
+        "attributes": "Atributos",
+        "addAttribute": "Añadir atributo",
+        "submit": "Enviar Invitación"
+      },
+      "success": "Invitación enviada correctamente",
+      "error": "Error al enviar la invitación",
+      "errors": {
+        "invalidWallet": "Dirección de wallet inválida. Debe ser una dirección Ethereum válida (0x...)",
+        "walletRequired": "Debes conectar tu wallet para firmar la credencial"
+      },
+      "successMessage": "OTP enviado a {email}. ID: {id}",
+      "authenticating": "Autenticando issuer...",
+      "signingPrompt": "Por favor, firma la credencial en tu wallet...",
+      "credentialSignedAndSent": "Credencial firmada y enviada a {email}. ID: {id}",
+      "formDescription": "Completa los datos para enviar una invitación de credencial",
+      "companyNameLabel": "Nombre de la Empresa",
+      "walletRequiredNote": "Dirección Ethereum del receptor (obligatorio)"
+    },
+    "history": {
+      "title": "Historial de Emisiones",
+      "subtitle": "Gestiona las credenciales emitidas y su estado",
+      "exportCSV": "Exportar CSV",
+      "stats": {
+        "total": "Total Emitidas",
+        "pending": "Pendientes",
+        "claimed": "Reclamadas",
+        "revoked": "Revocadas"
+      },
+      "table": {
+        "email": "Email",
+        "date": "Fecha",
+        "status": "Estado",
+        "hash": "Hash",
+        "actions": "Acciones"
+      },
+      "status": {
+        "pending": "Pendiente",
+        "claimed": "Reclamada",
+        "revoked": "Revocada"
+      },
+      "actions": {
+        "revoke": "Revocar",
+        "view": "Ver detalles"
+      },
+      "revokeConfirm": {
+        "title": "Confirmar Revocación",
+        "description": "Esta acción es irreversible. La credencial quedará invalidada permanentemente.",
+        "confirm": "Confirmar Revocación",
+        "signing": "Firmando TX..."
+      },
+      "messages": {
+        "revoked": "Credencial revocada correctamente",
+        "csvExported": "CSV exportado"
+      }
+    }
+  },
+  "admin": {
+    "authGate": {
+      "title": "Panel de Administración",
+      "connectDescription": "Conecta tu wallet de administrador para acceder al panel de control.",
+      "connecting": "Conectando...",
+      "accessDenied": "Acceso Denegado",
+      "noPermissions": "Esta wallet no tiene permisos de administrador.",
+      "accessAvailableFor": "Acceso admin disponible para:",
+      "diamondOwner": "Owner del Diamond Contract",
+      "configuredAddresses": "Direcciones configuradas en NEXT_PUBLIC_ADMIN_ADDRESSES"
+    },
+    "layout": {
+      "dashboard": "Dashboard",
+      "issuers": "Emisores",
+      "revoke": "Revocar",
+      "config": "Configuración",
+      "admin": "Admin",
+      "administrator": "Administrador",
+      "connectedAs": "Conectado como"
+    },
+    "revoke": {
+      "searchPlaceholder": "Buscar por ID de credencial, email del titular o hash..."
+    },
+    "config": {
+      "pauseDescription": "Esto pausará la emisión de nuevas credenciales. Las verificaciones seguirán funcionando normalmente.",
+      "resumeDescription": "Esto reactivará la emisión de credenciales en el sistema.",
+      "signatureRequired": "Se requerirá tu firma de MetaMask para confirmar el cambio."
+    },
+    "issuers": {
+      "title": "Emisores",
+      "subtitle": "Gestiona los emisores autorizados de credenciales",
+      "newIssuer": "Nuevo Emisor",
+      "searchPlaceholder": "Buscar emisor...",
+      "table": {
+        "name": "Nombre",
+        "walletAddress": "Wallet Address",
+        "email": "Email",
+        "status": "Estado",
+        "addedBy": "Añadido Por",
+        "date": "Fecha",
+        "actions": "Acciones"
+      },
+      "status": {
+        "active": "Activo",
+        "inactive": "Inactivo"
+      },
+      "dialog": {
+        "title": "Registrar Emisor",
+        "description": "Añade un nuevo emisor autorizado al sistema. El emisor se registrará en el smart contract.",
+        "nameLabel": "Nombre del Emisor",
+        "namePlaceholder": "Ej: Banco Nacional",
+        "emailLabel": "Email de Contacto",
+        "emailPlaceholder": "admin@empresa.com",
+        "walletLabel": "Wallet Address",
+        "addressPlaceholder": "0x...",
+        "cancel": "Cancelar",
+        "submit": "Registrar",
+        "signing": "Firmando TX..."
+      },
+      "deactivate": {
+        "title": "Desactivar Emisor",
+        "description": "Esto revocará el acceso de {name} para emitir nuevas credenciales. Las credenciales existentes no se verán afectadas.",
+        "cancel": "Cancelar",
+        "confirm": "Desactivar"
+      },
+      "messages": {
+        "registered": "Emisor registrado correctamente. Esperando confirmación de blockchain...",
+        "confirmed": "Emisor confirmado en blockchain",
+        "deactivated": "Emisor desactivado correctamente",
+        "loadError": "Error al cargar emisores",
+        "registerError": "Error al registrar emisor",
+        "deactivateError": "Error al desactivar emisor",
+        "noIssuers": "No se encontraron emisores"
+      },
+      "pendingSync": "Pendiente sincronización blockchain...",
+      "viewOnExplorer": "Ver en Explorer"
+    },
+    "applications": {
+      "title": "Gestión de Solicitudes",
+      "subtitle": "Revisa y gestiona las solicitudes de credenciales",
+      "stats": {
+        "pending": "Pendientes",
+        "approved": "Aprobadas",
+        "rejected": "Rechazadas"
+      },
+      "filters": {
+        "all": "Todos los estados",
+        "search": "Buscar por email, nombre o wallet..."
+      },
+      "table": {
+        "applicant": "Solicitante",
+        "organization": "Organización",
+        "wallet": "Wallet",
+        "date": "Fecha",
+        "status": "Estado",
+        "actions": "Acciones"
+      },
+      "status": {
+        "pending": "Pendiente",
+        "approved": "Aprobada",
+        "rejected": "Rechazada",
+        "autoApproved": "Auto-Aprobada",
+        "expired": "Expirada"
+      },
+      "actions": {
+        "view": "Ver detalles",
+        "approve": "Aprobar",
+        "reject": "Rechazar",
+        "reopen": "Reabrir",
+        "resendEmail": "Reenviar email"
+      },
+      "detail": {
+        "title": "Detalles de Solicitud",
+        "reason": "Motivo",
+        "rejectionReason": "Razón de rechazo"
+      },
+      "reject": {
+        "title": "Rechazar Solicitud",
+        "description": "Indica el motivo del rechazo. El solicitante será notificado por email.",
+        "reasonLabel": "Motivo del rechazo",
+        "reasonPlaceholder": "Explica por qué se rechaza esta solicitud...",
+        "confirm": "Rechazar Solicitud"
+      },
+      "messages": {
+        "approved": "Solicitud aprobada. Magic link enviado.",
+        "rejected": "Solicitud rechazada.",
+        "reopened": "Solicitud reabierta.",
+        "emailResent": "Email reenviado."
+      }
+    },
+    "myKeys": {
+      "title": "Claves emitidas por mí",
+      "subtitle": "Gestiona las credenciales que has emitido con tu wallet",
+      "loading": "Cargando...",
+      "noCredentials": "No has emitido ninguna credencial con esta wallet.",
+      "issued": "Emitida",
+      "status": {
+        "active": "Activa",
+        "revoked": "Revocada",
+        "suspended": "Suspendida"
+      },
+      "actions": {
+        "revoke": "Revocar",
+        "suspend": " Suspender",
+        "unsuspend": "Reactivar"
+      },
+      "dialogs": {
+        "revokeTitle": "Revocar Credencial",
+        "suspendTitle": "Suspender Credencial",
+        "unsuspendTitle": "Reactivar Credencial",
+        "revokeDescription": "Esta acción es irreversible. La credencial dejará de ser válida permanentemente.",
+        "suspendDescription": "La credencial dejará de ser válida temporalmente hasta que la reactives.",
+        "unsuspendDescription": "La credencial volverá a ser válida.",
+        "cancel": "Cancelar",
+        "confirm": "Confirmar"
+      },
+      "messages": {
+        "revokeSent": "Transacción de revocación enviada",
+        "suspendSent": "Transacción de suspensión enviada",
+        "unsuspendSent": "Transacción de reactivación enviada",
+        "error": "Error al ejecutar la acción en blockchain"
+      }
+    }
+  },
+  "vc": {
+    "info": {
+      "invalidParam": "El parámetro VC en la URL no es válido",
+      "linkCopied": "Link copiado al portapapeles",
+      "title": "Inspector de Credenciales",
+      "subtitle": "Analiza cualquier Credencial Verificable y visualiza toda su información de forma legible",
+      "parsing": "Parseando JSON...",
+      "validating": "Validando estructura...",
+      "analyzing": "Analizando credencial...",
+      "analyzeAnother": "Analizar otra credencial",
+      "unknownParseError": "Error desconocido al parsear JSON",
+      "invalidStructure": "Estructura inválida: {errors}",
+      "analysisError": "Error al analizar la credencial"
+    },
+    "status": {
+      "today": "hoy",
+      "daysAgo": "hace {count} día",
+      "daysAgo_plural": "hace {count} días",
+      "monthsAgo": "hace {count} mes",
+      "monthsAgo_plural": "hace {count} meses",
+      "yearsAgo": "hace {count} año",
+      "yearsAgo_plural": "hace {count} años"
+    },
+    "issuer": {
+      "verified": "Este emisor está registrado en el registry de confianza de Alastria",
+      "unverified": "Este emisor no está en ningún registry público de confianza",
+      "unknown": "No se pudo verificar el estado del emisor"
+    },
+    "holder": {
+      "yes": "Sí",
+      "no": "No",
+      "highPrivacy": "Alta - Mayoría de datos protegidos"
+    },
+    "proofs": {
+      "assertionMethod": "Firma de Emisión",
+      "authentication": "Firma de Aceptación"
+    },
+    "timeline": {
+      "unknownDate": "Fecha desconocida"
+    },
+    "parser": {
+      "invalidJson": "JSON inválido: Error de sintaxis en el documento",
+      "missingContext": "Falta campo obligatorio: @context",
+      "missingType": "Falta campo obligatorio: type",
+      "oldStandard": "Usa estándar antiguo v1.0",
+      "noExpiration": "No tiene fecha de expiración",
+      "issuerVerified": "Emisor verificado en blockchain",
+      "issuerNotVerified": "Emisor no está en registry público",
+      "hasEvidence": "Incluye evidencia de verificación",
+      "noEvidence": "No incluye evidencia",
+      "usesEip712": "Firma con EIP-712 (más segura)",
+      "noEip712": "No usa EIP-712",
+      "validStructure": "Estructura Válida",
+      "w3cCompliant": "Cumple con estándar W3C",
+      "structureErrors": "Errores en estructura",
+      "holderShouldSign": "El holder debería firmar la credencial para mayor seguridad",
+      "expiringSoon": "La credencial expira pronto, solicitar renovación",
+      "considerEip712": "Considerar usar EIP-712 para firmas más seguras",
+      "expired": "Credencial expirada",
+      "active": "Estado actual: Activa"
+    },
+    "verify": {
+      "loading": "Cargando credencial...",
+      "verifying": "Verificando credencial...",
+      "credentialNotFound": "Credencial no encontrada",
+      "verificationFailed": "Error al verificar la credencial",
+      "retry": "Reintentar",
+      "issuer": "Emisor",
+      "holder": "Titular",
+      "issuedAt": "Fecha de emisión",
+      "expiresAt": "Fecha de expiración",
+      "credentialId": "ID de Credencial",
+      "noExpiration": "Sin fecha de expiración",
+      "checks": "Verificaciones",
+      "attributes": "Atributos",
+      "verifyAnother": "Verificar otra credencial",
+      "personalData": "Datos Personales",
+      "holderAccess": "Acceso de titular",
+      "personalDataProtected": "Los datos personales de esta credencial están protegidos.",
+      "connectToViewDetails": "Si eres el titular, conecta tu wallet para ver los detalles completos.",
+      "connectWallet": "Conectar Wallet",
+      "viewMyDetails": "Ver mis datos",
+      "onlyHolderCanView": "Solo el titular de esta credencial puede ver los datos personales.",
+      "accessDenied": "Acceso denegado",
+      "status": {
+        "valid": "Credencial Válida",
+        "validDesc": "Esta credencial ha sido verificada criptográficamente y está activa.",
+        "invalid": "Credencial Inválida",
+        "invalidDesc": "La credencial no pudo ser verificada.",
+        "error": "Error de Verificación",
+        "errorDesc": "No se pudo verificar la credencial. Intente de nuevo."
+      },
+      "check": {
+        "signature": "Firma",
+        "notExpired": "No expirada",
+        "notRevoked": "No revocada",
+        "trustedIssuer": "Emisor confiable",
+        "onChain": "En blockchain"
+      }
+    }
+  },
+  "snap": {
+    "notInstalled": "MetaMask no está instalado",
+    "installed": "Snap instalado correctamente",
+    "installing": "Instalando Snap...",
+    "installError": "Error al instalar el Snap",
+    "communicationError": "Error al comunicarse con el Snap",
+    "serverNotAvailable": "El servidor del Snap no está disponible. Verifica que esté corriendo.",
+    "connectionError": "No se pudo conectar al Snap. Verifica tu conexión a internet."
+  },
+  "env": {
+    "invalidUrl": "NEXT_PUBLIC_API_URL debe ser una URL válida",
+    "invalidVariables": "Variables de entorno inválidas. Revisa la consola."
+  },
+  "wallet": {
+    "authError": "Error de autenticación",
+    "connect": "Conectar Wallet",
+    "disconnect": "Desconectar",
+    "connected": "Conectado",
+    "wrongNetwork": "Red incorrecta",
+    "switchNetwork": "Cambiar a Red Alastria"
+  },
+  "api": {
+    "verificationFailed": "Verification failed",
+    "invalidAction": "Invalid action"
+  },
+  "images": {
+    "alastriaCredential": "Alastria Verifiable Credential",
+    "alastria": "Alastria"
+  },
+  "login": {
+    "title": "Acceso Corporativo",
+    "description": "Conecta tu wallet para acceder a la plataforma Alastria VC",
+    "roles": {
+      "holder": "Holder",
+      "issuer": "Issuer",
+      "admin": "Admin"
+    },
+    "buttons": {
+      "connectWallet": "Conectar Wallet",
+      "connecting": "Conectando...",
+      "signToAuth": "Firmar para Autenticar",
+      "authenticating": "Autenticando..."
+    },
+    "accessNote": "El acceso se determina automáticamente según tu rol"
+  },
+  "aria": {
+    "switchToLight": "Switch to light mode",
+    "switchToDark": "Switch to dark mode"
+  },
+  "footer": {
+    "copyright": "© 2026 Consorcio de Alastria. Todos los derechos reservados.",
+    "links": {
+      "privacy": "Privacidad",
+      "terms": "Términos",
+      "docs": "Documentación"
+    }
+  },
+  "docs": {
+    "title": "Documentación",
+    "search": "Buscar en docs...",
+    "nav": {
+      "introduction": "Introducción",
+      "whatIs": "¿Qué es Alastria?",
+      "coreConcepts": "Conceptos Core",
+      "architecture": "Arquitectura",
+      "overview": "Visión General",
+      "diamondPattern": "Diamond Pattern",
+      "quickstart": "Inicio Rápido",
+      "installation": "Instalación",
+      "firstCredential": "Primera Credencial",
+      "api": "API Reference",
+      "issuerApi": "Issuer API",
+      "verifierApi": "Verifier API",
+      "smartContracts": "Smart Contracts",
+      "facets": "Facets Reference",
+      "security": "Seguridad",
+      "eip712": "EIP-712",
+      "siwa": "SIWA Auth"
+    },
+    "home": {
+      "title": "Documentación de Alastria Credentials",
+      "subtitle": "Todo lo que necesitas para integrar y usar Credenciales Verificables en el ecosistema Alastria",
+      "cards": {
+        "introduction": {
+          "title": "Introducción",
+          "description": "Aprende los conceptos fundamentales de identidad digital descentralizada y credenciales verificables."
+        },
+        "architecture": {
+          "title": "Arquitectura",
+          "description": "Entiende cómo funciona el sistema: Diamond Pattern, Facets y flujo de datos."
+        },
+        "quickstart": {
+          "title": "Inicio Rápido",
+          "description": "Configura tu entorno de desarrollo y emite tu primera credencial en minutos."
+        },
+        "api": {
+          "title": "API Reference",
+          "description": "Documentación completa de las APIs del Issuer y Verifier con ejemplos."
+        },
+        "smartContracts": {
+          "title": "Smart Contracts",
+          "description": "Referencia de los contratos inteligentes: facets, funciones y eventos."
+        },
+        "security": {
+          "title": "Seguridad",
+          "description": "EIP-712, SIWA y mejores prácticas de seguridad para credenciales."
+        }
+      }
+    },
+    "introduction": {
+      "breadcrumb": "Introducción",
+      "badge": "Fundamentos",
+      "title": "¿Qué es Alastria Credentials?",
+      "subtitle": "Plataforma de identidad digital descentralizada basada en estándares W3C para el ecosistema empresarial español.",
+      "whatIs": {
+        "title": "¿Qué es?",
+        "description": "Alastria Credentials es una infraestructura de identidad digital que permite a organizaciones emitir, y a usuarios portar y presentar, credenciales verificables de forma segura y privada.",
+        "points": {
+          "1": "Implementa estándares W3C para Verifiable Credentials y DIDs",
+          "2": "Usa blockchain Alastria para verificación descentralizada",
+          "3": "Compatible con el ecosistema europeo EBSI",
+          "4": "Diseñado para cumplimiento regulatorio (eIDAS, GDPR)"
+        }
+      },
+      "did": {
+        "title": "Identificadores Descentralizados (DIDs)",
+        "description": "Los DIDs son identificadores únicos globales que no dependen de ninguna autoridad central. En Alastria usamos el método did:ethr basado en Ethereum.",
+        "example": "Ejemplo de DID"
+      },
+      "vc": {
+        "title": "Credenciales Verificables (VCs)",
+        "description": "Las VCs son el equivalente digital de documentos físicos como títulos universitarios, carnets o certificados. Son:",
+        "tamperProof": "A prueba de manipulación",
+        "tamperProofDesc": "Firmadas criptográficamente",
+        "verifiable": "Verificables",
+        "verifiableDesc": "Cualquiera puede comprobar su autenticidad",
+        "portable": "Portables",
+        "portableDesc": "El usuario las controla"
+      },
+      "ecosystem": {
+        "title": "Ecosistema",
+        "issuer": {
+          "title": "Emisor (Issuer)",
+          "description": "Organización autorizada que emite credenciales. Ejemplo: universidad, gobierno, empresa."
+        },
+        "holder": {
+          "title": "Titular (Holder)",
+          "description": "Persona o entidad que recibe y custodia las credenciales en su wallet."
+        },
+        "verifier": {
+          "title": "Verificador (Verifier)",
+          "description": "Entidad que solicita y verifica credenciales para otorgar acceso o servicios."
+        }
+      },
+      "nav": {
+        "next": "Conceptos Core"
+      }
+    },
+    "concepts": {
+      "breadcrumb": "Conceptos Core",
+      "badge": "Fundamentos",
+      "title": "Conceptos Core",
+      "subtitle": "Los pilares fundamentales de la identidad auto-soberana y las credenciales verificables.",
+      "ssiTriangle": {
+        "title": "El Triángulo de la Confianza SSI",
+        "description": "La Identidad Auto-Soberana (SSI) se basa en un modelo triangular de confianza donde tres actores interactúan de forma descentralizada.",
+        "howItWorks": "¿Cómo funciona?",
+        "steps": {
+          "1": "El Emisor verifica la identidad del Titular y emite una credencial firmada",
+          "2": "El Titular almacena la credencial en su wallet (ej: MetaMask Snap)",
+          "3": "El Verificador solicita una credencial para dar acceso a un servicio",
+          "4": "El Titular presenta una Verifiable Presentation (VP) con las credenciales",
+          "5": "El Verificador valida la firma y el estado on-chain"
+        }
+      },
+      "vcLifecycle": {
+        "title": "Ciclo de Vida de una Credencial",
+        "issuance": {
+          "title": "Emisión",
+          "description": "El issuer crea y firma la VC"
+        },
+        "storage": {
+          "title": "Almacenamiento",
+          "description": "El holder guarda en su wallet"
+        },
+        "presentation": {
+          "title": "Presentación",
+          "description": "El holder presenta al verifier"
+        },
+        "verification": {
+          "title": "Verificación",
+          "description": "Se verifica firma y estado"
+        },
+        "revocation": {
+          "title": "Revocación",
+          "description": "El issuer puede invalidar"
+        }
+      },
+      "components": {
+        "title": "Componentes de una VC",
+        "vcJson": "Ejemplo de Verifiable Credential",
+        "context": "@context - Define el vocabulario y semántica del documento",
+        "type": "type - Tipo de credencial (siempre incluye VerifiableCredential)",
+        "issuer": "issuer - DID del emisor de la credencial",
+        "subject": "credentialSubject - Datos del titular y claims",
+        "proof": "proof - Firma criptográfica del emisor"
+      },
+      "nav": {
+        "prev": "Introducción",
+        "next": "Arquitectura"
+      }
+    },
+    "architecture": {
+      "overview": {
+        "breadcrumb": "Visión General",
+        "badge": "Arquitectura",
+        "title": "Visión General de la Arquitectura",
+        "subtitle": "Cómo se conectan todos los componentes del sistema de credenciales verificables de Alastria.",
+        "components": {
+          "title": "Componentes del Sistema",
+          "frontend": {
+            "title": "Frontend (Next.js)",
+            "description": "Aplicación web para usuarios finales, emisores y verificadores.",
+            "tech": "Next.js 15, React 19, TailwindCSS, wagmi"
+          },
+          "issuer": {
+            "title": "Issuer Backend",
+            "description": "Servicio para emisión y gestión de credenciales.",
+            "tech": "Fastify, TypeScript, PDF-lib, SIWA"
+          },
+          "verifier": {
+            "title": "Verifier Backend",
+            "description": "Servicio para verificación de credenciales y presentaciones.",
+            "tech": "Fastify, TypeScript, ethers.js"
+          },
+          "contracts": {
+            "title": "Smart Contracts",
+            "description": "Contratos Diamond para registro on-chain.",
+            "tech": "Solidity, Hardhat, EIP-2535"
+          },
+          "snap": {
+            "title": "MetaMask Snap",
+            "description": "Extensión para almacenamiento de credenciales.",
+            "tech": "MetaMask Snaps API, TypeScript"
+          }
+        },
+        "dataFlow": {
+          "title": "Flujo de Datos",
+          "step1": {
+            "title": "1. Invitación",
+            "description": "El issuer genera un magic link con OTP y lo envía por email al futuro holder."
+          },
+          "step2": {
+            "title": "2. Claim",
+            "description": "El holder valida OTP, conecta wallet, y firma con EIP-712 para vincular la VC a su DID."
+          },
+          "step3": {
+            "title": "3. Registro",
+            "description": "El hash de la VC se registra on-chain en CredentialStatusFacet para verificación futura."
+          },
+          "step4": {
+            "title": "4. Verificación",
+            "description": "Cualquiera puede verificar: firma EIP-712, issuer en registry, y estado no revocado."
+          }
+        },
+        "techStack": {
+          "title": "Stack Tecnológico",
+          "blockchain": "Blockchain",
+          "backend": "Backend",
+          "frontend": "Frontend",
+          "storage": "Storage"
+        },
+        "nav": {
+          "prev": "Conceptos Core",
+          "next": "Diamond Pattern"
+        }
+      },
+      "diamond": {
+        "breadcrumb": "Diamond Pattern",
+        "badge": "Smart Contracts",
+        "badgeEip": "EIP-2535",
+        "title": "Diamond Pattern (EIP-2535)",
+        "subtitle": "Arquitectura modular y upgradeable para los smart contracts de Alastria Credentials.",
+        "whatIs": {
+          "title": "¿Qué es el Diamond Pattern?",
+          "description": "El Diamond Pattern (EIP-2535) es un estándar que permite crear contratos inteligentes modulares y upgradeables. En lugar de un contrato monolítico, la funcionalidad se divide en \"facets\" que pueden añadirse, reemplazarse o eliminarse sin perder el estado.",
+          "why": "¿Por qué usamos Diamond?",
+          "reasons": {
+            "1": "Supera el límite de 24KB de código de contratos",
+            "2": "Permite upgrades granulares sin migrar datos",
+            "3": "Cada facet puede auditarse independientemente",
+            "4": "Reutilización de facets entre diferentes diamonds"
+          }
+        },
+        "structure": {
+          "title": "Estructura del Diamond",
+          "diamondProxy": {
+            "title": "Diamond Proxy",
+            "description": "Contrato principal que recibe todas las llamadas y las delega al facet correcto."
+          },
+          "diamondCut": {
+            "title": "DiamondCutFacet",
+            "description": "Facet especial para añadir, reemplazar o eliminar funciones."
+          },
+          "diamondLoupe": {
+            "title": "DiamondLoupeFacet",
+            "description": "Permite inspeccionar qué funciones tiene el diamond y en qué facets."
+          },
+          "business": {
+            "title": "Business Facets",
+            "description": "Facets con la lógica de negocio: TrustedIssuer, CredentialStatus, etc."
+          }
+        },
+        "facets": {
+          "title": "Facets de Alastria Credentials",
+          "trustedIssuer": {
+            "title": "TrustedIssuerFacet",
+            "description": "Gestiona el registro de emisores autorizados.",
+            "functions": "addTrustedIssuer, removeTrustedIssuer, isTrustedIssuer, getIssuerInfo"
+          },
+          "credentialStatus": {
+            "title": "CredentialStatusFacet",
+            "description": "Gestiona el estado de las credenciales (activa, revocada, suspendida).",
+            "functions": "registerCredential, revokeCredential, getCredentialStatus, isCredentialActive"
+          },
+          "proof": {
+            "title": "ProofFacet",
+            "description": "Verificación de firmas EIP-712 on-chain.",
+            "functions": "verifyCredentialSignature, verifyCredentialProof, getDomainSeparator"
+          },
+          "attestationBatch": {
+            "title": "AttestationBatchFacet",
+            "description": "Operaciones en batch para optimizar gas.",
+            "functions": "batchRegister, batchRevoke, createBatchAttestation"
+          }
+        },
+        "upgrade": {
+          "title": "Proceso de Upgrade",
+          "step1": "Desarrollar y auditar el nuevo facet",
+          "step2": "Desplegar el nuevo facet a la red",
+          "step3": "Preparar el DiamondCut con las funciones a añadir/reemplazar",
+          "step4": "Ejecutar diamondCut() (solo owner/multisig)",
+          "step5": "Verificar con DiamondLoupe que los cambios son correctos"
+        },
+        "storage": {
+          "title": "Diamond Storage",
+          "description": "Cada facet usa su propio slot de storage aislado para evitar colisiones. El slot se calcula como el hash del namespace del facet."
+        },
+        "nav": {
+          "prev": "Visión General",
+          "next": "Instalación"
+        }
+      }
+    },
+    "quickstart": {
+      "installation": {
+        "breadcrumb": "Instalación",
+        "badge": "Inicio Rápido",
+        "title": "Instalación y Configuración",
+        "subtitle": "Guía paso a paso para configurar el entorno de desarrollo de Alastria Credentials.",
+        "prerequisites": {
+          "title": "Prerequisitos",
+          "items": {
+            "node": "Node.js 20+ instalado",
+            "pnpm": "pnpm 8+ instalado",
+            "docker": "Docker y Docker Compose",
+            "metamask": "MetaMask instalado en el navegador",
+            "git": "Git para clonar el repositorio"
+          }
+        },
+        "clone": {
+          "title": "1. Clonar el Repositorio"
+        },
+        "install": {
+          "title": "2. Instalar Dependencias",
+          "description": "El proyecto usa pnpm workspaces para gestionar el monorepo."
+        },
+        "env": {
+          "title": "3. Configurar Variables de Entorno",
+          "description": "El proyecto incluye scripts que configuran automáticamente las variables de entorno para desarrollo."
+        },
+        "start": {
+          "title": "4. Iniciar en Modo Desarrollo",
+          "description": "Este comando inicia todo el stack: Hardhat node, deploy de contratos, backends (issuer y verifier), frontend, y MetaMask Snap.",
+          "services": "Servicios disponibles:"
+        },
+        "metamask": {
+          "title": "5. Configurar MetaMask",
+          "description": "Añade la red local de Hardhat a MetaMask:",
+          "steps": {
+            "1": "Abre MetaMask → Redes → Añadir red",
+            "2": "Nombre: Hardhat Local",
+            "3": "RPC URL: http://localhost:8545",
+            "4": "Chain ID: 31337",
+            "5": "Símbolo: ETH"
+          },
+          "importAccount": "Importar cuenta de prueba:",
+          "warning": "Esta clave privada es solo para desarrollo local. NUNCA uses en producción."
+        },
+        "verify": {
+          "title": "6. Verificar la Instalación",
+          "description": "Comprueba que todo funciona correctamente:",
+          "checks": {
+            "1": "Abre http://localhost:3000 - Deberías ver la landing page",
+            "2": "Conecta MetaMask con la cuenta importada",
+            "3": "Ve a /issuer - Deberías poder acceder al portal de emisor"
+          }
+        },
+        "troubleshooting": {
+          "title": "Solución de Problemas",
+          "portInUse": {
+            "title": "Puerto en uso",
+            "description": "Si un puerto está ocupado, mata el proceso:"
+          },
+          "dockerIssues": {
+            "title": "Problemas con Docker",
+            "description": "Reinicia los contenedores:"
+          },
+          "metamaskReset": {
+            "title": "MetaMask no conecta",
+            "description": "Resetea la cuenta en MetaMask: Configuración → Avanzado → Borrar datos de actividad"
+          }
+        },
+        "nav": {
+          "prev": "Diamond Pattern",
+          "next": "Primera Credencial"
+        }
+      }
+    },
+    "api": {
+      "issuer": {
+        "breadcrumb": "Issuer API",
+        "badge": "REST API",
+        "port": "Puerto 8001",
+        "title": "Issuer API",
+        "subtitle": "API REST para emisión de Credenciales Verificables. Incluye autenticación SIWA (Sign-In with Alastria) y gestión del flujo de emisión.",
+        "baseUrl": {
+          "title": "Base URL",
+          "development": "Desarrollo:",
+          "production": "Producción:"
+        },
+        "auth": {
+          "title": "Autenticación",
+          "description": "El Issuer usa SIWA (Sign-In with Alastria) basado en EIP-4361 para autenticar usuarios. El flujo consiste en obtener un challenge, firmarlo con MetaMask, y enviarlo para obtener una sesión.",
+          "challenge": {
+            "description": "Obtiene un challenge (nonce) para iniciar la autenticación SIWA."
+          },
+          "verify": {
+            "description": "Verifica la firma del challenge y crea una sesión autenticada."
+          }
+        },
+        "credentials": {
+          "title": "Emisión de Credenciales",
+          "prepare": {
+            "description": "Prepara una credencial para ser firmada. Genera el documento VC y los datos EIP-712.",
+            "requiresAuth": "Requiere autenticación"
+          },
+          "finalize": {
+            "description": "Finaliza la credencial añadiendo la firma EIP-712 del issuer.",
+            "requiresAuth": "Requiere autenticación"
+          }
+        },
+        "management": {
+          "title": "Gestión de Credenciales",
+          "list": {
+            "description": "Lista las credenciales emitidas por el issuer autenticado.",
+            "requiresAuth": "Requiere autenticación"
+          },
+          "revoke": {
+            "description": "Revoca una credencial. Actualiza el estado on-chain en CredentialStatusFacet.",
+            "requiresAuth": "Requiere autenticación"
+          }
+        },
+        "errors": {
+          "title": "Códigos de Error",
+          "400": "Bad Request - Parámetros inválidos",
+          "401": "Unauthorized - No autenticado",
+          "403": "Forbidden - No es Trusted Issuer",
+          "404": "Not Found - Recurso no existe",
+          "500": "Internal Error - Error del servidor"
+        },
+        "nav": {
+          "prev": "Blockchain Sync",
+          "next": "Verifier API"
+        }
+      },
+      "verifier": {
+        "breadcrumb": "Verifier API",
+        "badge": "REST API",
+        "port": "Puerto 8002",
+        "title": "Verifier API",
+        "subtitle": "API REST para verificación de Credenciales y Presentaciones Verificables. Incluye verificación on-chain de firmas y estados de revocación.",
+        "baseUrl": {
+          "title": "Base URL",
+          "development": "Desarrollo:",
+          "production": "Producción:"
+        },
+        "process": {
+          "title": "Proceso de Verificación",
+          "step1": {
+            "title": "Verificar Firma",
+            "description": "Recuperar dirección del firmante de la firma EIP-712."
+          },
+          "step2": {
+            "title": "Verificar Issuer",
+            "description": "Comprobar que el firmante es un Trusted Issuer on-chain."
+          },
+          "step3": {
+            "title": "Verificar Estado",
+            "description": "Comprobar que la credencial no está revocada on-chain."
+          }
+        },
+        "credentials": {
+          "title": "Verificación de Credenciales",
+          "verify": {
+            "description": "Verifica una Credencial Verificable completa con su firma EIP-712."
+          },
+          "tabs": {
+            "request": "Request",
+            "valid": "✅ Válido",
+            "invalid": "❌ Inválido"
+          }
+        },
+        "presentations": {
+          "title": "Verificación de Presentaciones",
+          "verify": {
+            "description": "Verifica una Verifiable Presentation (VP) que contiene una o más credenciales."
+          },
+          "challenge": {
+            "description": "Genera un challenge para solicitar una presentación. El holder debe incluir este challenge en la firma de su VP para prevenir replay attacks."
+          }
+        },
+        "status": {
+          "title": "Consulta de Estado",
+          "description": "Consulta el estado de revocación de una credencial por su ID."
+        },
+        "batch": {
+          "title": "Verificación por Lotes",
+          "description": "Verifica múltiples credenciales en una sola llamada. Optimiza las consultas on-chain agrupándolas."
+        },
+        "errors": {
+          "title": "Códigos de Error",
+          "400": "Bad Request - Formato de credencial inválido",
+          "404": "Not Found - Credencial no encontrada",
+          "422": "Unprocessable - Credencial inválida (verificación fallida)",
+          "500": "Internal Error - Error del servidor o blockchain"
+        },
+        "sdk": {
+          "title": "Ejemplo con SDK"
+        },
+        "nav": {
+          "prev": "Issuer API",
+          "next": "Smart Contract Facets"
+        }
+      }
+    },
+    "smartContracts": {
+      "facets": {
+        "breadcrumb": "Facets Reference",
+        "badge": "Solidity",
+        "badgeEip": "EIP-2535",
+        "title": "Smart Contract Facets",
+        "subtitle": "Referencia completa de los Facets del Diamond Pattern. Cada facet implementa una funcionalidad específica del sistema de credenciales verificables.",
+        "overview": {
+          "title": "Arquitectura de Facets",
+          "trustedIssuer": {
+            "title": "TrustedIssuerFacet",
+            "description": "Gestión del registro de emisores autorizados."
+          },
+          "credentialStatus": {
+            "title": "CredentialStatusFacet",
+            "description": "Estados de credenciales: activas, revocadas, suspendidas."
+          },
+          "proof": {
+            "title": "ProofFacet",
+            "description": "Verificación de firmas EIP-712 on-chain."
+          },
+          "attestationBatch": {
+            "title": "AttestationBatchFacet",
+            "description": "Batch de attestations para gas efficiency."
+          }
+        },
+        "trustedIssuer": {
+          "title": "TrustedIssuerFacet",
+          "description": "Gestiona el registro de emisores de confianza (Trusted Issuers). Solo los emisores registrados pueden emitir credenciales verificables válidas en el ecosistema Alastria.",
+          "usage": "Uso desde JavaScript"
+        },
+        "credentialStatus": {
+          "title": "CredentialStatusFacet",
+          "description": "Gestiona el estado de las credenciales on-chain. Permite registrar, revocar y suspender credenciales de forma inmutable y verificable.",
+          "considerations": {
+            "title": "Consideraciones Importantes",
+            "revoke": "Revocación es permanente: Una vez revocada, no se puede revertir",
+            "suspend": "Suspensión es temporal: Se puede reactivar con unsuspendCredential",
+            "onlyIssuer": "Solo el issuer: Solo el emisor original puede cambiar el estado",
+            "hash": "Hash determinístico: Se calcula del contenido de la credencial"
+          }
+        },
+        "proof": {
+          "title": "ProofFacet",
+          "description": "Verifica firmas EIP-712 on-chain. Permite validar que una firma fue realizada por un determinado emisor sin necesidad de confiar en un servidor centralizado.",
+          "domain": "EIP-712 Domain"
+        },
+        "attestationBatch": {
+          "title": "AttestationBatchFacet",
+          "description": "Optimiza el registro de múltiples credenciales en una sola transacción. Reduce significativamente los costes de gas cuando se emiten credenciales en lote.",
+          "gasComparison": {
+            "title": "Comparación de Gas",
+            "operation": "Operación",
+            "individual": "Gas Individual",
+            "batch": "Gas Batch (10)",
+            "savings": "Ahorro",
+            "register": "Registro",
+            "revoke": "Revocación"
+          }
+        },
+        "storage": {
+          "title": "Diamond Storage Pattern",
+          "description": "Cada facet usa su propio slot de storage aislado para evitar colisiones. El slot se calcula como el hash del namespace del facet."
+        },
+        "nav": {
+          "prev": "Verifier API",
+          "next": "EIP-712 Security"
+        }
+      }
+    },
+    "security": {
+      "eip712": {
+        "breadcrumb": "EIP-712",
+        "badge": "Seguridad",
+        "badgeEip": "EIP-712",
+        "title": "EIP-712 Typed Signatures",
+        "subtitle": "Sistema de firmas estructuradas para credenciales verificables. EIP-712 proporciona firmas legibles, seguras y verificables on-chain.",
+        "why": {
+          "title": "¿Por qué EIP-712?",
+          "readable": {
+            "title": "Firmas Legibles",
+            "description": "MetaMask muestra exactamente qué está firmando el usuario en un formato estructurado y comprensible."
+          },
+          "onchain": {
+            "title": "Verificable On-chain",
+            "description": "Las firmas pueden verificarse directamente en smart contracts sin depender de servicios externos."
+          },
+          "domain": {
+            "title": "Domain Binding",
+            "description": "Las firmas están vinculadas a un dominio específico, previniendo ataques de replay cross-chain."
+          },
+          "schema": {
+            "title": "Schema Validation",
+            "description": "Los tipos estructurados garantizan que los datos firmados tengan el formato esperado."
+          }
+        },
+        "domainSeparator": {
+          "title": "Domain Separator",
+          "description": "El Domain Separator vincula las firmas a un contexto específico, previniendo que una firma válida en un contexto se use en otro.",
+          "security": {
+            "title": "Seguridad del Domain",
+            "description": "Cada componente del domain es crítico:",
+            "chainId": "chainId: Previene replay attacks entre redes",
+            "verifyingContract": "verifyingContract: Vincula al contrato específico",
+            "version": "version: Permite migrar a nuevas versiones del schema"
+          }
+        },
+        "types": {
+          "title": "Definición de Tipos",
+          "description": "Los tipos EIP-712 definen la estructura exacta de los datos a firmar. Alastria usa tipos específicos para Verifiable Credentials."
+        },
+        "signing": {
+          "title": "Proceso de Firma",
+          "step1": "Preparar los datos",
+          "step2": "Solicitar firma vía MetaMask",
+          "step3": "Verificar la firma"
+        },
+        "securityConsiderations": {
+          "title": "Consideraciones de Seguridad",
+          "replay": {
+            "title": "Replay Attacks",
+            "description": "Una firma válida podría reutilizarse maliciosamente.",
+            "mitigations": "Mitigaciones:",
+            "items": {
+              "1": "ChainId en el domain previene cross-chain replay",
+              "2": "Nonce único por credencial",
+              "3": "Challenge en presentaciones para frescura"
+            }
+          },
+          "frontrunning": {
+            "title": "Front-running",
+            "description": "Un atacante podría ver la transacción en mempool y adelantarse.",
+            "mitigations": "Mitigaciones:",
+            "items": {
+              "1": "Las operaciones son idempotentes",
+              "2": "Verificaciones vinculadas al emisor original",
+              "3": "Private mempools en Alastria T-Network"
+            }
+          },
+          "malleability": {
+            "title": "Signature Malleability",
+            "description": "Las firmas ECDSA pueden modificarse manteniendo validez.",
+            "mitigations": "Mitigaciones:",
+            "items": {
+              "1": "OpenZeppelin ECDSA normaliza s-value",
+              "2": "Verificación del rango de v (27/28)",
+              "3": "Hash incluido en el registro on-chain"
+            }
+          }
+        },
+        "bestPractices": {
+          "title": "Mejores Prácticas",
+          "do": {
+            "title": "Hacer ✓",
+            "items": {
+              "1": "Validar el domain antes de firmar",
+              "2": "Incluir timestamps con margen razonable",
+              "3": "Verificar on-chain cuando sea posible",
+              "4": "Usar challenges únicos en presentaciones",
+              "5": "Almacenar el hash de la firma, no la firma"
+            }
+          },
+          "dont": {
+            "title": "Evitar ✗",
+            "items": {
+              "1": "Firmar datos sin verificar el domain",
+              "2": "Reutilizar nonces o challenges",
+              "3": "Confiar solo en verificación off-chain",
+              "4": "Exponer claves privadas en logs",
+              "5": "Ignorar errores de verificación"
+            }
+          }
+        },
+        "example": {
+          "title": "Ejemplo Completo"
+        },
+        "nav": {
+          "prev": "Smart Contract Facets",
+          "next": "SIWA Authentication"
+        }
+      },
+      "siwa": {
+        "breadcrumb": "SIWA Auth",
+        "badge": "Autenticación",
+        "badgeEip": "EIP-4361",
+        "title": "Sign-In with Alastria (SIWA)",
+        "subtitle": "Sistema de autenticación descentralizada basado en EIP-4361 (SIWE). Los usuarios se autentican firmando un mensaje con su wallet, sin necesidad de contraseñas ni servidores de identidad centralizados.",
+        "howItWorks": {
+          "title": "¿Cómo funciona?",
+          "step1": {
+            "title": "Solicitar Challenge",
+            "description": "El frontend solicita un nonce único al backend"
+          },
+          "step2": {
+            "title": "Firmar Mensaje",
+            "description": "El usuario firma el mensaje SIWA con MetaMask"
+          },
+          "step3": {
+            "title": "Verificar Firma",
+            "description": "El backend verifica la firma y recupera la dirección"
+          },
+          "step4": {
+            "title": "Crear Sesión",
+            "description": "Se establece una sesión JWT con cookie segura"
+          }
+        },
+        "messageFormat": {
+          "title": "Formato del Mensaje SIWA",
+          "description": "El mensaje SIWA sigue el formato estándar EIP-4361, estructurado para ser legible por humanos y parseable por máquinas.",
+          "example": "Ejemplo de Mensaje",
+          "fields": {
+            "title": "Campos del Mensaje",
+            "domain": "domain - Origen que solicita la firma",
+            "address": "address - Dirección del usuario",
+            "statement": "statement - Descripción legible",
+            "uri": "uri - URI del recurso",
+            "version": "version - Versión del protocolo",
+            "chainId": "chainId - ID de la red blockchain",
+            "nonce": "nonce - Valor único anti-replay",
+            "issuedAt": "issuedAt - Timestamp de emisión",
+            "expirationTime": "expirationTime - Expiración del challenge"
+          },
+          "nonceSecurity": {
+            "title": "Seguridad del Nonce",
+            "description": "El nonce es crítico para la seguridad:",
+            "items": {
+              "1": "Generado criptográficamente seguro",
+              "2": "Almacenado en servidor con TTL corto",
+              "3": "Invalidado tras primer uso",
+              "4": "Vinculado a la dirección solicitante"
+            }
+          }
+        },
+        "implementation": {
+          "title": "Implementación",
+          "frontend": "Frontend (React)",
+          "backend": "Backend (Fastify)"
+        },
+        "sessions": {
+          "title": "Gestión de Sesiones",
+          "jwt": {
+            "title": "JWT Token"
+          },
+          "cookie": {
+            "title": "Cookie Segura",
+            "httpOnly": "HttpOnly: No accesible desde JS",
+            "secure": "Secure: Solo HTTPS en producción",
+            "sameSite": "SameSite=Strict: Anti-CSRF",
+            "path": "Path=/: Disponible en toda la app"
+          }
+        },
+        "protectedRoutes": {
+          "title": "Rutas Protegidas",
+          "middleware": "Middleware de Autenticación"
+        },
+        "bestPractices": {
+          "title": "Mejores Prácticas",
+          "recommendations": {
+            "title": "Recomendaciones",
+            "items": {
+              "1": "Nonces de un solo uso con TTL corto",
+              "2": "Verificar domain y chainId del mensaje",
+              "3": "Usar cookies HttpOnly + Secure",
+              "4": "Implementar rate limiting",
+              "5": "Rotar secrets de JWT regularmente",
+              "6": "Logging de intentos de autenticación"
+            }
+          },
+          "avoid": {
+            "title": "Evitar",
+            "items": {
+              "1": "Almacenar tokens en localStorage",
+              "2": "Reutilizar nonces",
+              "3": "Expiraciones muy largas",
+              "4": "Confiar solo en client-side validation",
+              "5": "Exponer errores detallados al cliente",
+              "6": "Ignorar expiración de mensajes SIWA"
+            }
+          }
+        },
+        "errors": {
+          "title": "Manejo de Errores",
+          "table": {
+            "error": "Error",
+            "cause": "Causa",
+            "solution": "Solución"
+          },
+          "invalidNonce": {
+            "error": "Invalid nonce",
+            "cause": "Nonce expirado o usado",
+            "solution": "Solicitar nuevo challenge"
+          },
+          "addressMismatch": {
+            "error": "Address mismatch",
+            "cause": "Firma con wallet diferente",
+            "solution": "Verificar wallet conectado"
+          },
+          "invalidSignature": {
+            "error": "Invalid signature",
+            "cause": "Mensaje modificado o firma incorrecta",
+            "solution": "Reiniciar flujo de autenticación"
+          },
+          "sessionExpired": {
+            "error": "Session expired",
+            "cause": "JWT expirado",
+            "solution": "Re-autenticar"
+          },
+          "notTrustedIssuer": {
+            "error": "Not a Trusted Issuer",
+            "cause": "Dirección no registrada",
+            "solution": "Contactar admin para registro"
+          }
+        },
+        "nav": {
+          "prev": "EIP-712 Security",
+          "next": "Volver a Docs"
+        }
+      }
+    }
+  }
+}

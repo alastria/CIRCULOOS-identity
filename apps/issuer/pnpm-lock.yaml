@@ -1,0 +1,28 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      '@circuloos/common':
+        specifier: workspace:*
+        version: link:../../../vc-vp-circuloos/packages/common
+      '@circuloos/file-store':
+        specifier: workspace:*
+        version: link:../../../vc-vp-circuloos/packages/file-store
+      zod:
+        specifier: ^4.1.13
+        version: 4.1.13
+
+packages:
+
+  zod@4.1.13:
+    resolution: {integrity: sha512-AvvthqfqrAhNH9dnfmrfKzX5upOdjUVJYFqNSlkmGf64gRaTzlPwz99IHYnVs28qYAybvAlBV+H7pn0saFY4Ig==}
+
+snapshots:
+
+  zod@4.1.13: {}

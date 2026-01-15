@@ -1,0 +1,46 @@
+# ========================================
+# Dockerfile for Deployer Service
+# ========================================
+
+# ----------------------------------------
+# Stage 1: Dependencies
+# ----------------------------------------
+FROM node:20-alpine AS deps
+RUN npm install -g pnpm@10.15.0
+WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/contracts/package.json ./apps/contracts/
+# Install ALL workspace dependencies (NODE_ENV must be development for devDependencies)
+ENV NODE_ENV=development
+RUN pnpm install
+
+# ----------------------------------------
+# Stage 2: Builder
+# ----------------------------------------
+FROM node:20-alpine AS builder
+RUN npm install -g pnpm@10.15.0
+WORKDIR /app
+
+# Copy source code first
+COPY apps/contracts ./apps/contracts
+
+# Then overlay node_modules from deps stage (preserves dependencies)
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/contracts/node_modules ./apps/contracts/node_modules
+
+# ----------------------------------------
+# Stage 3: Runner
+# ----------------------------------------
+FROM node:20-alpine AS runner
+RUN npm install -g pnpm@10.15.0
+WORKDIR /app
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 deployer
+
+COPY --from=builder --chown=deployer:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=deployer:nodejs /app/apps/contracts ./apps/contracts
+
+WORKDIR /app/apps/contracts
+
+# Default command: Deploy to docker network
+CMD ["pnpm", "deploy:docker:init"]

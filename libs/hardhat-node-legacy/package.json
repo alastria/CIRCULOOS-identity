@@ -1,0 +1,42 @@
+{
+  "name": "@circuloos/hardhat-node",
+  "version": "0.0.0",
+  "private": true,
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "node": "hardhat node --port ${PORT:-8545}",
+    "dev": "node scripts/dev.mjs",
+    "start": "pnpm node",
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "coverage": " npx hardhat clean && npx hardhat coverage",
+    "clean": "hardhat clean",
+    "deploy:local": "hardhat run --network local scripts/deploy/deploy-local.ts",
+    "deploy:local:init": "DEPLOY_INIT=true DEPLOY_ENV=local hardhat run --network local scripts/deploy/deploy-local.ts",
+    "deploy:docker:init": "DEPLOY_INIT=true DEPLOY_ENV=docker hardhat run --network local scripts/deploy/deploy-local.ts",
+    "deploy:test": "hardhat run --network test scripts/deploy/deploy-test.ts",
+    "deploy:test:init": "hardhat run --network test scripts/deploy/deploy-test.ts -- --init",
+    "deploy:dev": "hardhat run --network dev scripts/deploy/deploy-dev.ts",
+    "deploy:dev:init": "hardhat run --network dev scripts/deploy/deploy-dev.ts -- --init",
+    "docker:health": "node scripts/docker/healthcheck.mjs",
+    "info": "ts-node scripts/utils/print-node-info.ts"
+  },
+  "dependencies": {
+    "hardhat": "^2.18.0",
+    "ethers": "^5.8.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.4.2"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.12",
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@nomiclabs/hardhat-waffle": "^2.0.6",
+    "@types/chai": "^5.2.3",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^24.10.1",
+    "chai": "4.3.7",
+    "ethereum-waffle": "^4.0.10",
+    "solidity-coverage": "^0.8.16"
+  }
+}
