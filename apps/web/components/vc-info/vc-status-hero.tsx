@@ -28,12 +28,12 @@ interface VCStatusHeroProps {
   showRaw: boolean
 }
 
-const statusConfig: Record<VCStatus, { icon: typeof Shield; label: string; color: string; bg: string }> = {
-  active: { icon: ShieldCheck, label: "Activa", color: "text-green-500", bg: "bg-green-500/10" },
-  expiring: { icon: Clock, label: "Por Expirar", color: "text-yellow-500", bg: "bg-yellow-500/10" },
-  expired: { icon: ShieldX, label: "Expirada", color: "text-red-500", bg: "bg-red-500/10" },
-  revoked: { icon: ShieldAlert, label: "Revocada", color: "text-red-600", bg: "bg-red-600/10" },
-  draft: { icon: FileText, label: "Borrador", color: "text-muted-foreground", bg: "bg-muted/50" },
+const statusConfig: Record<VCStatus, { icon: typeof Shield; color: string; bg: string }> = {
+  active: { icon: ShieldCheck, color: "text-green-500", bg: "bg-green-500/10" },
+  expiring: { icon: Clock, color: "text-yellow-500", bg: "bg-yellow-500/10" },
+  expired: { icon: ShieldX, color: "text-red-500", bg: "bg-red-500/10" },
+  revoked: { icon: ShieldAlert, color: "text-red-600", bg: "bg-red-600/10" },
+  draft: { icon: FileText, color: "text-muted-foreground", bg: "bg-muted/50" },
 }
 
 export function VCStatusHero({
@@ -44,8 +44,21 @@ export function VCStatusHero({
   onToggleRaw,
   showRaw,
 }: VCStatusHeroProps) {
+  const { locale, t } = useI18n()
   const { status, raw, security, issuanceDate, expirationDate, daysUntilExpiration } = analysis
-  const config = statusConfig[status]
+  const config = {
+    ...statusConfig[status],
+    label:
+      status === "active"
+        ? t("vc.statusHero.active")
+        : status === "expiring"
+          ? t("vc.statusHero.expiring")
+          : status === "expired"
+            ? t("vc.statusHero.expired")
+            : status === "revoked"
+              ? t("vc.statusHero.revoked")
+              : t("vc.statusHero.draft"),
+  }
   const StatusIcon = config.icon
 
   // Extract credential type
@@ -54,14 +67,13 @@ export function VCStatusHero({
 
   // Format dates
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString("es-ES", {
+    return date.toLocaleDateString(locale === "es" ? "es-ES" : "en-US", {
       day: "numeric",
       month: "long",
       year: "numeric",
     })
   }
 
-  const { t } = useI18n()
   const getRelativeTime = (date: Date) => {
     const now = new Date()
     const diffMs = now.getTime() - date.getTime()
@@ -84,7 +96,7 @@ export function VCStatusHero({
         <StatusIcon className={cn("h-5 w-5", config.color)} />
         <span className={cn("font-semibold", config.color)}>{config.label}</span>
         {status === "expiring" && daysUntilExpiration !== null && (
-          <span className="text-sm text-yellow-600">(expira en {daysUntilExpiration} días)</span>
+          <span className="text-sm text-yellow-600">{t("vc.statusHero.expiringInDays", { count: daysUntilExpiration })}</span>
         )}
       </div>
 
@@ -96,29 +108,29 @@ export function VCStatusHero({
               <Badge variant="outline" className="mb-2">
                 {credentialType}
               </Badge>
-              <h2 className="text-2xl font-bold text-foreground">Credencial Verificable</h2>
+              <h2 className="text-2xl font-bold text-foreground">{t("vc.statusHero.verifiableCredential")}</h2>
               {raw.id && <p className="text-sm text-muted-foreground mt-1 font-mono truncate max-w-md">ID: {raw.id}</p>}
             </div>
 
             {/* Dates */}
             <div className="flex flex-wrap gap-6">
               <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">Emitida</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">{t("vc.statusHero.issued")}</p>
                 <p className="font-medium text-foreground">{formatDate(issuanceDate)}</p>
                 <p className="text-xs text-muted-foreground">{getRelativeTime(issuanceDate)}</p>
               </div>
               {expirationDate ? (
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Expira</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">{t("vc.statusHero.expires")}</p>
                   <p className="font-medium text-foreground">{formatDate(expirationDate)}</p>
                   {daysUntilExpiration !== null && daysUntilExpiration > 0 && (
-                    <p className="text-xs text-muted-foreground">en {daysUntilExpiration} días</p>
+                    <p className="text-xs text-muted-foreground">{t("vc.statusHero.inDays", { count: daysUntilExpiration })}</p>
                   )}
                 </div>
               ) : (
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Expira</p>
-                  <Badge variant="secondary">Sin expiración</Badge>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">{t("vc.statusHero.expires")}</p>
+                  <Badge variant="secondary">{t("vc.statusHero.noExpiration")}</Badge>
                 </div>
               )}
             </div>
@@ -138,13 +150,13 @@ export function VCStatusHero({
                 {security.score}
               </div>
               <div>
-                <p className="text-sm font-medium text-foreground">Puntuación de Seguridad</p>
+                <p className="text-sm font-medium text-foreground">{t("vc.security.title")}</p>
                 <p className="text-xs text-muted-foreground">
-                  {security.level === "very-high" && "Muy Confiable"}
-                  {security.level === "high" && "Confiable"}
-                  {security.level === "medium" && "Confianza Media"}
-                  {security.level === "low" && "Baja Confianza"}
-                  {security.level === "untrusted" && "No Confiable"}
+                  {security.level === "very-high" && t("vc.security.veryHigh")}
+                  {security.level === "high" && t("vc.security.high")}
+                  {security.level === "medium" && t("vc.security.medium")}
+                  {security.level === "low" && t("vc.security.low")}
+                  {security.level === "untrusted" && t("vc.security.untrusted")}
                 </p>
               </div>
             </div>
@@ -154,19 +166,19 @@ export function VCStatusHero({
           <div className="flex flex-col gap-2 min-w-[200px]">
             <Button onClick={onVerifyBlockchain} className="w-full">
               <ExternalLink className="h-4 w-4 mr-2" />
-              Verificar en Blockchain
+              {t("vc.statusHero.verifyBlockchain")}
             </Button>
             <Button onClick={onDownloadPdf} variant="outline" className="w-full bg-transparent">
               <Download className="h-4 w-4 mr-2" />
-              Descargar PDF
+              {t("vc.statusHero.downloadPdf")}
             </Button>
             <Button onClick={onShare} variant="outline" className="w-full bg-transparent">
               <Share2 className="h-4 w-4 mr-2" />
-              Compartir
+              {t("vc.statusHero.share")}
             </Button>
             <Button onClick={onToggleRaw} variant="ghost" className="w-full">
               <Code className="h-4 w-4 mr-2" />
-              {showRaw ? "Ocultar JSON" : "Ver JSON Raw"}
+              {showRaw ? t("vc.statusHero.hideJson") : t("vc.statusHero.showRawJson")}
             </Button>
           </div>
         </div>

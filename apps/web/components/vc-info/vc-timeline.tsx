@@ -23,11 +23,29 @@ const eventConfig: Record<VCTimelineEvent["type"], { icon: typeof Circle; color:
 }
 
 export function VCTimeline({ events }: VCTimelineProps) {
-  const { t } = useI18n()
+  const { locale, t } = useI18n()
+
+  const getEventDescription = (event: VCTimelineEvent) => {
+    const translationMap: Partial<Record<VCTimelineEvent["type"], string>> = {
+      created: "vc.timeline.events.created",
+      "signed-issuer": "vc.timeline.events.signedIssuer",
+      "signed-holder": "vc.timeline.events.signedHolder",
+      current: "vc.timeline.events.current",
+      expired: "vc.timeline.events.expired",
+      sent: "vc.timeline.events.sent",
+      registered: "vc.timeline.events.registered",
+      batched: "vc.timeline.events.batched",
+      revoked: "vc.timeline.events.revoked",
+    }
+
+    const key = translationMap[event.type]
+    return key ? t(key) : event.description
+  }
+
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return t("vc.timeline.unknownDate")
     const date = new Date(dateStr)
-    return date.toLocaleDateString("es-ES", {
+    return date.toLocaleDateString(locale === "es" ? "es-ES" : "en-US", {
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -41,7 +59,7 @@ export function VCTimeline({ events }: VCTimelineProps) {
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Clock className="h-5 w-5 text-primary" />
-          Historia de la Credencial
+          {t("vc.timeline.title")}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -69,7 +87,7 @@ export function VCTimeline({ events }: VCTimelineProps) {
 
                   {/* Content */}
                   <div className="flex-1 pb-2">
-                    <p className="font-medium text-foreground">{event.description}</p>
+                    <p className="font-medium text-foreground">{getEventDescription(event)}</p>
                     <p className="text-sm text-muted-foreground mt-0.5">{formatDate(event.date)}</p>
                     {event.actor && (
                       <p className="text-xs text-muted-foreground mt-1 font-mono truncate">{event.actor}</p>
@@ -81,7 +99,7 @@ export function VCTimeline({ events }: VCTimelineProps) {
                         rel="noopener noreferrer"
                         className="text-xs text-primary hover:underline mt-1 inline-block"
                       >
-                        Ver transacción
+                        {t("vc.timeline.viewTransaction")}
                       </a>
                     )}
                   </div>

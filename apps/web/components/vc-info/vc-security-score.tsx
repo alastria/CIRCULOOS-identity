@@ -3,6 +3,7 @@
 import { Shield, CheckCircle, XCircle, AlertTriangle, Lightbulb } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+import { useI18n } from "@/lib/i18n/provider"
 import { cn } from "@/lib/utils"
 import type { VCSecurityScore as VCSecurityScoreType } from "@/lib/types/vc"
 
@@ -11,29 +12,63 @@ interface VCSecurityScoreProps {
 }
 
 export function VCSecurityScore({ security }: VCSecurityScoreProps) {
-  const { score, level, checks, recommendations } = security
+  const { t } = useI18n()
+  const { score, maxScore, level, checks, recommendations } = security
+
+  const getCheckLabel = (name: string) => {
+    const translationMap: Record<string, string> = {
+      "Firmada por Emisor": "vc.security.checkLabels.issuerSigned",
+      "Firmada por Holder": "vc.security.checkLabels.holderSigned",
+      "Emisor en Registry": "vc.security.checkLabels.issuerInRegistry",
+      "No Expirada": "vc.security.checkLabels.notExpired",
+      Expirada: "vc.security.checkLabels.expired",
+      "Tiene Evidencia": "vc.security.checkLabels.hasEvidence",
+      "Estructura Válida": "vc.security.checkLabels.validStructure",
+    }
+
+    return translationMap[name] ? t(translationMap[name]) : name
+  }
+
+  const getCheckDescription = (description: string) => {
+    const translationMap: Record<string, string> = {
+      "La credencial tiene firma del emisor": "vc.security.checkDescriptions.issuerSigned",
+      "Falta firma del emisor": "vc.security.checkDescriptions.issuerMissingSignature",
+      "El holder ha firmado la credencial": "vc.security.checkDescriptions.holderSigned",
+      "El holder no ha firmado": "vc.security.checkDescriptions.holderNotSigned",
+      "Emisor verificado en blockchain": "vc.security.checkDescriptions.issuerVerified",
+      "Emisor no está en registry público": "vc.security.checkDescriptions.issuerNotVerified",
+      "La credencial no ha expirado": "vc.security.checkDescriptions.notExpired",
+      "La credencial ha expirado": "vc.security.checkDescriptions.expired",
+      "Incluye evidencia de verificación": "vc.security.checkDescriptions.hasEvidence",
+      "No incluye evidencia": "vc.security.checkDescriptions.noEvidence",
+      "Cumple con estándar W3C": "vc.security.checkDescriptions.validStructure",
+      "Errores en estructura": "vc.security.checkDescriptions.invalidStructure",
+    }
+
+    return translationMap[description] ? t(translationMap[description]) : description
+  }
 
   const levelConfig = {
     "very-high": {
-      label: "Muy Confiable",
+      label: t("vc.security.veryHigh"),
       color: "text-green-500",
       bg: "bg-green-500",
       progressClass: "[&>div]:bg-green-500",
     },
-    high: { label: "Confiable", color: "text-green-500", bg: "bg-green-500", progressClass: "[&>div]:bg-green-500" },
+    high: { label: t("vc.security.high"), color: "text-green-500", bg: "bg-green-500", progressClass: "[&>div]:bg-green-500" },
     medium: {
-      label: "Confianza Media",
+      label: t("vc.security.medium"),
       color: "text-yellow-500",
       bg: "bg-yellow-500",
       progressClass: "[&>div]:bg-yellow-500",
     },
     low: {
-      label: "Baja Confianza",
+      label: t("vc.security.low"),
       color: "text-orange-500",
       bg: "bg-orange-500",
       progressClass: "[&>div]:bg-orange-500",
     },
-    untrusted: { label: "No Confiable", color: "text-red-500", bg: "bg-red-500", progressClass: "[&>div]:bg-red-500" },
+    untrusted: { label: t("vc.security.untrusted"), color: "text-red-500", bg: "bg-red-500", progressClass: "[&>div]:bg-red-500" },
   }
 
   const config = levelConfig[level]
@@ -43,7 +78,7 @@ export function VCSecurityScore({ security }: VCSecurityScoreProps) {
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Shield className="h-5 w-5 text-primary" />
-          Puntuación de Seguridad
+          {t("vc.security.title")}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -64,13 +99,13 @@ export function VCSecurityScore({ security }: VCSecurityScoreProps) {
           <div className="flex-1 space-y-2">
             <p className={cn("text-xl font-semibold", config.color)}>{config.label}</p>
             <Progress value={score} className={cn("h-3", config.progressClass)} />
-            <p className="text-sm text-muted-foreground">{score} de 100 puntos</p>
+            <p className="text-sm text-muted-foreground">{t("vc.security.scorePoints", { score, maxScore })}</p>
           </div>
         </div>
 
         {/* Checks */}
         <div className="space-y-3">
-          <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Verificaciones</h4>
+          <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{t("vc.security.checks")}</h4>
           <div className="space-y-2">
             {checks.map((check, index) => (
               <div
@@ -86,8 +121,8 @@ export function VCSecurityScore({ security }: VCSecurityScoreProps) {
                   <XCircle className="h-5 w-5 text-muted-foreground shrink-0" />
                 )}
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">{check.name}</p>
-                  <p className="text-xs text-muted-foreground">{check.description}</p>
+                  <p className="text-sm font-medium text-foreground">{getCheckLabel(check.name)}</p>
+                  <p className="text-xs text-muted-foreground">{getCheckDescription(check.description)}</p>
                 </div>
                 <span className={cn("text-sm font-mono", check.passed ? "text-green-500" : "text-muted-foreground")}>
                   {check.points > 0 ? `+${check.points}` : check.points}
@@ -102,7 +137,7 @@ export function VCSecurityScore({ security }: VCSecurityScoreProps) {
           <div className="space-y-3">
             <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-2">
               <Lightbulb className="h-4 w-4" />
-              Recomendaciones
+              {t("vc.security.recommendations")}
             </h4>
             <div className="space-y-2">
               {recommendations.map((rec, index) => (

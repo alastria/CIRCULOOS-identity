@@ -42,25 +42,25 @@ export function VCIssuerSection({ issuer, onVerifySignature, signatureVerifying 
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Building2 className="h-5 w-5 text-primary" />
-          Quién Emitió Esta Credencial
+          {t("vc.issuer.title")}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Identification */}
         <div className="space-y-4">
-          <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Identificación</h4>
+          <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{t("vc.issuer.identification")}</h4>
 
           {/* DID */}
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">DID del Emisor</span>
+              <span className="text-sm text-muted-foreground">{t("vc.issuer.didLabel")}</span>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>
                     <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs">
-                    <p>Identificador Descentralizado - Una forma única e inmutable de identificar al emisor</p>
+                    <p>{t("vc.issuer.didTooltip")}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -86,7 +86,7 @@ export function VCIssuerSection({ issuer, onVerifySignature, signatureVerifying 
           {/* Name */}
           {issuer.name && (
             <div className="space-y-1">
-              <span className="text-sm text-muted-foreground">Nombre</span>
+              <span className="text-sm text-muted-foreground">{t("vc.issuer.name")}</span>
               <p className="font-medium text-foreground">{issuer.name}</p>
             </div>
           )}
@@ -94,7 +94,7 @@ export function VCIssuerSection({ issuer, onVerifySignature, signatureVerifying 
           {/* Ethereum Address */}
           {issuer.ethereumAddress && (
             <div className="space-y-1">
-              <span className="text-sm text-muted-foreground">Dirección Ethereum</span>
+              <span className="text-sm text-muted-foreground">{t("vc.issuer.ethereumAddress")}</span>
               <div className="flex items-center gap-2">
                 <code className="text-sm bg-muted/50 px-2 py-1 rounded font-mono">
                   {truncateAddress(issuer.ethereumAddress)}
@@ -127,7 +127,7 @@ export function VCIssuerSection({ issuer, onVerifySignature, signatureVerifying 
           {/* ENS Name */}
           {issuer.ensName && (
             <div className="space-y-1">
-              <span className="text-sm text-muted-foreground">ENS</span>
+              <span className="text-sm text-muted-foreground">{t("vc.issuer.ens")}</span>
               <p className="font-medium text-foreground">{issuer.ensName}</p>
             </div>
           )}
@@ -135,7 +135,7 @@ export function VCIssuerSection({ issuer, onVerifySignature, signatureVerifying 
           {/* URL */}
           {issuer.url && (
             <div className="space-y-1">
-              <span className="text-sm text-muted-foreground">Sitio Web</span>
+              <span className="text-sm text-muted-foreground">{t("vc.issuer.website")}</span>
               <a
                 href={issuer.url}
                 target="_blank"
@@ -151,7 +151,7 @@ export function VCIssuerSection({ issuer, onVerifySignature, signatureVerifying 
 
         {/* Trust Level */}
         <div className="space-y-4">
-          <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Nivel de Confianza</h4>
+          <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{t("vc.issuer.trustLevel")}</h4>
 
           <div
             className={cn(
@@ -171,9 +171,9 @@ export function VCIssuerSection({ issuer, onVerifySignature, signatureVerifying 
             />
             <div>
               <p className="font-medium text-foreground">
-                {issuer.trustLevel === "verified" && "Emisor Verificado en Blockchain"}
-                {issuer.trustLevel === "unverified" && "Emisor No Verificado"}
-                {issuer.trustLevel === "unknown" && "Estado Desconocido"}
+                {issuer.trustLevel === "verified" && t("vc.issuer.trustVerifiedTitle")}
+                {issuer.trustLevel === "unverified" && t("vc.issuer.trustUnverifiedTitle")}
+                {issuer.trustLevel === "unknown" && t("vc.issuer.trustUnknownTitle")}
               </p>
               <p className="text-sm text-muted-foreground mt-1">
                 {issuer.trustLevel === "verified" && t("vc.issuer.verified")}
@@ -186,31 +186,31 @@ export function VCIssuerSection({ issuer, onVerifySignature, signatureVerifying 
 
         {/* Signature Verification */}
         <div className="space-y-4">
-          <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Firma del Emisor</h4>
+          <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{t("vc.issuer.signatureSection")}</h4>
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {issuer.signatureValid === true && (
                 <>
                   <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span className="text-green-500 font-medium">Firma Válida</span>
+                  <span className="text-green-500 font-medium">{t("vc.issuer.signatureValid")}</span>
                 </>
               )}
               {issuer.signatureValid === false && (
                 <>
                   <XCircle className="h-5 w-5 text-red-500" />
-                  <span className="text-red-500 font-medium">Firma Inválida</span>
+                  <span className="text-red-500 font-medium">{t("vc.issuer.signatureInvalid")}</span>
                 </>
               )}
               {issuer.signatureValid === null && (
                 <>
                   <HelpCircle className="h-5 w-5 text-muted-foreground" />
-                  <span className="text-muted-foreground">No verificada</span>
+                  <span className="text-muted-foreground">{t("vc.issuer.signatureNotVerified")}</span>
                 </>
               )}
             </div>
             <Button variant="outline" size="sm" onClick={onVerifySignature} disabled={signatureVerifying}>
-              {signatureVerifying ? "Verificando..." : "Verificar Firma"}
+              {signatureVerifying ? t("vc.issuer.verifying") : t("vc.issuer.verifySignature")}
             </Button>
           </div>
         </div>

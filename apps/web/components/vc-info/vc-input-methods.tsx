@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils"
 import type { VCInputMethod } from "@/lib/types/vc"
 import { useCirculoosSnap } from "@/hooks/use-circuloos-snap"
+import { useI18n } from "@/lib/i18n/provider"
 import { toast } from "sonner"
 
 interface VCInputMethodsProps {
@@ -22,6 +23,7 @@ interface VCInputMethodsProps {
 }
 
 export function VCInputMethods({ onVCLoaded, isLoading, error }: VCInputMethodsProps) {
+  const { t } = useI18n()
   const [activeTab, setActiveTab] = useState<VCInputMethod>("upload")
   const [dragActive, setDragActive] = useState(false)
   const [pastedJson, setPastedJson] = useState("")
@@ -93,7 +95,7 @@ export function VCInputMethods({ onVCLoaded, isLoading, error }: VCInputMethodsP
     if (!isInstalled) {
       const installed = await installSnap()
       if (!installed) {
-        toast.error("Por favor, instala el MetaMask Snap primero")
+        toast.error(t("vc.input.installSnapFirst"))
         return
       }
     }
@@ -103,7 +105,7 @@ export function VCInputMethods({ onVCLoaded, isLoading, error }: VCInputMethodsP
       const credentials = await getCredentials()
 
       if (!credentials || !Array.isArray(credentials) || credentials.length === 0) {
-        toast.error("No se encontraron credenciales en tu MetaMask Snap")
+        toast.error(t("vc.input.snapCredentialsNotFound"))
         setLoadingSnap(false)
         return
       }
@@ -123,7 +125,7 @@ export function VCInputMethods({ onVCLoaded, isLoading, error }: VCInputMethodsP
       setLoadingSnap(false)
     } catch (error: any) {
       console.error("Error loading credentials from snap:", error)
-      toast.error(error?.message || "Error al cargar credenciales del snap")
+      toast.error(error?.message || t("vc.input.snapLoadError"))
       setLoadingSnap(false)
     }
   }
@@ -133,7 +135,7 @@ export function VCInputMethods({ onVCLoaded, isLoading, error }: VCInputMethodsP
 
     const credential = snapCredentials.find((vc: any) => vc.id === selectedCredentialId)
     if (!credential) {
-      toast.error("Credencial no encontrada")
+      toast.error(t("vc.input.credentialNotFound"))
       return
     }
 
@@ -150,23 +152,23 @@ export function VCInputMethods({ onVCLoaded, isLoading, error }: VCInputMethodsP
           <TabsList className="grid w-full grid-cols-3 lg:grid-cols-5 gap-1 h-auto p-1 bg-muted/50">
             <TabsTrigger value="upload" className="flex items-center gap-2 text-xs sm:text-sm py-2">
               <Upload className="h-4 w-4" />
-              <span className="hidden sm:inline">Archivo</span>
+              <span className="hidden sm:inline">{t("vc.input.fileTab")}</span>
             </TabsTrigger>
             <TabsTrigger value="paste" className="flex items-center gap-2 text-xs sm:text-sm py-2">
               <FileText className="h-4 w-4" />
-              <span className="hidden sm:inline">Pegar</span>
+              <span className="hidden sm:inline">{t("vc.input.pasteTab")}</span>
             </TabsTrigger>
             <TabsTrigger value="url" className="flex items-center gap-2 text-xs sm:text-sm py-2">
               <Link className="h-4 w-4" />
-              <span className="hidden sm:inline">URL</span>
+              <span className="hidden sm:inline">{t("vc.input.urlTab")}</span>
             </TabsTrigger>
             <TabsTrigger value="snap" className="flex items-center gap-2 text-xs sm:text-sm py-2">
               <Wallet className="h-4 w-4" />
-              <span className="hidden sm:inline">Snap</span>
+              <span className="hidden sm:inline">{t("vc.input.snapTab")}</span>
             </TabsTrigger>
             <TabsTrigger value="direct" className="flex items-center gap-2 text-xs sm:text-sm py-2">
               <QrCode className="h-4 w-4" />
-              <span className="hidden sm:inline">QR</span>
+              <span className="hidden sm:inline">{t("vc.input.qrTab")}</span>
             </TabsTrigger>
           </TabsList>
 
@@ -194,8 +196,8 @@ export function VCInputMethods({ onVCLoaded, isLoading, error }: VCInputMethodsP
               ) : (
                 <div className="flex flex-col items-center gap-2">
                   <Upload className="h-10 w-10 text-muted-foreground" />
-                  <p className="font-medium text-foreground">Arrastra tu archivo JSON aquí</p>
-                  <p className="text-sm text-muted-foreground">o haz click para seleccionar (máx. 10MB)</p>
+                  <p className="font-medium text-foreground">{t("vc.input.uploadTitle")}</p>
+                  <p className="text-sm text-muted-foreground">{t("vc.input.uploadSubtitle")}</p>
                 </div>
               )}
             </div>
@@ -211,7 +213,7 @@ export function VCInputMethods({ onVCLoaded, isLoading, error }: VCInputMethodsP
             />
             <Button onClick={handlePasteAnalyze} disabled={!pastedJson.trim() || isLoading} className="w-full">
               {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileText className="h-4 w-4 mr-2" />}
-              Analizar Credencial
+              {t("vc.input.analyzeCredential")}
             </Button>
           </TabsContent>
 
@@ -224,11 +226,11 @@ export function VCInputMethods({ onVCLoaded, isLoading, error }: VCInputMethodsP
                 placeholder="https://issuer.com/credentials/abc123.json"
                 className="bg-muted/30"
               />
-              <p className="text-xs text-muted-foreground">Introduce la URL pública donde está alojada la credencial</p>
+              <p className="text-xs text-muted-foreground">{t("vc.input.urlHelp")}</p>
             </div>
             <Button onClick={handleUrlLoad} disabled={!urlInput.trim() || isLoading} className="w-full">
               {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Link className="h-4 w-4 mr-2" />}
-              Cargar desde URL
+              {t("vc.input.loadFromUrl")}
             </Button>
           </TabsContent>
 
@@ -239,27 +241,27 @@ export function VCInputMethods({ onVCLoaded, isLoading, error }: VCInputMethodsP
                 <Wallet className="h-8 w-8 text-[#F6851B]" />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground">Importar desde MetaMask</h3>
+                <h3 className="font-semibold text-foreground">{t("vc.input.importFromMetamask")}</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Conecta tu wallet y selecciona una credencial almacenada en el Snap
+                  {t("vc.input.snapDescription")}
                 </p>
               </div>
 
               {snapCredentials.length === 0 ? (
                 <Button onClick={handleSnapImport} disabled={loadingSnap || isLoading} variant="outline">
                   {loadingSnap ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Wallet className="h-4 w-4 mr-2" />}
-                  {loadingSnap ? "Cargando..." : "Conectar MetaMask"}
+                  {loadingSnap ? t("vc.input.loading") : t("vc.input.connectMetamask")}
                 </Button>
               ) : (
                 <div className="space-y-4">
                   <Select value={selectedCredentialId} onValueChange={setSelectedCredentialId}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecciona una credencial" />
+                      <SelectValue placeholder={t("vc.input.selectCredential")} />
                     </SelectTrigger>
                     <SelectContent>
                       {snapCredentials.map((vc: any) => {
                         const vcType = Array.isArray(vc.type) ? vc.type[1] || vc.type[0] : vc.type
-                        const vcId = vc.id || "sin-id"
+                        const vcId = vc.id || t("vc.input.noId")
                         return (
                           <SelectItem key={vcId} value={vcId}>
                             {vcType || "VerifiableCredential"} - {vcId.slice(0, 8)}...
@@ -271,10 +273,10 @@ export function VCInputMethods({ onVCLoaded, isLoading, error }: VCInputMethodsP
                   <div className="flex gap-2">
                     <Button onClick={handleSelectCredential} disabled={!selectedCredentialId || isLoading} className="flex-1">
                       {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
-                      Cargar Credencial
+                      {t("vc.input.loadCredential")}
                     </Button>
                     <Button onClick={() => { setSnapCredentials([]); setSelectedCredentialId("") }} variant="outline">
-                      Cancelar
+                      {t("vc.input.cancel")}
                     </Button>
                   </div>
                 </div>
@@ -289,9 +291,9 @@ export function VCInputMethods({ onVCLoaded, isLoading, error }: VCInputMethodsP
                 <QrCode className="h-8 w-8 text-primary" />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground">Link Directo o QR</h3>
+                <h3 className="font-semibold text-foreground">{t("vc.input.directLinkOrQr")}</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Usa un link con la VC embebida o escanea un código QR
+                  {t("vc.input.directLinkDescription")}
                 </p>
                 <p className="text-xs text-muted-foreground mt-2 font-mono">/vc/info?vc=[base64_encoded_vc]</p>
               </div>
@@ -304,7 +306,7 @@ export function VCInputMethods({ onVCLoaded, isLoading, error }: VCInputMethodsP
           <div className="mt-4 p-4 rounded-lg bg-destructive/10 border border-destructive/20 flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
             <div>
-              <p className="font-medium text-destructive">Error al procesar</p>
+              <p className="font-medium text-destructive">{t("vc.info.processingError")}</p>
               <p className="text-sm text-destructive/80 mt-1">{error}</p>
             </div>
           </div>

@@ -18,7 +18,7 @@ interface VCHolderSectionProps {
 }
 
 export function VCHolderSection({ holder, onVerifySignature, signatureVerifying }: VCHolderSectionProps) {
-  const { t } = useI18n()
+  const { locale, t } = useI18n()
   const [copiedDid, setCopiedDid] = useState(false)
   const [showSensitive, setShowSensitive] = useState(false)
 
@@ -35,7 +35,7 @@ export function VCHolderSection({ holder, onVerifySignature, signatureVerifying 
 
   const formatClaimValue = (value: unknown, type: string): string => {
     if (type === "boolean") return value ? t("vc.holder.yes") : t("vc.holder.no")
-    if (type === "date") return new Date(value as string).toLocaleDateString("es-ES")
+    if (type === "date") return new Date(value as string).toLocaleDateString(locale === "es" ? "es-ES" : "en-US")
     if (type === "hash") return `${String(value).slice(0, 10)}...${String(value).slice(-8)}`
     if (type === "email" && !showSensitive) {
       const email = String(value)
@@ -52,20 +52,19 @@ export function VCHolderSection({ holder, onVerifySignature, signatureVerifying 
     <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2 text-lg">
-          <User className="h-5 w-5 text-primary" />A Quién Pertenece Esta Credencial
+          <User className="h-5 w-5 text-primary" />
+          {t("vc.holder.title")}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Holder Identification */}
         <div className="space-y-4">
-          <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-            Identificación del Titular
-          </h4>
+          <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{t("vc.holder.identification")}</h4>
 
           {holder.did ? (
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">DID del Titular</span>
+                <span className="text-sm text-muted-foreground">{t("vc.holder.didLabel")}</span>
                 <Badge variant="outline" className="text-xs">
                   {holder.didType}
                 </Badge>
@@ -84,12 +83,12 @@ export function VCHolderSection({ holder, onVerifySignature, signatureVerifying 
               </div>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground italic">No se especificó identificador del titular</p>
+            <p className="text-sm text-muted-foreground italic">{t("vc.holder.unspecifiedIdentifier")}</p>
           )}
 
           {holder.ethereumAddress && (
             <div className="space-y-1">
-              <span className="text-sm text-muted-foreground">Dirección Ethereum</span>
+              <span className="text-sm text-muted-foreground">{t("vc.holder.ethereumAddress")}</span>
               <div className="flex items-center gap-2">
                 <code className="text-sm bg-muted/50 px-2 py-1 rounded font-mono">
                   {truncateAddress(holder.ethereumAddress)}
@@ -109,7 +108,7 @@ export function VCHolderSection({ holder, onVerifySignature, signatureVerifying 
 
           {holder.name && (
             <div className="space-y-1">
-              <span className="text-sm text-muted-foreground">Nombre</span>
+              <span className="text-sm text-muted-foreground">{t("vc.holder.name")}</span>
               <p className="font-medium text-foreground">{holder.name}</p>
             </div>
           )}
@@ -118,17 +117,17 @@ export function VCHolderSection({ holder, onVerifySignature, signatureVerifying 
         {/* Claims */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Atributos (Claims)</h4>
+            <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{t("vc.holder.claims")}</h4>
             <Button variant="ghost" size="sm" onClick={() => setShowSensitive(!showSensitive)}>
               {showSensitive ? (
                 <>
                   <Eye className="h-4 w-4 mr-1" />
-                  Ocultar
+                  {t("vc.holder.hide")}
                 </>
               ) : (
                 <>
                   <Eye className="h-4 w-4 mr-1" />
-                  Mostrar
+                  {t("vc.holder.show")}
                 </>
               )}
             </Button>
@@ -155,7 +154,7 @@ export function VCHolderSection({ holder, onVerifySignature, signatureVerifying 
                             <Lock className="h-3.5 w-3.5 text-primary" />
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>Este dato está protegido (hasheado)</p>
+                            <p>{t("vc.holder.protectedData")}</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -175,7 +174,7 @@ export function VCHolderSection({ holder, onVerifySignature, signatureVerifying 
 
         {/* Privacy Level */}
         <div className="space-y-4">
-          <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Nivel de Privacidad</h4>
+          <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{t("vc.holder.privacyLevel")}</h4>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -185,8 +184,8 @@ export function VCHolderSection({ holder, onVerifySignature, signatureVerifying 
                 {holder.privacyLevel === "low" && <Unlock className="h-4 w-4 text-red-500" />}
                 <span className="text-sm font-medium text-foreground">
                   {holder.privacyLevel === "high" && t("vc.holder.highPrivacy")}
-                  {holder.privacyLevel === "medium" && "Media - Algunos datos protegidos"}
-                  {holder.privacyLevel === "low" && "Baja - Datos en claro"}
+                  {holder.privacyLevel === "medium" && t("vc.holder.mediumPrivacy")}
+                  {holder.privacyLevel === "low" && t("vc.holder.lowPrivacy")}
                 </span>
               </div>
             </div>
@@ -204,31 +203,31 @@ export function VCHolderSection({ holder, onVerifySignature, signatureVerifying 
 
         {/* Holder Signature */}
         <div className="space-y-4">
-          <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Firma del Titular</h4>
+          <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{t("vc.holder.signatureSection")}</h4>
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {holder.signatureValid === true && (
                 <>
                   <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span className="text-green-500 font-medium">Firmada por el holder</span>
+                  <span className="text-green-500 font-medium">{t("vc.holder.signedByHolder")}</span>
                 </>
               )}
               {holder.signatureValid === false && (
                 <>
                   <HelpCircle className="h-5 w-5 text-yellow-500" />
-                  <span className="text-yellow-500 font-medium">Solo firmada por emisor</span>
+                  <span className="text-yellow-500 font-medium">{t("vc.holder.onlySignedByIssuer")}</span>
                 </>
               )}
               {holder.signatureValid === null && (
                 <>
                   <HelpCircle className="h-5 w-5 text-muted-foreground" />
-                  <span className="text-muted-foreground">No verificada</span>
+                  <span className="text-muted-foreground">{t("vc.holder.signatureNotVerified")}</span>
                 </>
               )}
             </div>
             <Button variant="outline" size="sm" onClick={onVerifySignature} disabled={signatureVerifying}>
-              {signatureVerifying ? "Verificando..." : "Verificar"}
+              {signatureVerifying ? t("vc.holder.verifying") : t("vc.holder.verify")}
             </Button>
           </div>
         </div>

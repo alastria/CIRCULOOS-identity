@@ -251,7 +251,7 @@ export function calculateSecurityScore(
 ): VCSecurityScore {
   const checks: VCSecurityScore["checks"] = []
   let score = 0
-  const maxScore = 100
+  const maxScore = 95
 
   // Issuer signature
   const hasIssuerProof = !!vc.proof
@@ -317,16 +317,6 @@ export function calculateSecurityScore(
   })
   if (hasEvidence) score += 5
 
-  // Uses EIP-712
-  const usesEIP712 = proofs.some((p) => p.type?.includes("EIP712") || p.eip712)
-  checks.push({
-    name: "Usa EIP-712",
-    passed: usesEIP712,
-    points: usesEIP712 ? 5 : 0,
-    description: usesEIP712 ? "Firma con EIP-712 (más segura)" : "No usa EIP-712",
-  })
-  if (usesEIP712) score += 5
-
   // Valid structure
   checks.push({
     name: "Estructura Válida",
@@ -343,19 +333,12 @@ export function calculateSecurityScore(
   else if (score >= 41) level = "medium"
   else if (score >= 1) level = "low"
 
-  // Recommendations
-  const recommendations: string[] = []
-  if (!hasHolderProof) recommendations.push("El holder debería firmar la credencial para mayor seguridad")
-  if (!issuer.isTrusted) recommendations.push("Verificar manualmente la identidad del emisor")
-  if (isExpiringSoon && !isExpired) recommendations.push("La credencial expira pronto, solicitar renovación")
-  if (!usesEIP712) recommendations.push("Considerar usar EIP-712 para firmas más seguras")
-
   return {
     score: Math.max(0, Math.min(100, score)),
     maxScore,
     level,
     checks,
-    recommendations,
+    recommendations: [],
   }
 }
 

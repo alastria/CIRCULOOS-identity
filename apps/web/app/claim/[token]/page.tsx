@@ -1243,10 +1243,12 @@ export default function ClaimPage() {
                   </Button>
                 </div>
 
+                {/*
                 <Button className="w-full gap-2" style={{ backgroundColor: "#F6851B" }} onClick={handleSaveToSnap}>
                   <Wallet className="w-4 h-4" />
                   {t("claim.success.saveToSnap")}
                 </Button>
+                */}
 
                 <div className="flex items-center justify-center pt-4 border-t">
                   <Button variant="outline" className="gap-2 w-full" asChild>
