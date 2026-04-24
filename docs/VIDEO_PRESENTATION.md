@@ -220,6 +220,8 @@ alastria-web          running (healthy)
 **Narración**:
 > "Con un solo `docker compose up --build` el entorno completo arranca. El deployer ejecuta el despliegue de contratos y termina — su trabajo está hecho. El resto de servicios quedan corriendo y saludables."
 
+**Narration**:
+> ‘With a single `docker compose up --build`, the entire environment starts up. The deployer executes the contract deployment and finishes — its job is done. The rest of the services remain running and healthy.’
 ---
 
 ### ESCENA 9 — Login del Emisor con SIWA
