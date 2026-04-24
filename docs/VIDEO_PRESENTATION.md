@@ -238,6 +238,9 @@ alastria-web          running (healthy)
 
 **Narración**:
 > "La autenticación usa SIWA — Sign-In With Alastria, basado en el estándar EIP-4361. No hay usuario ni contraseña. La identidad es la propia wallet. El backend valida la firma y establece una cookie JWT HttpOnly — completamente segura frente a XSS."
+> 
+**Narration**:
+> ‘Authentication uses SIWA — Sign-In With Alastria, based on the EIP-4361 standard. There is no username or password. The identity is the wallet itself. The backend validates the signature and sets an HttpOnly JWT cookie — which is completely secure against XSS.’
 
 ---
 
@@ -258,6 +261,8 @@ alastria-web          running (healthy)
 **Narración**:
 > "El emisor rellena el formulario con la dirección del titular y su email. Al preparar, el backend genera un borrador de credencial con ID único. En este punto aún no hay firma — es solo el draft."
 
+**Narration**:
+> ‘The issuer fills in the form with the holder’s address and email address. Upon submission, the backend generates a draft credential with a unique ID. At this stage, there is no signature yet — it is only a draft.’
 ---
 
 ### ESCENA 11 — Firma EIP-712 en MetaMask
@@ -280,6 +285,8 @@ alastria-web          running (healthy)
 **Narración**:
 > "MetaMask muestra un formulario legible — no un hash. El emisor ve exactamente qué está firmando. Al confirmar, la firma se envía al backend que la registra en la blockchain y desencadena el envío del email al titular."
 
+**Narration**:
+> ‘MetaMask displays a readable form — not a hash. The sender can see exactly what they are signing. Upon confirmation, the signature is sent to the backend, which records it on the blockchain and triggers the sending of the email to the recipient.’
 ---
 
 ### ESCENA 12 — Email al Holder — Mailpit
@@ -294,6 +301,9 @@ alastria-web          running (healthy)
 
 **Narración**:
 > "En desarrollo usamos Mailpit como servidor SMTP local. El titular recibe un email con un link único y temporal para reclamar su credencial."
+
+**Narration**:
+> ‘In development, we use Mailpit as our local SMTP server. The account holder receives an email containing a unique, temporary link to claim their credentials.’
 
 ---
 
@@ -316,6 +326,8 @@ alastria-web          running (healthy)
 **Narración**:
 > "El titular abre el link, conecta su propia wallet y firma para reclamar. El sistema valida que la dirección coincide con la del titular designado por el emisor y que el OTP del token es válido. Solo entonces entrega la credencial."
 
+**Narration**:
+> ‘The account holder opens the link, connects their own wallet and signs to claim the token. The system verifies that the address matches that of the account holder designated by the issuer and that the token’s OTP is valid. Only then is the credential issued.’
 ---
 
 ### ESCENA 14 — Descarga del VC (JSON y PDF)
@@ -330,6 +342,8 @@ alastria-web          running (healthy)
 **Narración**:
 > "El titular recibe dos formatos: el JSON con la credencial W3C completa incluyendo la firma EIP-712, y un PDF visual que además lleva el JSON completo incrustado en sus metadatos — es un documento auto-contenido y verificable."
 
+**Narration**:
+> ‘The recipient receives two formats: the JSON file containing the full W3C credential, including the EIP-712 signature, and a visual PDF that also has the full JSON embedded in its metadata — it is a self-contained and verifiable document.’
 ---
 
 ### ESCENA 15 — Verificación pública de la credencial
@@ -350,6 +364,8 @@ alastria-web          running (healthy)
 **Narración**:
 > "El portal de verificación es público — cualquiera puede acceder. Sube el JSON, y el sistema verifica en tres pasos: la estructura W3C, la firma criptográfica del emisor, y el estado on-chain en los smart contracts. Todo en segundos."
 
+**Narration**:
+> ‘The verification portal is public — anyone can access it. Upload the JSON file, and the system verifies it in three steps: the W3C structure, the issuer’s cryptographic signature, and the on-chain status of the smart contracts. All in a matter of seconds.’
 ---
 
 ### ESCENA 16 — Revocación y re-verificación
@@ -368,6 +384,8 @@ alastria-web          running (healthy)
 **Narración**:
 > "El emisor puede revocar una credencial en cualquier momento. La revocación queda registrada on-chain. Al volver a verificar el mismo archivo, el verifier consulta el contrato y devuelve el estado actualizado — la VC ya no es válida."
 
+**Narration**:
+> ‘The issuer can revoke a credential at any time. The revocation is recorded on-chain. When verifying the same file again, the verifier queries the contract and returns the updated status — the VC is no longer valid.’
 ---
 
 ## BLOQUE 4 — Componentes Avanzados
@@ -397,6 +415,8 @@ alastria-web          running (healthy)
 **Narración**:
 > "Más allá del flujo web, el proyecto incluye un MetaMask Snap que convierte tu wallet en una custodia de credenciales. Las VCs se almacenan cifradas. Para firmar una Verifiable Presentation, el Snap deriva una clave específica por BIP-44 — la clave raíz nunca sale de MetaMask."
 
+**Narration**:
+> ‘Beyond the web flow, the project includes a MetaMask Snap that turns your wallet into a credential vault. VCs are stored in encrypted form. To sign a Verifiable Presentation, the Snap derives a specific key using BIP-44 — the root key never leaves MetaMask.’
 ---
 
 ### ESCENA 18 — PDF self-contained con metadatos XMP
@@ -416,6 +436,8 @@ alastria-web          running (healthy)
 **Narración**:
 > "El PDF no es solo visual. Lleva la VC completa incrustada en metadatos XMP, codificada en Base64. Esto lo hace auto-contenido: el emisor podría desaparecer y la credencial sigue siendo verificable extrayendo el JSON del propio PDF."
 
+**Narration**:
+> ‘The PDF isn’t just visual. It contains the full VC embedded in XMP metadata, encoded in Base64. This makes it self-contained: even if the issuer were to disappear, the credential would still be verifiable by extracting the JSON from the PDF itself.’
 ---
 
 ## BLOQUE 5 — Cierre
@@ -441,6 +463,8 @@ alastria-web          running (healthy)
 **Narración**:
 > "Pasar de local a la red real de Alastria es cambiar dos variables de entorno. La arquitectura es la misma. Y añadir un nuevo tipo de credencial — académica, laboral, de acceso — solo requiere registrar un nuevo schema EIP-712 en la librería compartida."
 
+**Narration**:
+> ‘Migrating from a local environment to the Alastria production network involves changing two environment variables. The architecture remains the same. And adding a new type of credential — academic, professional, or access — simply requires registering a new EIP-712 schema in the shared library.’
 ---
 
 ### ESCENA 20 — Cierre
@@ -456,6 +480,8 @@ alastria-web          running (healthy)
 **Narración**:
 > "Identidad digital soberana, sobre estándares abiertos, en la red Alastria."
 
+**Narration**:
+> ‘Sovereign digital identity, based on open standards, on the Alastria network.’
 ---
 
 ## Checklist Pre-Grabación
