@@ -79,8 +79,10 @@ export interface VerifiableCredential {
   id?: string
   type: string | string[]
   issuer: string | VCIssuer
-  issuanceDate: string
+  issuanceDate?: string
+  validFrom?: string
   expirationDate?: string
+  validUntil?: string
   credentialSubject: VCCredentialSubject
   proof?: VCProof | VCProof[]
   evidence?: VCEvidence[]

@@ -32,11 +32,9 @@ registerCredentialType({
           { name: 'credentialType', type: 'string' },
           { name: 'credentialId', type: 'string' },
 
-          // Holder data (EXPANDED - not JSON!)
+          // Public holder data only. These fields must survive public VC redaction
+          // so the verifier can rebuild the same typed data from a public credential.
           { name: 'holderAddress', type: 'address' },
-          { name: 'holderName', type: 'string' },
-          { name: 'holderEmail', type: 'string' },
-          { name: 'companyName', type: 'string' },
 
           // Issuer data
           { name: 'issuerDID', type: 'string' },
@@ -60,11 +58,8 @@ registerCredentialType({
           credentialType: 'Circuloos Marketplace',
           credentialId: vc.id || '',
 
-          // Expand credentialSubject fields - use normalized address
+          // Only sign fields that are present in the public verification payload.
           holderAddress: normalizedHolderAddress as any,
-          holderName: vc.credentialSubject?.name || '',
-          holderEmail: vc.credentialSubject?.email || '',
-          companyName: vc.credentialSubject?.companyName || '',
 
           issuerDID: issuerString,
           issuerName: formatIssuerName(issuerString, 'Circuloos'),

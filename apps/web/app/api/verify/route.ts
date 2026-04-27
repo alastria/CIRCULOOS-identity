@@ -1,6 +1,36 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { urls } from "@/config"
 
+function detectVerificationPayload(document: any) {
+  const types = Array.isArray(document?.type) ? document.type : [document?.type].filter(Boolean)
+
+  if (document?.verifiableCredential || types.includes("VerifiablePresentation")) {
+    return { kind: "presentation" as const, data: document }
+  }
+
+  return { kind: "credential" as const, data: document }
+}
+
+function normalizeVerificationPayload(input: any) {
+  if (!input || typeof input !== "object") {
+    throw new Error("Invalid credential JSON format")
+  }
+
+  if (input.presentation && typeof input.presentation === "object") {
+    return detectVerificationPayload(input.presentation)
+  }
+
+  if (input.credential && typeof input.credential === "object") {
+    return detectVerificationPayload(input.credential)
+  }
+
+  if (input.vc && typeof input.vc === "object") {
+    return detectVerificationPayload(input.vc)
+  }
+
+  return detectVerificationPayload(input)
+}
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
@@ -12,11 +42,11 @@ export async function POST(request: NextRequest) {
 
     // Read file content
     const text = await file.text()
-    let vcData: any
+    let parsedData: any
 
     // Parse JSON or extract from PDF
     if (file.type === "application/json") {
-      vcData = JSON.parse(text)
+      parsedData = JSON.parse(text)
     } else if (file.type === "application/pdf") {
       // Extract JSON from PDF metadata (Subject field)
       try {
@@ -28,7 +58,7 @@ export async function POST(request: NextRequest) {
         if (subject) {
           // Subject contains base64 encoded VC JSON
           const jsonString = Buffer.from(subject, 'base64').toString('utf-8')
-          vcData = JSON.parse(jsonString)
+          parsedData = JSON.parse(jsonString)
         } else {
           return NextResponse.json({ error: "No credential data found in PDF metadata" }, { status: 400 })
         }
@@ -40,12 +70,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unsupported file format" }, { status: 400 })
     }
 
+    const verificationPayload = normalizeVerificationPayload(parsedData)
+    const endpoint = verificationPayload.kind === "presentation"
+      ? `${urls.verifier}/api/v1/verify/presentation`
+      : `${urls.verifier}/api/v1/verify`
+    const body = verificationPayload.kind === "presentation"
+      ? { presentation: verificationPayload.data }
+      : { credential: verificationPayload.data }
+
     // Proxy to verifier backend
-    // Backend expects { credential: VC } format
-    const response = await fetch(`${urls.verifier}/api/v1/verify`, {
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ credential: vcData })
+      body: JSON.stringify(body)
     })
 
     const result = await response.json()

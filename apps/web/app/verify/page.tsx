@@ -40,6 +40,40 @@ interface VerificationResult {
   error?: string
 }
 
+type VerificationPayload =
+  | { kind: "credential"; data: any }
+  | { kind: "presentation"; data: any }
+
+function detectVerificationPayload(document: any): VerificationPayload {
+  const types = Array.isArray(document?.type) ? document.type : [document?.type].filter(Boolean)
+
+  if (document?.verifiableCredential || types.includes("VerifiablePresentation")) {
+    return { kind: "presentation", data: document }
+  }
+
+  return { kind: "credential", data: document }
+}
+
+function normalizeVerificationPayload(input: any): VerificationPayload {
+  if (!input || typeof input !== "object") {
+    throw new Error("Invalid credential JSON format")
+  }
+
+  if (input.presentation && typeof input.presentation === "object") {
+    return detectVerificationPayload(input.presentation)
+  }
+
+  if (input.credential && typeof input.credential === "object") {
+    return detectVerificationPayload(input.credential)
+  }
+
+  if (input.vc && typeof input.vc === "object") {
+    return detectVerificationPayload(input.vc)
+  }
+
+  return detectVerificationPayload(input)
+}
+
 export default function VerifyPage() {
   const { t } = useI18n()
   const [status, setStatus] = useState<VerificationStatus>("idle")
@@ -54,11 +88,11 @@ export default function VerifyPage() {
     try {
       // Read file content
       const text = await file.text()
-      let vcData: any
+      let parsedData: any
 
       // Parse JSON or extract from PDF
       if (file.type === "application/json") {
-        vcData = JSON.parse(text)
+        parsedData = JSON.parse(text)
       } else if (file.type === "application/pdf") {
         // For PDF, we need to extract the JSON credential from metadata
         try {
@@ -74,11 +108,11 @@ export default function VerifyPage() {
               // Try decoding as Base64 first (new format)
               // Handle browser-compatible base64 encoding from generator
               const decoded = decodeURIComponent(escape(atob(subject)))
-              vcData = JSON.parse(decoded)
+              parsedData = JSON.parse(decoded)
             } catch (e) {
               // Fallback: Try parsing directly (legacy format)
               try {
-                vcData = JSON.parse(subject)
+                parsedData = JSON.parse(subject)
               } catch (e2) {
                 // console.warn('Failed to parse PDF subject as JSON:', e2)
               }
@@ -86,14 +120,14 @@ export default function VerifyPage() {
           }
 
           // 2. Fallback: Regex match on raw text (Legacy/Backup)
-          if (!vcData) {
+          if (!parsedData) {
             const match = text.match(/\{[\s\S]*"@context"[\s\S]*\}/)
             if (match) {
-              vcData = JSON.parse(match[0])
+              parsedData = JSON.parse(match[0])
             }
           }
 
-          if (!vcData) {
+          if (!parsedData) {
             throw new Error("No credential data found in PDF metadata or content")
           }
         } catch (err) {
@@ -104,12 +138,17 @@ export default function VerifyPage() {
         throw new Error("Unsupported file format")
       }
 
+      const verificationPayload = normalizeVerificationPayload(parsedData)
+      const endpoint = verificationPayload.kind === "presentation" ? "/api/v1/verify/presentation" : "/api/v1/verify"
+      const requestBody = verificationPayload.kind === "presentation"
+        ? { presentation: verificationPayload.data }
+        : { credential: verificationPayload.data }
+
       // Call verifier API
-      // Backend expects { credential: VC } format
-      const response = await fetch(`${config.verifierApiUrl}/api/v1/verify`, {
+      const response = await fetch(`${config.verifierApiUrl}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ credential: vcData })
+        body: JSON.stringify(requestBody)
       })
 
       const verifyResult = await response.json()
@@ -125,7 +164,14 @@ export default function VerifyPage() {
       }
 
       // Extract credential information
-      const vc = vcData.verifiableCredential?.[0] || vcData
+      const vc = verificationPayload.kind === "presentation"
+        ? verificationPayload.data.verifiableCredential?.[0]
+        : verificationPayload.data
+
+      if (!vc) {
+        throw new Error("No credential data found in uploaded document")
+      }
+
       const credentialSubject = vc.credentialSubject || {}
 
       // Build attributes object (exclude special fields)

@@ -93,12 +93,14 @@ const verifyRoutes: FastifyPluginAsync = async (fastify) => {
             // Extract proof info
             const proof = credential.proof
             const domain = proof.domain
-            const signature = proof.signature
+            const signature = proof.signature || proof.proofValue
 
             if (!domain || !signature) {
                 return reply.code(400).send({
                     valid: false,
-                    error: 'Invalid proof: must have domain and signature'
+                    error: proof?.proofValue && !proof?.domain
+                        ? 'Invalid proof: proofValue was provided without domain. This JSON looks like a provisional client-side credential, not the issuer-generated verifiable credential.'
+                        : 'Invalid proof: must have domain and signature'
                 })
             }
 

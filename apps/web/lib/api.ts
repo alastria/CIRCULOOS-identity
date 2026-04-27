@@ -258,6 +258,12 @@ export const api = {
             return data
         },
 
+        // Get public credential with proof for verification flows
+        getCredentialPublic: async (id: string) => {
+            const { data } = await issuerApi.get(`/credentials/${encodeURIComponent(id)}/public`)
+            return data
+        },
+
         // Get full credential with personal data (requires SIWA, only holder can access)
         getCredentialFull: async (id: string) => {
             const { data } = await issuerApi.get(`/credentials/${encodeURIComponent(id)}/full`)

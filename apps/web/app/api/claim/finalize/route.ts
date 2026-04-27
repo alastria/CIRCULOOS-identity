@@ -30,9 +30,19 @@ export async function POST(request: NextRequest) {
       }, { status: response.status })
     }
 
+    const vcId = result.vcId || result.vc?.id || result.id
+    let credential = result.vc || result
+
+    if (vcId) {
+      const publicCredentialResponse = await fetch(`${urls.issuer}/credentials/${encodeURIComponent(vcId)}/public`)
+      if (publicCredentialResponse.ok) {
+        credential = await publicCredentialResponse.json()
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      credential: result.vc || result,
+      credential,
       message: "Credential claimed successfully",
     })
   } catch (error: any) {

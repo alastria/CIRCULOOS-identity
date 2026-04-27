@@ -12,6 +12,14 @@ import type {
 } from "@/lib/types/vc"
 import { keccak256, toBytes } from "viem"
 
+function getIssuanceDateValue(vc: VerifiableCredential): string | null {
+  return vc.issuanceDate || vc.validFrom || null
+}
+
+function getExpirationDateValue(vc: VerifiableCredential): string | null {
+  return vc.expirationDate || vc.validUntil || null
+}
+
 // Parse and validate JSON
 export function parseVCJson(input: string): { vc: VerifiableCredential | null; error: string | null } {
   try {
@@ -64,9 +72,9 @@ export function validateVC(vc: VerifiableCredential): VCValidationResult {
     errors.push("Falta campo obligatorio: credentialSubject")
   }
 
-  // Check issuanceDate
-  if (!vc.issuanceDate) {
-    errors.push("Falta campo obligatorio: issuanceDate")
+  // Check issuance date (W3C v1 uses issuanceDate, v2 uses validFrom)
+  if (!getIssuanceDateValue(vc)) {
+    errors.push("Falta campo obligatorio: issuanceDate o validFrom")
   }
 
   // Check proof
@@ -78,7 +86,7 @@ export function validateVC(vc: VerifiableCredential): VCValidationResult {
   }
 
   // Check expirationDate
-  if (!vc.expirationDate) {
+  if (!getExpirationDateValue(vc)) {
     warnings.push("No tiene fecha de expiración")
   }
 
@@ -285,7 +293,8 @@ export function calculateSecurityScore(
 
   // Not expired
   const now = new Date()
-  const expirationDate = vc.expirationDate ? new Date(vc.expirationDate) : null
+  const expirationDateValue = getExpirationDateValue(vc)
+  const expirationDate = expirationDateValue ? new Date(expirationDateValue) : null
   const isExpired = expirationDate ? expirationDate < now : false
   const isExpiringSoon = expirationDate ? expirationDate.getTime() - now.getTime() < 30 * 24 * 60 * 60 * 1000 : false
 
@@ -351,7 +360,7 @@ export function buildTimeline(vc: VerifiableCredential): VCTimelineEvent[] {
   events.push({
     id: "issuance",
     type: "created",
-    date: vc.issuanceDate,
+    date: getIssuanceDateValue(vc),
     actor: typeof vc.issuer === "string" ? vc.issuer : vc.issuer.name || vc.issuer.id,
     description: "Credencial creada y preparada",
   })
@@ -382,7 +391,8 @@ export function buildTimeline(vc: VerifiableCredential): VCTimelineEvent[] {
 
   // Current status
   const now = new Date()
-  const expirationDate = vc.expirationDate ? new Date(vc.expirationDate) : null
+  const expirationDateValue = getExpirationDateValue(vc)
+  const expirationDate = expirationDateValue ? new Date(expirationDateValue) : null
   const isExpired = expirationDate ? expirationDate < now : false
 
   events.push({
@@ -432,8 +442,10 @@ export function analyzeVC(vc: VerifiableCredential): VCAnalysis {
   const hash = calculateVCHash(vc)
   const status = determineVCStatus(vc)
 
-  const issuanceDate = new Date(vc.issuanceDate)
-  const expirationDate = vc.expirationDate ? new Date(vc.expirationDate) : null
+  const issuanceDateValue = getIssuanceDateValue(vc) || new Date().toISOString()
+  const expirationDateValue = getExpirationDateValue(vc)
+  const issuanceDate = new Date(issuanceDateValue)
+  const expirationDate = expirationDateValue ? new Date(expirationDateValue) : null
   const now = new Date()
   const daysUntilExpiration = expirationDate
     ? Math.ceil((expirationDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))

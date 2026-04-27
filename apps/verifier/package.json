@@ -11,7 +11,8 @@
     "start": "node dist/index.js",
     "test": "vitest",
     "coverage": "vitest run --coverage",
-    "docker:health": "node scripts/docker/healthcheck.js"
+    "docker:health": "node scripts/docker/healthcheck.js",
+    "diagnose:credential": "node scripts/diagnose-credential.js"
   },
   "dependencies": {
     "@circuloos/common": "workspace:*",

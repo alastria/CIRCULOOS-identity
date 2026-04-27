@@ -482,29 +482,7 @@ export default function ClaimPage() {
         serializableMessage // Send the exact message that was signed (serialized)
       )
 
-      // Backend returns { vcId, holder }. We need to fetch the full VC.
-      // Since we don't have the signature headers ready for the GET /credentials/:id endpoint
-      // (it requires a specific auth signature), we might need to update the backend
-      // to return the full VC on finalize, or we mock the preview for now.
-
-      // For now, we construct a "claimed" object to show success
-      const credential = {
-        "@context": ["https://www.w3.org/2018/credentials/v1"],
-        type: ["VerifiableCredential", "Credential"],
-        id: result.vcId, // Use the vcId returned from backend
-        issuer: "did:ethr:issuer",
-        issuanceDate: new Date().toISOString(),
-        credentialSubject: {
-          id: result.holder.verificationMethod,
-        },
-        proof: {
-          type: "EcdsaSecp256k1Signature2019",
-          created: new Date().toISOString(),
-          proofPurpose: "assertionMethod",
-          verificationMethod: result.holder.verificationMethod,
-          proofValue: signature,
-        },
-      }
+      const credential = await api.credentials.getCredentialPublic(result.vcId)
 
       setClaimedCredential(credential as any)
       setStep("success")
