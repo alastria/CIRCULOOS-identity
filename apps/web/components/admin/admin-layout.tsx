@@ -5,7 +5,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useAccount, useDisconnect } from "wagmi"
-import { LayoutDashboard, Users, Ban, Settings, Menu, X, LogOut, ChevronRight } from "lucide-react"
+import { LayoutDashboard, Users, Ban, Settings, Menu, X, LogOut, ChevronRight, Cpu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useI18n } from "@/lib/i18n/provider"
@@ -13,6 +13,7 @@ import { useI18n } from "@/lib/i18n/provider"
 const getNavigation = (t: (key: string) => string) => [
   { name: t("admin.layout.dashboard"), href: "/admin", icon: LayoutDashboard },
   { name: t("admin.layout.issuers"), href: "/admin/issuers", icon: Users },
+  { name: t("admin.layout.iot"), href: "/admin/iot", icon: Cpu },
   { name: t("admin.layout.revoke"), href: "/admin/revoke", icon: Ban },
   { name: t("admin.layout.config"), href: "/admin/config", icon: Settings },
 ]

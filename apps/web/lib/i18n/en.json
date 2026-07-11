@@ -529,6 +529,7 @@
     "layout": {
       "dashboard": "Dashboard",
       "issuers": "Issuers",
+      "iot": "IoT Devices",
       "revoke": "Revoke",
       "config": "Configuration",
       "admin": "Admin",
@@ -591,6 +592,41 @@
       },
       "pendingSync": "Pending blockchain sync...",
       "viewOnExplorer": "View on Explorer"
+    },
+    "iot": {
+      "title": "IoT Devices",
+      "subtitle": "Provisioned devices and their on-chain attestations (Phase 1 pilot)",
+      "searchPlaceholder": "Search by alias or address...",
+      "table": {
+        "alias": "Alias",
+        "address": "Address",
+        "lastAttestation": "Last attestation",
+        "status": "Status"
+      },
+      "status": {
+        "active": "Active",
+        "stale": "No recent activity"
+      },
+      "messages": {
+        "notConfigured": "NEXT_PUBLIC_ATTESTATION_REGISTRY_ADDRESS is not configured",
+        "loadError": "Failed to load devices",
+        "noDevices": "No devices with attestations found"
+      },
+      "detail": {
+        "back": "Back to devices",
+        "subtitle": "{count} attestations recorded",
+        "table": {
+          "timestamp": "Timestamp",
+          "eventHash": "Event Hash",
+          "tx": "Transaction",
+          "verification": "Verification"
+        },
+        "verified": "Signature verified",
+        "notVerified": "Signature not verified",
+        "noAttestations": "This device has no attestations yet",
+        "prev": "Previous",
+        "next": "Next"
+      }
     },
     "applications": {
       "title": "Application Management",

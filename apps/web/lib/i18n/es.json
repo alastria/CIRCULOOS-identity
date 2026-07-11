@@ -530,6 +530,7 @@
     "layout": {
       "dashboard": "Dashboard",
       "issuers": "Emisores",
+      "iot": "Dispositivos IoT",
       "revoke": "Revocar",
       "config": "Configuración",
       "admin": "Admin",
@@ -592,6 +593,41 @@
       },
       "pendingSync": "Pendiente sincronización blockchain...",
       "viewOnExplorer": "Ver en Explorer"
+    },
+    "iot": {
+      "title": "Dispositivos IoT",
+      "subtitle": "Dispositivos aprovisionados y sus atestaciones on-chain (piloto Fase 1)",
+      "searchPlaceholder": "Buscar por alias o address...",
+      "table": {
+        "alias": "Alias",
+        "address": "Address",
+        "lastAttestation": "Última atestación",
+        "status": "Estado"
+      },
+      "status": {
+        "active": "Activo",
+        "stale": "Sin actividad reciente"
+      },
+      "messages": {
+        "notConfigured": "Falta configurar NEXT_PUBLIC_ATTESTATION_REGISTRY_ADDRESS",
+        "loadError": "Error al cargar dispositivos",
+        "noDevices": "No se encontraron dispositivos con atestaciones"
+      },
+      "detail": {
+        "back": "Volver a dispositivos",
+        "subtitle": "{count} atestaciones registradas",
+        "table": {
+          "timestamp": "Fecha",
+          "eventHash": "Event Hash",
+          "tx": "Transacción",
+          "verification": "Verificación"
+        },
+        "verified": "Firma verificada",
+        "notVerified": "Firma no verificada",
+        "noAttestations": "Este dispositivo no tiene atestaciones todavía",
+        "prev": "Anterior",
+        "next": "Siguiente"
+      }
     },
     "applications": {
       "title": "Gestión de Solicitudes",
