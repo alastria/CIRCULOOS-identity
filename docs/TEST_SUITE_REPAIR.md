@@ -57,8 +57,8 @@ longer called).
 
 | # | Where | Issue | Impact |
 |---|---|---|---|
-| P1 | `libs/common/src/eip712/types/circuloos-marketplace.ts:51-52` | The issuance message signs `holderAddress \|\| id`; with `holderAddress` present, `credentialSubject.id` is not covered by the issuer signature. | Holder can be swapped without breaking the issuer signature. |
-| P2 | `libs/common/src/verifier.ts:149` | `requireW3CCompliance` compares the DID `subjectId` with the recovered bare `0x` address as raw strings. | The holder check can never succeed. |
+| P1 | `libs/common/src/eip712/types/circuloos-marketplace.ts:51-52` | The issuance message signs `holderAddress \|\| id`; with `holderAddress` present, `credentialSubject.id` is not covered by the issuer signature. | **Fixed** with the employee credential: the holder is always derived from `credentialSubject.id` (`subjectAddress`, `eip712/utils.ts`); a disagreeing `holderAddress` is rejected. |
+| P2 | `libs/common/src/verifier.ts:149` | `requireW3CCompliance` compares the DID `subjectId` with the recovered bare `0x` address as raw strings. | **Fixed**: compares normalised addresses. |
 | P3 | `apps/verifier/src/routes/verify.ts` | The on-chain subject check and the holder-proof check were removed; `checks.notExpired` is always `VALID` (TODO at line 138). | `/verify` does not bind credential to holder nor check expiry. |
 | P4 | `apps/verifier/src/routes/verify.ts` | On-chain/registry errors return 500 with the raw error text (previously 502 with a friendly message). | Internal error details reach the client. |
 | P5 | `apps/verifier` | `POST /verify/presentation` has no tests. | — |
@@ -66,6 +66,9 @@ longer called).
 | P7 | `apps/issuer/src/routes/playground.ts:36,61` | Response schema drops `calldata`; reads a `holderAddress` that `createDraftVC` deleted (subject always zero address). | Playground only; not registered in production. |
 | P8 | `apps/issuer/src/services/notification.service.ts:31` | Trailing `/` in `APP_PUBLIC_URL` produces `//claim`. | Cosmetic / broken link. |
 | P9 | `libs/common/src/config/verifier.schema.ts` | See KNOWN-BUG above. | Config silently ignored. |
+| P10 | `libs/common/src/eip712/types/circuloos-marketplace.ts` | Marketplace dates are signed as `toLocaleDateString('es-ES')` without a fixed time zone; the issuer signs in the browser and the server rebuilds the message in its own time zone. | Signatures can fail to verify near midnight across time zones; changes within the same day are not covered. The employee schema signs the exact ISO strings. |
+| P11 | `apps/issuer/src/services/registry.service.ts:78-80` | `recordIssuance(vcHash, subject)` passes the subject **DID** where the contract expects an address; the error is logged and swallowed. | Credentials are not recorded on-chain, so on-chain status/revocation cannot work. To fix in plan phase A2. |
+| P12 | `apps/issuer/src/services/credential.service.ts` `loadVC` | After the claim, finalize() stores a presentation (no `id`) under the VC id; `loadVC` discards objects without `id`. | A claimed credential cannot be loaded with `loadVC`; `loadIssuedCredential` was added for the employee reference. |
 
-P1–P3 sit exactly where the employee credential and the login verification (plan phases A1/A3) are
+P3 (verification for login) is planned for phase A3. P1–P3 sat exactly where the employee credential and the login verification (plan phases A1/A3) are
 built; they will be fixed there, with their own failing tests first.

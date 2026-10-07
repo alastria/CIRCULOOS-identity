@@ -37,6 +37,7 @@ export enum CredentialType {
   StudentCredential = 'StudentCredential',
   // Schema-specific types (map to EIP-712 schemas)
   CirculoosMarketplaceCredential = 'CirculoosMarketplaceCredential',
+  CirculoosEmployeeCredential = 'CirculoosEmployeeCredential',
 }
 
 /**
@@ -45,6 +46,7 @@ export enum CredentialType {
  */
 export const CredentialTypeToSchemaId: Record<string, string> = {
   'CirculoosMarketplaceCredential': 'circuloos-marketplace',
+  'CirculoosEmployeeCredential': 'circuloos-employee',
   'IdentityCredential': 'circuloos-marketplace', // Default for now
   'EmployeeCredential': 'employee-badge', // Future
   'StudentCredential': 'student-credential', // Future

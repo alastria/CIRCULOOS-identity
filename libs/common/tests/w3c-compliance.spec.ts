@@ -161,21 +161,12 @@ describe('W3C Compliance Enhancements', () => {
       // Manually corrupt the credentialSubject.id
       invalidIdVC.credentialSubject.id = 'invalid-address'
 
-      const signature = await signCredentialIssuance(testIssuerWallet.privateKey, testDomain, invalidIdVC)
-      const invalidSigned = {
-        vc: invalidIdVC,
-        issuerProof: buildCredentialProof({
-          signature,
-          signer: testIssuerWallet.address,
-          domain: testDomain,
-          proofPurpose: 'assertionMethod'
-        })
-      }
-
-      const result = await verifySignedCredential(invalidSigned, { requireW3CCompliance: true })
-
-      // Should still verify signature, but W3C compliance may fail
-      expect(result.issuer.ok).toBe(true)
+      // Since fix P1 (docs/TEST_SUITE_REPAIR.md) the issuer signs the holder derived from
+      // credentialSubject.id; a subject id that is not an address cannot be signed at all,
+      // instead of producing a valid signature that ignores the corrupted id.
+      await expect(
+        signCredentialIssuance(testIssuerWallet.privateKey, testDomain, invalidIdVC)
+      ).rejects.toThrow(/credentialSubject\.id is not an Ethereum address/)
     })
   })
 

@@ -1,3 +1,5 @@
+import { DIDUtils } from '../utils/did'
+
 /**
  * EIP-712 Utility Functions
  * Formatting and helper functions for better UX
@@ -99,4 +101,26 @@ export function formatIssuerName(issuer: any, defaultName: string = 'Emisor'): s
   }
 
   return issuerString || defaultName
+}
+
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+
+/**
+ * The address an issuer signs as the credential's holder: always derived from
+ * `credentialSubject.id`, the field verifiers and W3C consumers read. A
+ * `holderAddress` claim, if present, must agree with it — otherwise one field
+ * could be signed while the other is trusted (fix P1, docs/TEST_SUITE_REPAIR.md).
+ * Throws on disagreement, so signing and verification both fail.
+ */
+export function subjectAddress(credentialSubject: any): string {
+  const fromId = DIDUtils.normalizeAddress(credentialSubject?.id || '')
+  const fromHolderAddress = DIDUtils.normalizeAddress(credentialSubject?.holderAddress || '')
+  const isAddress = (v: string) => /^0x[0-9a-f]{40}$/.test(v)
+  if (fromId && !isAddress(fromId)) {
+    throw new Error('credentialSubject.id is not an Ethereum address or an address-based DID')
+  }
+  if (fromId && fromHolderAddress && fromId !== fromHolderAddress) {
+    throw new Error('credentialSubject.holderAddress does not match credentialSubject.id')
+  }
+  return fromId || fromHolderAddress || ZERO_ADDRESS
 }

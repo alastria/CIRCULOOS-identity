@@ -6,7 +6,7 @@
  */
 
 import { registerCredentialType } from '../registry'
-import { formatDate, extractIssuerAddress, formatIssuerName } from '../utils'
+import { formatDate, extractIssuerAddress, formatIssuerName, subjectAddress } from '../utils'
 import { DIDUtils } from '../../utils/did'
 
 registerCredentialType({
@@ -14,7 +14,7 @@ registerCredentialType({
   displayName: 'Circuloos Marketplace',
   description: 'Credencial de acceso al marketplace de Circuloos',
   icon: '',
-  version: '1.0.0',
+  version: '2.0.0',
 
   schema: {
     // =========================================================================
@@ -43,15 +43,20 @@ registerCredentialType({
           // Validity period
           { name: 'issuedAt', type: 'string' },
           { name: 'expiresAt', type: 'string' },
+
+          // Employee credential this access credential is based on (empty if none).
+          // Its hash is hashVC(), the same key the on-chain credential status uses.
+          { name: 'employeeCredentialId', type: 'string' },
+          { name: 'employeeCredentialHash', type: 'string' },
         ],
       },
 
       messageBuilder: (vc: any) => {
         const issuerString = typeof vc.issuer === 'string' ? vc.issuer : vc.issuer?.id || ''
 
-        // Normalize holderAddress: extract plain Ethereum address from DID if needed
-        const rawHolderAddress = vc.credentialSubject?.holderAddress || vc.credentialSubject?.id || ''
-        const normalizedHolderAddress = DIDUtils.normalizeAddress(rawHolderAddress) || '0x0000000000000000000000000000000000000000'
+        // Holder = credentialSubject.id; a disagreeing holderAddress throws (fix P1)
+        const normalizedHolderAddress = subjectAddress(vc.credentialSubject)
+        const employeeCredential = vc.credentialSubject?.employeeCredential
 
         return {
           action: 'Emitir credencial de acceso al marketplace',
@@ -66,6 +71,9 @@ registerCredentialType({
 
           issuedAt: formatDate(vc.validFrom || vc.issuanceDate),
           expiresAt: formatDate(vc.validUntil || vc.expirationDate),
+
+          employeeCredentialId: employeeCredential?.id || '',
+          employeeCredentialHash: employeeCredential?.credentialHash || '',
         }
       }
     },

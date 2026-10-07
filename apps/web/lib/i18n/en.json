@@ -461,7 +461,11 @@
         "companyNamePlaceholder": "E.g: Alastria Blockchain Ecosystem",
         "attributes": "Attributes",
         "addAttribute": "Add attribute",
-        "submit": "Send Invitation"
+        "submit": "Send Invitation",
+        "taxID": "Organisation tax ID / VAT",
+        "taxIDPlaceholder": "With country prefix, e.g. ESB12345678",
+        "addressCountry": "Country (ISO)",
+        "organizationHint": "The legal name, tax ID and country are signed into the credential and cannot be changed afterwards."
       },
       "success": "Invitation sent successfully",
       "error": "Error sending invitation",

@@ -5,8 +5,32 @@ import {
   TrustedIssuerRegistryClient,
   IStorageAdapter,
   DIDUtils,
-  getCredentialType
+  getCredentialType,
+  hashVC,
+  EMPLOYEE_SCHEMA_ID,
+  EMPLOYEE_VC_TYPE,
+  Organization
 } from '@circuloos/common'
+import { EmployeeCredentialRef } from './credential.service'
+
+export interface PrepareOptions {
+  /** EIP-712 schema id: 'circuloos-marketplace' (default) or 'circuloos-employee'. */
+  credentialType?: string
+  /** Required for 'circuloos-employee'. */
+  organization?: Partial<Organization>
+  /** Marketplace only: id of an issued employee credential of the same holder. */
+  employeeCredentialId?: string
+}
+
+const MARKETPLACE_SCHEMA_ID = 'circuloos-marketplace'
+
+/**
+ * Schema of a draft built by this server in prepare(): read from its `type` only
+ * (never from the subject), since prepare() sets the type itself.
+ */
+function schemaIdOfDraft(vc: any): string {
+  return Array.isArray(vc?.type) && vc.type.includes(EMPLOYEE_VC_TYPE) ? EMPLOYEE_SCHEMA_ID : MARKETPLACE_SCHEMA_ID
+}
 import { SecurityService } from './security.service'
 import { config } from '../config'
 import { logger } from '../logger'
@@ -35,7 +59,13 @@ export class IssuanceService {
     this.notification = new NotificationService(opts.emailSender)
   }
 
-  async prepare(email: string, holderAddress?: string, companyName?: string, customClaims?: Record<string, any>) {
+  async prepare(
+    email: string,
+    holderAddress?: string,
+    companyName?: string,
+    customClaims?: Record<string, any>,
+    options: PrepareOptions = {}
+  ) {
     // Validate required holder address for W3C compliance
     if (!holderAddress?.trim()) {
       throw new Error('holderAddress is required for credential issuance')
@@ -61,6 +91,17 @@ export class IssuanceService {
       throw new Error('ISSUER_HMAC_SECRET is required in production')
     }
 
+    const credentialType = options.credentialType || MARKETPLACE_SCHEMA_ID
+    if (credentialType !== MARKETPLACE_SCHEMA_ID && credentialType !== EMPLOYEE_SCHEMA_ID) {
+      throw new Error(`unsupported credentialType: ${credentialType}`)
+    }
+    if (options.employeeCredentialId && credentialType !== MARKETPLACE_SCHEMA_ID) {
+      throw new Error('employeeCredentialId is only valid for marketplace credentials')
+    }
+    const employeeCredential = options.employeeCredentialId
+      ? await this.resolveEmployeeCredential(options.employeeCredentialId, normalizedHolder)
+      : undefined
+
     // 1. Create Draft VC
     const { id, draftVc } = this.credential.createDraftVC(
       normalizedHolder,
@@ -68,7 +109,10 @@ export class IssuanceService {
       issuerDid || 'did:example:issuer', // Fallback only for dev/test
       hmacSecret || 'dev-secret-only-for-testing',
       companyName,
-      customClaims
+      customClaims,
+      credentialType,
+      options.organization,
+      employeeCredential
     )
 
     // 2. Generate OTP and Token
@@ -96,6 +140,25 @@ export class IssuanceService {
     // NOTE: Email is NOT sent here anymore. It will be sent after Issuer signs in mint().
 
     return { id, token, otp, expiresAt: exp, domain, holderAddress: normalizedHolder, draftVc }
+  }
+
+  /**
+   * An access credential may reference an employee credential only if it was issued
+   * (signed, stored) to the same holder, before or after the holder claimed it. The hash
+   * is hashVC(), the key the on-chain credential status uses.
+   */
+  private async resolveEmployeeCredential(employeeCredentialId: string, holderAddress: string): Promise<EmployeeCredentialRef> {
+    const vc: any = await this.credential.loadIssuedCredential(employeeCredentialId)
+    if (!vc) throw new Error(`employee credential not found: ${employeeCredentialId}`)
+    if (!Array.isArray(vc.type) || !vc.type.includes(EMPLOYEE_VC_TYPE)) {
+      throw new Error(`credential ${employeeCredentialId} is not an employee credential`)
+    }
+    if (!vc.proof) throw new Error(`employee credential ${employeeCredentialId} is not issued`)
+    const employeeHolder = DIDUtils.normalizeAddress(vc.credentialSubject?.id || '')
+    if (employeeHolder !== holderAddress.toLowerCase()) {
+      throw new Error('employee credential belongs to a different holder')
+    }
+    return { id: vc.id, credentialHash: hashVC(vc) }
   }
 
   async mint(id: string, issuerSignature?: string, issuerSigner?: string, domainOverride?: any) {
@@ -149,8 +212,8 @@ export class IssuanceService {
     }, 'Mint signature verification starting')
 
     // Use the new schema registry to verify signature with the same types used by frontend
-    // This ensures the EIP-712 typed data hash matches
-    const credentialType = 'circuloos-marketplace'
+    // This ensures the EIP-712 typed data hash matches.
+    const credentialType = schemaIdOfDraft(vc)
     const schema = getCredentialType(credentialType)
 
     let recovered: string | null = null
@@ -166,9 +229,13 @@ export class IssuanceService {
         recovered = utils.verifyTypedData(domain, types, message, issuerSignature)
         logger.debug({ recovered }, 'Schema registry recovered address')
       } catch (schemaErr: any) {
-        logger.warn({ error: schemaErr.message }, 'Schema registry verification failed, trying legacy')
-        // Fallback to legacy verification
-        recovered = this.security.verifySignature(domain, vc, issuerSignature)
+        // The legacy format only ever existed for marketplace credentials
+        if (credentialType === MARKETPLACE_SCHEMA_ID) {
+          logger.warn({ error: schemaErr.message }, 'Schema registry verification failed, trying legacy')
+          recovered = this.security.verifySignature(domain, vc, issuerSignature)
+        } else {
+          logger.warn({ error: schemaErr.message, credentialType }, 'Schema registry verification failed')
+        }
       }
     } else {
       // Fallback to legacy verification if schema not found
@@ -374,7 +441,8 @@ export class IssuanceService {
       providedTimestamp,
       providedSignature,
       credentialPreview,
-      !!providedClaimMessage // Flag to indicate if we should use message directly
+      !!providedClaimMessage, // Flag to indicate if we should use message directly
+      schemaIdOfDraft(vc)
     )
 
     logger.debug({ recovered, providedSigner }, 'Finalize signature verification')
@@ -459,10 +527,10 @@ export class IssuanceService {
     timestamp: string | undefined,
     signature: string,
     credentialPreviewOrMessage?: any,
-    useMessageDirectly: boolean = false
+    useMessageDirectly: boolean = false,
+    credentialType: string = MARKETPLACE_SCHEMA_ID
   ): string {
     // Use the new schema registry to verify signature with the same types used by frontend
-    const credentialType = 'circuloos-marketplace'
     const schema = getCredentialType(credentialType)
 
     let recovered: string | null = null

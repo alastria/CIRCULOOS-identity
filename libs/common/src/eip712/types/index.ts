@@ -8,6 +8,7 @@
 // Register all credential types
 import './generic'                    // Legacy/fallback schema
 import './circuloos-marketplace'      // Circuloos Marketplace credential
+import './circuloos-employee'         // Circuloos Employee credential (organisation)
 
 // Export registry functions
 export * from '../registry'

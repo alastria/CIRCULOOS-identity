@@ -164,7 +164,9 @@ export class IssueController {
                 expiresAt: rec.expiresAt,
                 domain: rec.domain,
                 credentialType,
-                issuer: issuer || 'Unknown'
+                issuer: issuer || 'Unknown',
+                // Employee credential: shown to the holder and included in the claim message
+                organization: draftVc?.credentialSubject?.worksFor?.legalName || undefined
             })
         } catch (err: any) {
             request.log.error(err)
@@ -192,11 +194,16 @@ export class IssueController {
             }
 
             // Call issuance service with JWT-authenticated issuer
-            const result = await this.issuanceService.prepare(body.email, body.holderAddress, body.companyName)
+            const result = await this.issuanceService.prepare(body.email, body.holderAddress, body.companyName, undefined, {
+                credentialType: body.credentialType,
+                organization: body.organization,
+                employeeCredentialId: body.employeeCredentialId,
+            })
             return reply.send(result)
         } catch (err: any) {
             request.log.error(err)
-            return reply.code(400).send({ error: err.message })
+            // OrganizationValidationError carries a machine-readable code (MISSING_TAX_ID, ...)
+            return reply.code(400).send({ error: err.message, ...(err.code ? { code: err.code } : {}) })
         }
     }
 

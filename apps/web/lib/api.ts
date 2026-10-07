@@ -98,15 +98,27 @@ export interface TokenInfoResponse {
     domain: any
     credentialType: string
     issuer: string
+    /** Employee credential only: the organisation's legal name. */
+    organization?: string
 }
 
 export const api = {
     issuer: {
-        prepare: async (email: string, holderAddress: string, companyName?: string) => {
+        prepare: async (
+            email: string,
+            holderAddress: string,
+            companyName?: string,
+            options?: {
+                credentialType?: string
+                organization?: { legalName: string; taxID: string; addressCountry: string }
+                employeeCredentialId?: string
+            },
+        ) => {
             const { data } = await issuerApi.post<IssuePrepareResponse>("/issue/prepare", {
                 email,
                 holderAddress,
                 companyName,
+                ...(options || {}),
             })
             return data
         },
