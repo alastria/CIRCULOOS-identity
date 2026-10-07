@@ -6,11 +6,17 @@ import { CredentialsFixture } from '../fixtures/credentials.fixture'
 import { SignaturesFixture } from '../fixtures/signatures.fixture'
 
 // Mock common
+// NOTE: src/routes/verify.ts was rewritten as the simplified "user-friendly" API
+// (registered in src/index.ts as `simplifiedVerifyRoutes`): POST /verify now takes
+// `{ credential, checkOnChain }` (a W3C VC with embedded proof), verifies the issuer
+// signature with `verifyCredentialIssuance` and answers 200 `{ valid, issuer, holder, checks, error }`.
+// Request-shape errors are 400 and unexpected failures are caught and returned as 500.
 vi.mock('@circuloos/common', async () => {
     const actual = await vi.importActual('@circuloos/common') as any
     return {
         ...actual,
         verifySignedCredential: vi.fn(),
+        verifyCredentialIssuance: vi.fn(),
         createTrustedIssuerRegistryClient: vi.fn().mockReturnValue({
             isTrustedIssuer: vi.fn().mockResolvedValue(true)
         }),
@@ -28,7 +34,17 @@ vi.mock('../../src/config', () => ({
     }
 }))
 
-import { verifySignedCredential } from '@circuloos/common'
+import { verifyCredentialIssuance, verifySignedCredential } from '@circuloos/common'
+
+// In production the issuer sets proof.verificationMethod to the signer address
+// (libs/common/src/eip712.ts), and the route compares it with the recovered address.
+const credential = {
+    ...CredentialsFixture.signedCredential,
+    proof: {
+        ...CredentialsFixture.signedCredential.proof,
+        verificationMethod: SignaturesFixture.issuerAddress
+    }
+}
 
 describe('Verify Route', () => {
     let server: any
@@ -48,15 +64,12 @@ describe('Verify Route', () => {
     })
 
     it('verifies a valid signed credential', async () => {
-        (verifySignedCredential as any).mockReturnValue({
-            issuer: { ok: true, recovered: SignaturesFixture.issuerAddress },
-            holder: { ok: true, recovered: SignaturesFixture.holderAddress }
-        })
+        (verifyCredentialIssuance as any).mockReturnValue(SignaturesFixture.issuerAddress)
 
         const response = await server.inject({
             method: 'POST',
             url: '/verify',
-            payload: CredentialsFixture.signedCredential
+            payload: { credential }
         })
 
         const body = JSON.parse(response.payload)
@@ -64,58 +77,81 @@ describe('Verify Route', () => {
             console.log('Verify failed:', body)
         }
         expect(response.statusCode).toBe(200)
-        expect(body.ok).toBe(true)
+        expect(body.valid).toBe(true)
+        expect(body.error).toBeUndefined()
+        expect(body.issuer).toEqual({
+            did: credential.issuer,
+            address: SignaturesFixture.issuerAddress,
+            signatureValid: true,
+            trusted: true
+        })
+        expect(body.holder.did).toBe(credential.credentialSubject.id)
+        expect(body.checks.signature).toBe('VALID')
+        expect(body.checks.trustedIssuer).toBe('VALID')
+        expect(verifyCredentialIssuance).toHaveBeenCalledWith(
+            credential.proof.domain,
+            credential,
+            credential.proof.signature,
+            'circuloos-marketplace'
+        )
+        expect(mockRegistry.isTrustedIssuer).toHaveBeenCalledWith(SignaturesFixture.issuerAddress)
     })
 
     it('fails when issuer proof is missing', async () => {
         const response = await server.inject({
             method: 'POST',
             url: '/verify',
-            payload: { ...CredentialsFixture.signedCredential, proof: undefined }
+            payload: { credential: { ...credential, proof: undefined } }
         })
 
         expect(response.statusCode).toBe(400)
-        expect(JSON.parse(response.payload).error).toContain('Invalid W3C VC')
+        const body = JSON.parse(response.payload)
+        expect(body.valid).toBe(false)
+        expect(body.error).toContain('Invalid W3C VC')
+        expect(verifyCredentialIssuance).not.toHaveBeenCalled()
     })
 
     it('fails when verification fails', async () => {
-        (verifySignedCredential as any).mockReturnValue({
-            issuer: { ok: false, reason: 'invalid signature' },
-            holder: { ok: true }
-        })
+        // Signature cannot be recovered -> verification result (200) with valid=false
+        (verifyCredentialIssuance as any).mockReturnValue(null)
 
         const response = await server.inject({
             method: 'POST',
             url: '/verify',
-            payload: CredentialsFixture.signedCredential
+            payload: { credential }
         })
 
-        expect(response.statusCode).toBe(400)
-        expect(JSON.parse(response.payload).ok).toBe(false)
+        expect(response.statusCode).toBe(200)
+        const body = JSON.parse(response.payload)
+        expect(body.valid).toBe(false)
+        expect(body.issuer.signatureValid).toBe(false)
+        expect(body.checks.signature).toBe('INVALID')
+        expect(body.error).toBe('Invalid signature or unknown credential type')
+        // Without a recovered address the registry must not be consulted
+        expect(mockRegistry.isTrustedIssuer).not.toHaveBeenCalled()
     })
 
     it('checks trusted issuer registry if available', async () => {
-        (verifySignedCredential as any).mockReturnValue({
-            issuer: { ok: true, recovered: SignaturesFixture.issuerAddress },
-            holder: { ok: true }
-        })
+        (verifyCredentialIssuance as any).mockReturnValue(SignaturesFixture.issuerAddress)
         mockRegistry.isTrustedIssuer.mockResolvedValue(false)
 
         const response = await server.inject({
             method: 'POST',
             url: '/verify',
-            payload: CredentialsFixture.signedCredential
+            payload: { credential }
         })
 
-        expect(response.statusCode).toBe(400)
-        expect(JSON.parse(response.payload).error).toBe('issuer not trusted on chain')
+        expect(response.statusCode).toBe(200)
+        const body = JSON.parse(response.payload)
+        expect(body.valid).toBe(false)
+        expect(body.error).toBe('Issuer not in trusted registry')
+        expect(body.checks.trustedIssuer).toBe('INVALID')
+        expect(body.issuer.trusted).toBe(false)
+        expect(mockRegistry.isTrustedIssuer).toHaveBeenCalledWith(SignaturesFixture.issuerAddress)
     })
 
     it('checks onchain service if available', async () => {
-        (verifySignedCredential as any).mockReturnValue({
-            issuer: { ok: true, recovered: '0x1234567890123456789012345678901234567890' },
-            holder: { ok: true }
-        })
+        (verifyCredentialIssuance as any).mockReturnValue(SignaturesFixture.issuerAddress)
         mockRegistry.isTrustedIssuer.mockResolvedValue(true)
 
         const mockOnchainService = {
@@ -130,18 +166,20 @@ describe('Verify Route', () => {
         const response = await server.inject({
             method: 'POST',
             url: '/verify',
-            payload: CredentialsFixture.signedCredential
+            payload: { credential }
         })
 
         expect(response.statusCode).toBe(200)
-        expect(mockOnchainService.isIssued).toHaveBeenCalled()
+        const body = JSON.parse(response.payload)
+        expect(body.valid).toBe(true)
+        expect(body.checks.onChainStatus).toBe('VALID')
+        expect(body.checks.notRevoked).toBe('VALID')
+        expect(mockOnchainService.isIssued).toHaveBeenCalledWith('0xhash')
+        expect(mockOnchainService.isRevoked).toHaveBeenCalledWith('0xhash')
     })
 
     it('fails when credential is not issued on chain', async () => {
-        (verifySignedCredential as any).mockReturnValue({
-            issuer: { ok: true, recovered: '0x1234567890123456789012345678901234567890' },
-            holder: { ok: true }
-        })
+        (verifyCredentialIssuance as any).mockReturnValue(SignaturesFixture.issuerAddress)
         mockRegistry.isTrustedIssuer.mockResolvedValue(true)
 
         const mockOnchainService = {
@@ -153,18 +191,18 @@ describe('Verify Route', () => {
         const response = await server.inject({
             method: 'POST',
             url: '/verify',
-            payload: CredentialsFixture.signedCredential
+            payload: { credential }
         })
 
-        expect(response.statusCode).toBe(400)
-        expect(JSON.parse(response.payload).error).toBe('credential not recorded on chain')
+        expect(response.statusCode).toBe(200)
+        const body = JSON.parse(response.payload)
+        expect(body.valid).toBe(false)
+        expect(body.error).toBe('Credential not recorded on-chain')
+        expect(body.checks.onChainStatus).toBe('INVALID')
     })
 
     it('fails when credential is revoked on chain', async () => {
-        (verifySignedCredential as any).mockReturnValue({
-            issuer: { ok: true, recovered: '0x1234567890123456789012345678901234567890' },
-            holder: { ok: true }
-        })
+        (verifyCredentialIssuance as any).mockReturnValue(SignaturesFixture.issuerAddress)
         mockRegistry.isTrustedIssuer.mockResolvedValue(true)
 
         const mockOnchainService = {
@@ -176,14 +214,18 @@ describe('Verify Route', () => {
         const response = await server.inject({
             method: 'POST',
             url: '/verify',
-            payload: CredentialsFixture.signedCredential
+            payload: { credential }
         })
 
-        expect(response.statusCode).toBe(400)
-        expect(JSON.parse(response.payload).error).toBe('credential has been revoked on chain')
+        expect(response.statusCode).toBe(200)
+        const body = JSON.parse(response.payload)
+        expect(body.valid).toBe(false)
+        expect(body.error).toBe('Credential has been revoked')
+        expect(body.checks.notRevoked).toBe('INVALID')
     })
 
-    it('fails when holder does not match on-chain subject', async () => {
+    // OBSOLETE: on-chain subject/holder validation (onchainService.store.loadAll) was removed from POST /verify in the simplified route; src/routes/verify.ts:155-178 only checks isIssued/isRevoked
+    it.skip('fails when holder does not match on-chain subject', async () => {
         (verifySignedCredential as any).mockReturnValue({
             issuer: { ok: true, recovered: '0x1234567890123456789012345678901234567890' },
             holder: { ok: true, recovered: '0xholder' }
@@ -213,10 +255,8 @@ describe('Verify Route', () => {
     })
 
     it('handles onchain service errors gracefully', async () => {
-        (verifySignedCredential as any).mockReturnValue({
-            issuer: { ok: true, recovered: '0x1234567890123456789012345678901234567890' },
-            holder: { ok: true }
-        })
+        // Upstream failures are caught by the route's try/catch and answered as 500 { valid: false, error }
+        (verifyCredentialIssuance as any).mockReturnValue(SignaturesFixture.issuerAddress)
         mockRegistry.isTrustedIssuer.mockResolvedValue(true)
 
         const mockOnchainService = {
@@ -228,35 +268,35 @@ describe('Verify Route', () => {
         const response = await server.inject({
             method: 'POST',
             url: '/verify',
-            payload: CredentialsFixture.signedCredential
+            payload: { credential }
         })
 
-        expect(response.statusCode).toBe(502)
-        expect(JSON.parse(response.payload).error).toBe('failed to query onchain service')
+        expect(response.statusCode).toBe(500)
+        const body = JSON.parse(response.payload)
+        expect(body.valid).toBe(false)
+        expect(body.error).toBe('Network error')
     })
 
     it('handles registry query errors gracefully', async () => {
-        (verifySignedCredential as any).mockReturnValue({
-            issuer: { ok: true, recovered: '0x1234567890123456789012345678901234567890' },
-            holder: { ok: true }
-        })
+        (verifyCredentialIssuance as any).mockReturnValue(SignaturesFixture.issuerAddress)
         mockRegistry.isTrustedIssuer.mockRejectedValue(new Error('Registry network error'))
 
         const response = await server.inject({
             method: 'POST',
             url: '/verify',
-            payload: CredentialsFixture.signedCredential
+            payload: { credential }
         })
 
-        expect(response.statusCode).toBe(502)
-        expect(JSON.parse(response.payload).error).toBe('failed to query trusted issuer registry')
+        expect(response.statusCode).toBe(500)
+        const body = JSON.parse(response.payload)
+        expect(body.valid).toBe(false)
+        expect(body.error).toBe('Registry network error')
     })
 
     it('handles subject validation errors gracefully', async () => {
-        (verifySignedCredential as any).mockReturnValue({
-            issuer: { ok: true, recovered: '0x1234567890123456789012345678901234567890' },
-            holder: { ok: true, recovered: '0xholder' }
-        })
+        // The simplified route no longer reads the credential store for subject validation,
+        // so a failing store cannot affect the verification result.
+        (verifyCredentialIssuance as any).mockReturnValue(SignaturesFixture.issuerAddress)
         mockRegistry.isTrustedIssuer.mockResolvedValue(true)
 
         const mockOnchainService = {
@@ -271,10 +311,11 @@ describe('Verify Route', () => {
         const response = await server.inject({
             method: 'POST',
             url: '/verify',
-            payload: CredentialsFixture.signedCredential
+            payload: { credential }
         })
 
-        // Should still succeed since subject validation error is caught
         expect(response.statusCode).toBe(200)
+        expect(JSON.parse(response.payload).valid).toBe(true)
+        expect(mockOnchainService.store.loadAll).not.toHaveBeenCalled()
     })
 })

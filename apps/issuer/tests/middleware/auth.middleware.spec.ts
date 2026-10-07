@@ -10,6 +10,13 @@ vi.mock('jsonwebtoken', () => ({
 }))
 
 import jwt from 'jsonwebtoken'
+import { config } from '../../src/config'
+
+// The middleware reads the secret from the issuer typed config (config.security.jwtSecret,
+// resolved once by loadConfig()) instead of process.env.JWT_SECRET at request time.
+vi.mock('../../src/config', () => ({
+  config: { security: { jwtSecret: undefined as string | undefined } }
+}))
 
 describe('Auth Middleware', () => {
   let mockRequest: Partial<FastifyRequest>
@@ -26,7 +33,7 @@ describe('Auth Middleware', () => {
       clearCookie: vi.fn().mockReturnThis()
     }
 
-    process.env.JWT_SECRET = 'test-secret-key-for-testing-purposes'
+    ;(config as any).security.jwtSecret = 'test-secret-key-for-testing-purposes'
   })
 
   afterEach(() => {
@@ -123,7 +130,7 @@ describe('Auth Middleware', () => {
     })
 
     it('should handle missing JWT_SECRET gracefully', async () => {
-      delete process.env.JWT_SECRET
+      ;(config as any).security.jwtSecret = undefined
 
       const validToken = 'valid-jwt-token'
       ;(mockRequest as any).cookies = { auth_token: validToken }
@@ -139,7 +146,7 @@ describe('Auth Middleware', () => {
       })
 
       consoleErrorSpy.mockRestore()
-      process.env.JWT_SECRET = 'test-secret-key-for-testing-purposes'
+      ;(config as any).security.jwtSecret = 'test-secret-key-for-testing-purposes'
     })
 
     it('should support different user roles', async () => {

@@ -17,24 +17,28 @@ describe('CredentialService', () => {
     let mockStore: any
 
     beforeEach(() => {
+        // IStorageAdapter API (loadIssuance/saveIssuance/loadVC/saveVC) replaced the
+        // legacy file-store API (loadAll/writeAtomic with path keys)
         mockStore = {
-            loadAll: vi.fn(),
-            writeAtomic: vi.fn()
+            loadIssuance: vi.fn(),
+            saveIssuance: vi.fn(),
+            loadVC: vi.fn(),
+            saveVC: vi.fn()
         }
         service = new CredentialService(mockStore)
     })
 
     it('loads issuance', async () => {
         const mockData = { id: 'issuance-1' }
-        mockStore.loadAll.mockResolvedValue(mockData)
+        mockStore.loadIssuance.mockResolvedValue(mockData)
 
         const result = await service.loadIssuance('issuance-1')
         expect(result).toEqual(mockData)
-        expect(mockStore.loadAll).toHaveBeenCalledWith('issuances/issuance-1.json')
+        expect(mockStore.loadIssuance).toHaveBeenCalledWith('issuance-1')
     })
 
     it('returns null if issuance not found', async () => {
-        mockStore.loadAll.mockResolvedValue(null)
+        mockStore.loadIssuance.mockResolvedValue(null)
         const result = await service.loadIssuance('issuance-1')
         expect(result).toBeNull()
     })
@@ -42,19 +46,19 @@ describe('CredentialService', () => {
     it('saves issuance', async () => {
         const data = { id: 'issuance-1', foo: 'bar' }
         await service.saveIssuance('issuance-1', data)
-        expect(mockStore.writeAtomic).toHaveBeenCalledWith('issuances/issuance-1.json', data)
+        expect(mockStore.saveIssuance).toHaveBeenCalledWith('issuance-1', data)
     })
 
     it('loads VC', async () => {
         const mockVC = { id: 'vc-1', issuer: 'did:issuer', credentialSubject: { id: '0xholder' } }
-        mockStore.loadAll.mockResolvedValue(mockVC)
+        mockStore.loadVC.mockResolvedValue(mockVC)
         const result = await service.loadVC('vc-1')
         expect(result).toEqual(mockVC)
-        expect(mockStore.loadAll).toHaveBeenCalledWith('vcs/vc-1.json')
+        expect(mockStore.loadVC).toHaveBeenCalledWith('vc-1')
     })
 
     it('returns null if VC not found', async () => {
-        mockStore.loadAll.mockResolvedValue({})
+        mockStore.loadVC.mockResolvedValue({})
         const result = await service.loadVC('vc-1')
         expect(result).toBeNull()
     })
@@ -62,7 +66,7 @@ describe('CredentialService', () => {
     it('saves VC', async () => {
         const data: any = { vc: { id: 'vc-1' } }
         await service.saveVC('vc-1', data)
-        expect(mockStore.writeAtomic).toHaveBeenCalledWith('vcs/vc-1.json', data)
+        expect(mockStore.saveVC).toHaveBeenCalledWith('vc-1', data)
     })
 
     it('creates draft VC', () => {

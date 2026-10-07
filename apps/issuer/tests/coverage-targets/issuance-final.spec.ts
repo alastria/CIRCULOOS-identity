@@ -15,8 +15,9 @@ describe('IssuanceService - Final Coverage', () => {
 
     beforeEach(() => {
         mocks = MockBuilder.serviceMocks()
+        // Constructor option renamed `store` -> `storage` (IStorageAdapter)
         service = new IssuanceService({
-            store: mocks.credential,
+            storage: mocks.credential,
             emailSender: mocks.notification,
             trustedIssuerRegistry: mocks.registry
         } as any)
@@ -46,7 +47,7 @@ describe('IssuanceService - Final Coverage', () => {
 
             await expect(service.finalize('test', {
                 otp: '123456',
-                token: 'token-without-holder'
+                token: 'token-without.holder' // must be '<payload>.<sig>' shaped (malformed tokens rejected first)
             })).rejects.toThrow('invalid token: missing holder address binding')
         })
     })
@@ -71,7 +72,7 @@ describe('IssuanceService - Final Coverage', () => {
 
             await expect(service.finalize('test', {
                 otp: '123456',
-                token: 'token-with-different-holder'
+                token: 'token-with-different.holder'
             })).rejects.toThrow('token holder address does not match issuance record')
         })
     })
@@ -94,7 +95,7 @@ describe('IssuanceService - Final Coverage', () => {
 
         await expect(service.finalize('test', {
             otp: '123456',
-            token: 'valid-token'
+            token: 'valid.token'
         })).rejects.toThrow('already claimed')
     })
 
@@ -117,7 +118,7 @@ describe('IssuanceService - Final Coverage', () => {
 
         await expect(service.finalize('test', {
             otp: '123456',
-            token: 'valid-token'
+            token: 'valid.token'
         })).rejects.toThrow('invalid otp')
     })
 })

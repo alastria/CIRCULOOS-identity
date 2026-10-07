@@ -1,6 +1,17 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { NonceService } from '../../src/services/nonce.service'
 import { SqlJsStorageAdapter } from '@circuloos/common'
+import { config } from '../../src/config'
+
+// NonceService now reads expiry and environment from the issuer typed config
+// (config.security.nonceExpirySeconds / config.nodeEnv) instead of a hardcoded
+// 15 min constant and process.env.NODE_ENV.
+vi.mock('../../src/config', () => ({
+    config: {
+        nodeEnv: 'development',
+        security: { nonceExpirySeconds: 600 },
+    }
+}))
 
 describe('NonceService', () => {
     let nonceService: NonceService
@@ -50,13 +61,13 @@ describe('NonceService', () => {
             expect(result1.nonce).not.toBe(result2.nonce)
         })
 
-        it('should use hardcoded 15 minute expiry', async () => {
+        it('should use the configured nonce expiry (config.security.nonceExpirySeconds)', async () => {
             const address = '0x1234567890123456789012345678901234567890'
             const now = Date.now()
             const result = await nonceService.generateNonce(address)
 
             const expiryMs = result.expiresAt.getTime() - now
-            const expectedMs = 15 * 60 * 1000 // 15 minutes
+            const expectedMs = 600 * 1000 // mocked nonceExpirySeconds
 
             // Allow 1 second tolerance
             expect(expiryMs).toBeGreaterThanOrEqual(expectedMs - 1000)
@@ -138,17 +149,15 @@ describe('NonceService', () => {
 
     describe('Garbage Collection', () => {
         it('should not start GC in test environment', () => {
-            const originalEnv = process.env.NODE_ENV
-            process.env.NODE_ENV = 'test'
+            const originalEnv = config.nodeEnv
+            ;(config as any).nodeEnv = 'test'
 
             nonceService.startGarbageCollection()
 
-            expect(nonceService['gcInterval']).toBeUndefined()
-
             // Restore environment
-            if (originalEnv) {
-                process.env.NODE_ENV = originalEnv
-            }
+            ;(config as any).nodeEnv = originalEnv
+
+            expect(nonceService['gcInterval']).toBeUndefined()
         })
 
         it('should start GC interval in non-test environment', () => {

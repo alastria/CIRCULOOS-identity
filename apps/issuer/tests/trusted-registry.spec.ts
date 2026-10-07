@@ -1,27 +1,33 @@
 import { describe, expect, it, vi } from 'vitest'
 import { IssuanceService } from '../src/services/issuanceService'
-import { buildEip712Domain, signCredential } from '@circuloos/common'
+import { buildEip712Domain } from '@circuloos/common'
 import { Wallet } from 'ethers'
+import { signIssuance } from './helpers/holder-signature.helper'
 
 type MemoryStoreRecord = Record<string, any>
 
+// In-memory IStorageAdapter subset (the service no longer uses the file-store
+// writeAtomic/loadAll API; it calls saveIssuance/loadIssuance/saveVC/loadVC)
 type MemoryStore = {
-  data: Map<string, MemoryStoreRecord>
-  writeAtomic: (key: string, value: MemoryStoreRecord) => Promise<void>
-  loadAll: (key: string) => Promise<MemoryStoreRecord | undefined>
+  issuances: Map<string, MemoryStoreRecord>
+  vcs: Map<string, MemoryStoreRecord>
+  saveIssuance: (id: string, value: MemoryStoreRecord) => Promise<void>
+  loadIssuance: (id: string) => Promise<MemoryStoreRecord | null>
+  saveVC: (id: string, value: MemoryStoreRecord) => Promise<void>
+  loadVC: (id: string) => Promise<MemoryStoreRecord | null>
 }
 
 function createMemoryStore(): MemoryStore {
-  const data = new Map<string, MemoryStoreRecord>()
+  const issuances = new Map<string, MemoryStoreRecord>()
+  const vcs = new Map<string, MemoryStoreRecord>()
+  const clone = (v: any) => (v ? JSON.parse(JSON.stringify(v)) : null)
   return {
-    data,
-    async writeAtomic(key: string, value: MemoryStoreRecord) {
-      data.set(key, JSON.parse(JSON.stringify(value)))
-    },
-    async loadAll(key: string) {
-      const value = data.get(key)
-      return value ? JSON.parse(JSON.stringify(value)) : undefined
-    },
+    issuances,
+    vcs,
+    async saveIssuance(id, value) { issuances.set(id, clone(value)) },
+    async loadIssuance(id) { return clone(issuances.get(id)) },
+    async saveVC(id, value) { vcs.set(id, clone(value)) },
+    async loadVC(id) { return clone(vcs.get(id)) },
   }
 }
 
@@ -37,15 +43,16 @@ describe('IssuanceService trusted issuer registry integration', () => {
       isTrustedIssuer: vi.fn().mockResolvedValue(false),
     }
 
-    const svc = new IssuanceService({ store, hmacSecret: 'test-secret', trustedIssuerRegistry: registry as any })
+    const svc = new IssuanceService({ storage: store as any, hmacSecret: 'test-secret', trustedIssuerRegistry: registry as any })
     const { id } = await svc.prepare('user@example.test', holderWallet.address)
-    const draftRecord = await store.loadAll(`issuances/${id}.json`)
+    const draftRecord = await store.loadIssuance(id)
     expect(draftRecord?.draft).toBeDefined()
     expect(draftRecord?.draft?.credentialSubject?.emailBinding).toBeDefined()
 
     const domain = buildEip712Domain('Circuloos', '1', 31337, registryAddress)
     const issuerWallet = Wallet.createRandom()
-    const signature = await signCredential(issuerWallet.privateKey, domain, draftRecord!.draft)
+    // Signed with the current circuloos-marketplace issuance types (post 6a34ad5)
+    const signature = await signIssuance(issuerWallet, domain, draftRecord!.draft)
 
     await expect(svc.mint(id, signature, issuerWallet.address, domain)).rejects.toThrow('issuer signer is not listed in the trusted issuer registry')
     expect(registry.isTrustedIssuer).toHaveBeenCalledWith(issuerWallet.address)
@@ -62,14 +69,15 @@ describe('IssuanceService trusted issuer registry integration', () => {
       isTrustedIssuer: vi.fn().mockResolvedValue(true),
     }
 
-    const svc = new IssuanceService({ store, hmacSecret: 'test-secret', trustedIssuerRegistry: registry as any })
+    const svc = new IssuanceService({ storage: store as any, hmacSecret: 'test-secret', trustedIssuerRegistry: registry as any })
     const { id } = await svc.prepare('user2@example.test', holderWallet.address)
-    const draftRecord = await store.loadAll(`issuances/${id}.json`)
+    const draftRecord = await store.loadIssuance(id)
     expect(draftRecord?.draft).toBeDefined()
 
     const domain = buildEip712Domain('Circuloos', '1', 31337, registryAddress)
     const issuerWallet = Wallet.createRandom()
-    const signature = await signCredential(issuerWallet.privateKey, domain, draftRecord!.draft)
+    // Signed with the current circuloos-marketplace issuance types (post 6a34ad5)
+    const signature = await signIssuance(issuerWallet, domain, draftRecord!.draft)
 
     const result = await svc.mint(id, signature, issuerWallet.address, domain)
     expect(result.id).toBe(id)

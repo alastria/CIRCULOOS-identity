@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import Fastify, { FastifyInstance } from 'fastify'
-import { FileStore } from '@circuloos/file-store'
+import { SqlJsStorageAdapter } from '@circuloos/common'
 import playgroundRoutes from '../../src/routes/playground'
+import { config } from '../../src/config'
 
 /**
  * Cover playground.ts line 64:
@@ -14,34 +15,44 @@ describe('Playground.ts - Line 64 Branch', () => {
     let server: FastifyInstance
     let origEnv: any
     let store: any
+    let origDiamond: string | undefined
+    let origRpc: string
 
     beforeEach(async () => {
         origEnv = { ...process.env }
         process.env.ISSUER_HMAC_SECRET = 'test-secret'
-        process.env.CREDENTIAL_REGISTRY_ADDRESS = '0x1234567890123456789012345678901234567890'
-        process.env.RPC_URL = 'http://localhost:8545'
+        // The playground reads the registry address / RPC from the typed config
+        // (config.diamond.address, config.blockchain.rpcUrl) instead of
+        // CREDENTIAL_REGISTRY_ADDRESS / RPC_URL env vars.
+        origDiamond = config.diamond.address
+        origRpc = config.blockchain.rpcUrl
+        ;(config.diamond as any).address = '0x1234567890123456789012345678901234567890'
+        ;(config.blockchain as any).rpcUrl = 'http://localhost:8545'
 
         server = Fastify({ logger: false })
-        store = new FileStore('./tmp-test-line64')
-        server.decorate('store', store)
+        // Routes now use an IStorageAdapter decorated as `storage` (was FileStore `store`)
+        store = new SqlJsStorageAdapter(':memory:')
+        server.decorate('storage', store)
         server.register(playgroundRoutes, { prefix: '/playground' })
         await server.ready()
     })
 
     afterEach(async () => {
         process.env = origEnv
+        ;(config.diamond as any).address = origDiamond
+        ;(config.blockchain as any).rpcUrl = origRpc
         await server.close()
     })
 
     it('covers AddressZero fallback when credentialSubject.holderAddress is missing (line 64)', async () => {
-        // Mock store.loadAll to intercept and modify the VC
-        const originalLoadAll = store.loadAll.bind(store)
+        // Mock store.loadIssuance to intercept and modify the VC
+        const originalLoadIssuance = store.loadIssuance.bind(store)
 
-        store.loadAll = vi.fn().mockImplementation(async function (this: any, path: string) {
-            const result = await originalLoadAll(path)
+        store.loadIssuance = vi.fn().mockImplementation(async function (this: any, id: string) {
+            const result = await originalLoadIssuance(id)
 
-            // If it's an issuance file and has a draft, remove holderAddress from credentialSubject
-            if (path.includes('issuances/') && result?.draft?.credentialSubject) {
+            // If the issuance has a draft, remove holderAddress from credentialSubject
+            if (result?.draft?.credentialSubject) {
                 const modifiedResult = { ...result }
                 modifiedResult.draft = {
                     ...result.draft,
@@ -68,9 +79,16 @@ describe('Playground.ts - Line 64 Branch', () => {
 
         // Should succeed - the calldata will use AddressZero as fallback
         expect(res.statusCode).toBe(200)
+        const data = JSON.parse(res.payload)
+        expect(store.loadIssuance).toHaveBeenCalled()
+        // calldata was populated (null only when no registry is configured or population fails).
+        // NB: the route's response schema declares calldata as a bare object, so its fields are
+        // stripped by the serializer; only its presence can be asserted over HTTP.
+        expect(data.calldata).not.toBeNull()
+        expect(data.vcHash).toMatch(/^0x[0-9a-f]{64}$/)
 
         // Restore
-        store.loadAll = originalLoadAll
+        store.loadIssuance = originalLoadIssuance
     })
 
     it('covers AddressZero fallback when holderAddress is missing from credentialSubject (line 64)', async () => {

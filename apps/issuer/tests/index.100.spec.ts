@@ -1,5 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 
+// The server now decorates an IStorageAdapter (sql.js) as `storage` instead of a FileStore
+// `store`; the /tmp-filestore helpers call storage.loadVC(id) / storage.loadIssuance(id).
 describe('Index.ts 100% Coverage', () => {
     describe('Server start function', () => {
         it('covers start function success path', async () => {
@@ -24,9 +26,9 @@ describe('Index.ts 100% Coverage', () => {
     describe('Storage routes with .json extension handling', () => {
         it('handles VC routes with explicit .json extension', async () => {
             const server = (await import('../src/index')).default
-            const store = (server as any).store
+            const storage = (server as any).storage
 
-            await store.writeAtomic('vcs/explicit-json.json', { vc: 'data' })
+            await storage.saveVC('explicit-json', { vc: 'data' })
 
             const res = await server.inject({
                 method: 'GET',
@@ -34,6 +36,7 @@ describe('Index.ts 100% Coverage', () => {
             })
 
             expect(res.statusCode).toBe(200)
+            expect(JSON.parse(res.payload)).toEqual({ vc: 'data' })
         })
 
         it('returns 404 when VC is not found (lines 63-64)', async () => {
@@ -48,7 +51,11 @@ describe('Index.ts 100% Coverage', () => {
             expect(JSON.parse(res.payload)).toHaveProperty('error', 'VC not found')
         })
 
-        it('returns 404 when VC is empty object (line 62-64)', async () => {
+        // OBSOLETE: the empty-object sentinel came from FileStore.loadAll (missing file -> {}).
+        // The handler now uses storage.loadVC(), which returns null when missing, and only checks
+        // `if (!vc)` (src/index.ts:144-147, as imported in a7732d4); an empty object is never
+        // produced for a missing VC, so there is no "empty object" branch left to cover.
+        it.skip('returns 404 when VC is empty object (line 62-64)', async () => {
             const server = (await import('../src/index')).default
             const store = (server as any).store
             const originalLoadAll = store.loadAll.bind(store)
@@ -73,9 +80,9 @@ describe('Index.ts 100% Coverage', () => {
 
         it('handles issuance routes with explicit .json extension', async () => {
             const server = (await import('../src/index')).default
-            const store = (server as any).store
+            const storage = (server as any).storage
 
-            await store.writeAtomic('issuances/explicit-json.json', { id: 'test' })
+            await storage.saveIssuance('explicit-json', { id: 'test' })
 
             const res = await server.inject({
                 method: 'GET',
@@ -83,18 +90,19 @@ describe('Index.ts 100% Coverage', () => {
             })
 
             expect(res.statusCode).toBe(200)
+            expect(JSON.parse(res.payload)).toEqual({ id: 'test' })
         })
 
         it('logs errors in VC route', async () => {
             const server = (await import('../src/index')).default
-            const store = (server as any).store
-            const originalLoadAll = store.loadAll.bind(store)
+            const storage = (server as any).storage
+            const originalLoadVC = storage.loadVC
 
-            store.loadAll = async (path: string) => {
-                if (path.includes('trigger-error')) {
+            storage.loadVC = async (id: string) => {
+                if (id.includes('trigger-error')) {
                     throw new Error('Forced VC error')
                 }
-                return originalLoadAll(path)
+                return originalLoadVC.call(storage, id)
             }
 
             const res = await server.inject({
@@ -103,14 +111,15 @@ describe('Index.ts 100% Coverage', () => {
             })
 
             expect(res.statusCode).toBe(500)
-            store.loadAll = originalLoadAll
+            expect(JSON.parse(res.payload)).toHaveProperty('error', 'internal')
+            storage.loadVC = originalLoadVC
         })
 
         it('handles issuance route without .json extension (lines 87-88)', async () => {
             const server = (await import('../src/index')).default
-            const store = (server as any).store
+            const storage = (server as any).storage
 
-            await store.writeAtomic('issuances/no-extension.json', { id: 'test', data: 'value' })
+            await storage.saveIssuance('no-extension', { id: 'test', data: 'value' })
 
             const res = await server.inject({
                 method: 'GET',
@@ -122,7 +131,10 @@ describe('Index.ts 100% Coverage', () => {
             expect(data.id).toBe('test')
         })
 
-        it('returns 404 when issuance is empty object (line 91-92)', async () => {
+        // OBSOLETE: same as the VC case — storage.loadIssuance() returns null for a missing record
+        // and the handler only checks `if (!rec)` (src/index.ts:173-176, as imported in a7732d4);
+        // the FileStore empty-object sentinel no longer exists.
+        it.skip('returns 404 when issuance is empty object (line 91-92)', async () => {
             const server = (await import('../src/index')).default
             const store = (server as any).store
             const originalLoadAll = store.loadAll.bind(store)
@@ -147,14 +159,14 @@ describe('Index.ts 100% Coverage', () => {
 
         it('logs error and returns 500 on exception (lines 95-97)', async () => {
             const server = (await import('../src/index')).default
-            const store = (server as any).store
-            const originalLoadAll = store.loadAll.bind(store)
+            const storage = (server as any).storage
+            const originalLoadIssuance = storage.loadIssuance
 
-            store.loadAll = async (path: string) => {
-                if (path.includes('throw-error')) {
+            storage.loadIssuance = async (id: string) => {
+                if (id.includes('throw-error')) {
                     throw new Error('Forced issuance error')
                 }
-                return originalLoadAll(path)
+                return originalLoadIssuance.call(storage, id)
             }
 
             const res = await server.inject({
@@ -165,18 +177,18 @@ describe('Index.ts 100% Coverage', () => {
             expect(res.statusCode).toBe(500)
             expect(JSON.parse(res.payload)).toHaveProperty('error', 'internal')
 
-            store.loadAll = originalLoadAll
+            storage.loadIssuance = originalLoadIssuance
         })
         it('logs errors in issuance route', async () => {
             const server = (await import('../src/index')).default
-            const store = (server as any).store
-            const originalLoadAll = store.loadAll.bind(store)
+            const storage = (server as any).storage
+            const originalLoadIssuance = storage.loadIssuance
 
-            store.loadAll = async (path: string) => {
-                if (path.includes('trigger-error')) {
+            storage.loadIssuance = async (id: string) => {
+                if (id.includes('trigger-error')) {
                     throw new Error('Forced issuance error')
                 }
-                return originalLoadAll(path)
+                return originalLoadIssuance.call(storage, id)
             }
 
             const res = await server.inject({
@@ -185,7 +197,8 @@ describe('Index.ts 100% Coverage', () => {
             })
 
             expect(res.statusCode).toBe(500)
-            store.loadAll = originalLoadAll
+            expect(JSON.parse(res.payload)).toHaveProperty('error', 'internal')
+            storage.loadIssuance = originalLoadIssuance
         })
     })
 })

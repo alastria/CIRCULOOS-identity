@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { createTestServer } from '../fixtures/server'
 import type { FastifyInstance } from 'fastify'
+import { authCookies } from '../helpers/auth-cookie.helper'
 
 /**
  * Surgical tests to cover exact remaining lines in issue.ts
@@ -28,14 +29,16 @@ describe('Issue Routes - Final Coverage', () => {
         it('logs error via server.log.error when prepare fails', async () => {
             const logErrorSpy = vi.spyOn(server.log, 'error')
 
-            // Mock store.writeAtomic to throw an error during prepare
-            const store = (server as any).store
-            const originalWriteAtomic = store.writeAtomic
-            store.writeAtomic = vi.fn().mockRejectedValue(new Error('Storage failure'))
+            // Mock storage.saveIssuance (IStorageAdapter; was FileStore.writeAtomic) to throw during prepare
+            const storage = (server as any).storage
+            const originalSaveIssuance = storage.saveIssuance
+            storage.saveIssuance = vi.fn().mockRejectedValue(new Error('Storage failure'))
 
             const res = await server.inject({
                 method: 'POST',
                 url: '/issue/prepare',
+                // /issue/prepare is behind authenticateJWT
+                cookies: authCookies('0x9999999999999999999999999999999999999999', 'issuer'),
                 payload: {
                     email: 'test@example.com',
                     holderAddress: '0x1234567890123456789012345678901234567890'
@@ -43,7 +46,8 @@ describe('Issue Routes - Final Coverage', () => {
             })
 
             // Restore original
-            store.writeAtomic = originalWriteAtomic
+            expect(storage.saveIssuance).toHaveBeenCalled()
+            storage.saveIssuance = originalSaveIssuance
 
             expect(res.statusCode).toBe(400)
 
