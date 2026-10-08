@@ -3,9 +3,14 @@ pragma solidity ^0.8.18;
 
 import { LibCredentialStatusStorage } from "../storage/LibCredentialStatusStorage.sol";
 import { ICredentialStatus } from "../facets/CredentialStatus/ICredentialStatus.sol";
+import { LibTrustedIssuer } from "./LibTrustedIssuer.sol";
 
 library LibCredentialStatus {
     function issue(bytes32 vcHash, address issuer) internal {
+        // Only a trusted issuer may record a credential: otherwise anyone who learns a hash first
+        // becomes its recorded issuer and controls its revocation (P14). Revocation keeps working
+        // for the recording issuer even if it is later removed from the registry.
+        if (!LibTrustedIssuer.isTrusted(issuer)) revert ICredentialStatus.NotTrustedIssuer(issuer);
         if (vcHash == bytes32(0)) revert ICredentialStatus.InvalidVcHash();
         
         LibCredentialStatusStorage.Layout storage ds = LibCredentialStatusStorage.layout();

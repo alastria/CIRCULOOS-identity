@@ -95,4 +95,10 @@ signed message lacks the two new fields, and the subject holder is now taken fro
     revoke); only if that succeeds is the issuance marked `REVOKED`. Errors carry a `code`:
     `NOT_FOUND` 404, `NOT_ISSUED`/`ALREADY_REVOKED` 409, `FORBIDDEN`/`INVALID_SIGNATURE` 403,
     `ONCHAIN_FAILED` 502.
-- **Open (P14):** the contract lets any address record a hash; see TEST_SUITE_REPAIR.md.
+- **Only trusted issuers record (P14, contract change).** `CredentialStatusFacet.issueCredential`
+  (and the `recordIssuance` alias) reverts with `NotTrustedIssuer(caller)` unless the caller is in
+  the trusted issuer registry, so nobody can register a credential hash first and take control of
+  its revocation. A recording issuer removed from the registry can still revoke what it recorded.
+  **Operational requirement:** the issuer backend key (`DIAMOND_OWNER_PRIVATE_KEY` /
+  `ISSUER_PRIVATE_KEY`) must be registered as a trusted issuer, otherwise every issuance is
+  issued but `onchain.status = 'failed'` (and cannot be revoked on-chain).

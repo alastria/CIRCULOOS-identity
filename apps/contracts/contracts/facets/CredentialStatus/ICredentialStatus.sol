@@ -14,6 +14,8 @@ interface ICredentialStatus {
     error NotIssuer();
     error NotSuspended();
     error AlreadySuspended();
+    /// @notice Only addresses in the trusted issuer registry may record a credential (P14).
+    error NotTrustedIssuer(address caller);
 
     function issueCredential(bytes32 vcHash, address subject) external;
     function revokeCredential(bytes32 vcHash) external;

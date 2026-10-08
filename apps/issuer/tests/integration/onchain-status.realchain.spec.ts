@@ -46,6 +46,9 @@ describe('A2 — trusted issuance and on-chain revocation (real local chain)', (
   beforeAll(async () => {
     chain = await startLocalIdentityChain()
     await (await chain.diamond.addTrustedIssuer(alastria.address)).wait()
+    // Since P14 the contract only accepts records from trusted issuers: the backend key that
+    // records (and later revokes) issuances must be registered as one.
+    await (await chain.diamond.addTrustedIssuer(backendKey.address)).wait()
     service = new IssuanceService({
       storage: memoryStorage() as any,
       hmacSecret: 'test-secret',
@@ -101,6 +104,26 @@ describe('A2 — trusted issuance and on-chain revocation (real local chain)', (
 
     const rec = await (service as any).credential.loadIssuance(prepared.id)
     expect(rec.onchain).toMatchObject({ status: 'recorded', credentialHash })
+  })
+
+  it('P14 if the backend key is not a trusted issuer, the credential is issued but the failed on-chain record is visible', async () => {
+    const outsider = devWallet(6)
+    const strictService = new IssuanceService({
+      storage: memoryStorage() as any,
+      hmacSecret: 'test-secret',
+      trustedIssuerRegistry: createTrustedIssuerRegistryClient({ address: chain.diamondAddress, rpcUrl: chain.rpcUrl }),
+      onchain: { diamondAddress: chain.diamondAddress, rpcUrl: chain.rpcUrl, signerKey: outsider.privateKey },
+    })
+    const prepared = await strictService.prepare('ana@khoani.example', holder.address, undefined, undefined, {
+      credentialType: EMPLOYEE_SCHEMA_ID,
+      organization: ORG,
+    })
+    const { types, messageBuilder } = getCredentialType(EMPLOYEE_SCHEMA_ID)!.schema.issuance
+    const signature = await alastria._signTypedData(prepared.domain, types, messageBuilder(prepared.draftVc))
+    await strictService.mint(prepared.id, signature, alastria.address, prepared.domain)
+
+    expect(await chain.diamond.isIssued(hashVC(prepared.draftVc))).toBe(false)
+    expect((await (strictService as any).credential.loadIssuance(prepared.id)).onchain.status).toBe('failed')
   })
 
   it('A2.2 the issuer revokes it and the chain marks it revoked', async () => {
