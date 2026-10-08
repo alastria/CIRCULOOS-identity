@@ -76,6 +76,18 @@ panel's signers and both Vault instances stay active. **Depends on that Vault be
 `eth_chainId` = `0x7e4`, `eth_gasPrice` = `0x0`, `web3_clientVersion` = `besu/22.10.3`, the node's
 block height equals the public endpoint's.
 
+**Done 2026-10-08 (read-only, from the VPS against the private regular node):**
+
+| Check | Result |
+|---|---|
+| `eth_chainId` / `eth_gasPrice` / client | 2020 / `0x0` / `besu/v22.10.3` |
+| Sync | `eth_syncing=false`, 5 peers, latest block 2 s old |
+| Fork | **pre-London** (no `baseFeePerGas`): EIP-1559 transactions are not accepted — the scripts and `Web3SignerSigner` send legacy transactions |
+| Block gas limit | 10,485,760 |
+| `eth_estimateGas` of every contract deployment on Red-B (constructors executed on Red-B's EVM, nothing written) | all succeed; largest `Diamond` 2,279,119 (21.7 % of a block); `DiamondCutFacet` 2,198,273 |
+| `diamondCut` (measured locally, cannot be estimated before the facets exist) | 1,328,203 (12.7 %); `addTrustedIssuer` 97,836 |
+| Owner / backend keys on Red-B | nonce 0, no code, balance 0 (none needed: gas price 0) |
+
 ### A4.3 🔴 Deploy
 ```bash
 cd apps/contracts && pnpm install --frozen-lockfile && pnpm compile
