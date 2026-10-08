@@ -17,6 +17,9 @@ import { randomBytes } from 'crypto'
 import { utils } from 'ethers'
 import { EMPLOYEE_SCHEMA_ID, EMPLOYEE_VC_TYPE, Organization } from './employee'
 import { verifyCredentialIssuance } from './eip712/helpers'
+// Registers the EIP-712 schemas (circuloos-employee among them): this module is imported on its
+// own by relying parties through the `@circuloos/common/login` subpath
+import './eip712/types'
 import { subjectAddress } from './eip712/utils'
 import { hashVC } from './hash'
 

@@ -108,6 +108,11 @@ signed message lacks the two new fields, and the subject holder is now taken fro
 `libs/common/src/login.ts` — used directly by relying parties (e.g. the IoT fleet panel, as a git
 dependency) and exposed by the verifier as `POST /api/v1/login/challenge` and `/login/verify`.
 
+**Import it through the subpath `@circuloos/common/login`**, never the package root: the root
+pulls in modules that run the issuer/verifier `loadConfig()` at import time (it requires
+`RPC_URL`, `CHAIN_ID`, `APP_PUBLIC_URL`, and the issuer secrets when `NODE_ENV=production`).
+The subpath loads only ethers and the login code, and registers the employee EIP-712 schema.
+
 1. The relying party issues a single-use challenge for the holder's wallet and its own
    **audience** (`LoginChallengeStore.issue(holder, audience)`; `InMemoryLoginChallengeStore` for a
    single instance — several instances need a shared store with an atomic consume).
