@@ -76,12 +76,14 @@ describe('RegistryService', () => {
         const mockTx = { wait: vi.fn().mockResolvedValue({ transactionHash: '0xtx', blockNumber: 100 }) }
         mockCredentialRegistry.recordIssuance.mockResolvedValue(mockTx)
 
-        const vc = { id: 'vc-1', credentialSubject: { id: '0xsubject' } }
+        // The contract takes the subject address; a DID subject is reduced to it (fix P11)
+        const subject = '0x' + 'ab'.repeat(20)
+        const vc = { id: 'vc-1', credentialSubject: { id: `did:alastria:quorum:${subject}` } }
         const result = await service.recordIssuance(vc)
 
         expect(result).toEqual({ txHash: '0xtx', blockNumber: 100 })
         expect(createCredentialRegistryFn).toHaveBeenCalled()
-        expect(mockCredentialRegistry.recordIssuance).toHaveBeenCalledWith('0xhash', '0xsubject')
+        expect(mockCredentialRegistry.recordIssuance).toHaveBeenCalledWith('0xhash', subject)
     })
 
     it('handles record issuance failure gracefully', async () => {

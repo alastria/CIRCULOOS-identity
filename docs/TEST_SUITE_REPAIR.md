@@ -1,5 +1,9 @@
 # Test suite repair (2026-10-07)
 
+> **Disclosure note.** P1, P3, P4, P11, P13, P14 and the committed secrets are security issues,
+> tracked in private GitHub security advisories. This file describes them: publish this branch only
+> together with the fixes and the advisories.
+
 Branch `feat/employee-credential`, based on `details-en` (`6a34ad5`). Test files only: no production
 code under `src/` was changed. Done before adding the employee credential, so that work has a
 trustworthy red/green signal.
@@ -67,8 +71,33 @@ longer called).
 | P8 | `apps/issuer/src/services/notification.service.ts:31` | Trailing `/` in `APP_PUBLIC_URL` produces `//claim`. | Cosmetic / broken link. |
 | P9 | `libs/common/src/config/verifier.schema.ts` | See KNOWN-BUG above. | Config silently ignored. |
 | P10 | `libs/common/src/eip712/types/circuloos-marketplace.ts` | Marketplace dates are signed as `toLocaleDateString('es-ES')` without a fixed time zone; the issuer signs in the browser and the server rebuilds the message in its own time zone. | Signatures can fail to verify near midnight across time zones; changes within the same day are not covered. The employee schema signs the exact ISO strings. |
-| P11 | `apps/issuer/src/services/registry.service.ts:78-80` | `recordIssuance(vcHash, subject)` passes the subject **DID** where the contract expects an address; the error is logged and swallowed. | Credentials are not recorded on-chain, so on-chain status/revocation cannot work. To fix in plan phase A2. |
+| P11 | `apps/issuer/src/services/registry.service.ts:78-80` | `recordIssuance(vcHash, subject)` passes the subject **DID** where the contract expects an address; the error is logged and swallowed. | **Fixed (A2)**: the subject address is passed, and the outcome is kept on the issuance (`onchain.status`: recorded / failed / disabled). Verified against a real local node. |
+| P13 | `apps/issuer/src/controllers/issueController.ts` `revokeCredential` | Any authenticated session (even a holder) could revoke any credential; the request signature was never checked; revocation was database-only. | **Fixed (A2)**: role issuer (and signer of the credential) or admin, EIP-712 `CredentialRevocation` signature verified, revoked on-chain first. |
+| P14 | `apps/contracts` `CredentialStatusFacet.issueCredential` | Unrestricted: any address can record a credential hash first and then controls its revocation. | Open — needs a contract decision before Red-B (plan A4); verifiers must check the recorded issuer (A3). |
+| P15 | `apps/web/app/admin/my-keys/page.tsx` | Revokes on-chain from the admin wallet, but issuances are recorded by the backend key, so the contract rejects it (`NotIssuer`). | Open — use the issuer API to revoke. |
 | P12 | `apps/issuer/src/services/credential.service.ts` `loadVC` | After the claim, finalize() stores a presentation (no `id`) under the VC id; `loadVC` discards objects without `id`. | A claimed credential cannot be loaded with `loadVC`; `loadIssuedCredential` was added for the employee reference. |
 
 P3 (verification for login) is planned for phase A3. P1–P3 sat exactly where the employee credential and the login verification (plan phases A1/A3) are
 built; they will be fixed there, with their own failing tests first.
+
+## Tracking (2026-10-08)
+
+| Item | Tracked in |
+|---|---|
+| P1 | Security advisory GHSA-7xhc-9xpf-4wq2 (draft, private) |
+| P2 | Issue #2 |
+| P3 | Security advisory GHSA-qfm6-qx8j-3f47 (draft, private) |
+| P4 | Security advisory GHSA-g564-24x2-wgq2 (draft, private) |
+| P5 | Issue #3 |
+| P6 | Issue #4 |
+| P7 | Issue #5 |
+| P8 | Issue #6 |
+| P9 | Issue #7 |
+| P10 | Issue #8 |
+| P11 | Security advisory GHSA-p35x-973w-c6ww (draft, private) |
+| P12 | Issue #9 |
+| P13 | Security advisory GHSA-f348-g9qr-p33q (draft, private) |
+| P14 | Security advisory GHSA-mprv-v6hr-mqwx (draft, private) |
+| P15 | Issue #11 |
+| Committed secrets (`.env.docker`, `details-en`) | Security advisory GHSA-rmvr-9wfj-373x (draft, private) |
+| Test suite drift | Issue #10 |

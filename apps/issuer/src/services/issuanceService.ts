@@ -9,7 +9,9 @@ import {
   hashVC,
   EMPLOYEE_SCHEMA_ID,
   EMPLOYEE_VC_TYPE,
-  Organization
+  Organization,
+  REVOCATION_TYPES,
+  buildRevocationMessage
 } from '@circuloos/common'
 import { EmployeeCredentialRef } from './credential.service'
 
@@ -24,6 +26,42 @@ export interface PrepareOptions {
 
 const MARKETPLACE_SCHEMA_ID = 'circuloos-marketplace'
 
+export type RevocationErrorCode =
+  | 'NOT_FOUND'
+  | 'NOT_ISSUED'
+  | 'ALREADY_REVOKED'
+  | 'FORBIDDEN'
+  | 'INVALID_SIGNATURE'
+  | 'ONCHAIN_FAILED'
+
+const REVOCATION_HTTP_STATUS: Record<RevocationErrorCode, number> = {
+  NOT_FOUND: 404,
+  NOT_ISSUED: 409,
+  ALREADY_REVOKED: 409,
+  FORBIDDEN: 403,
+  INVALID_SIGNATURE: 403,
+  ONCHAIN_FAILED: 502,
+}
+
+export class RevocationError extends Error {
+  readonly httpStatus: number
+  constructor(public readonly code: RevocationErrorCode, message: string) {
+    super(message)
+    this.name = 'RevocationError'
+    this.httpStatus = REVOCATION_HTTP_STATUS[code]
+  }
+}
+
+export interface RevocationRequest {
+  /** Authenticated wallet (from the session JWT). */
+  wallet: string
+  role: 'holder' | 'issuer' | 'admin'
+  reason: string
+  /** EIP-712 signature of buildRevocationMessage(credentialId, reason) with the issuance domain. */
+  signature: string
+  signerAddress: string
+}
+
 /**
  * Schema of a draft built by this server in prepare(): read from its `type` only
  * (never from the subject), since prepare() sets the type itself.
@@ -35,7 +73,7 @@ import { SecurityService } from './security.service'
 import { config } from '../config'
 import { logger } from '../logger'
 import { CredentialService } from './credential.service'
-import { RegistryService } from './registry.service'
+import { RegistryService, OnchainConfig } from './registry.service'
 import { NotificationService } from './notification.service'
 import { utils } from 'ethers'
 
@@ -52,10 +90,17 @@ export class IssuanceService {
     otpExpirySeconds?: number
     trustedIssuerRegistry?: TrustedIssuerRegistryClient
     createCredentialRegistry?: (address: string, signerOrProvider: any) => any
+    /** On-chain credential status (defaults to the app config). */
+    onchain?: OnchainConfig
+    /** Refuse all issuers when no trusted issuer registry is configured (default: production only). */
+    requireTrustedRegistry?: boolean
   }) {
     this.security = new SecurityService(opts.hmacSecret, opts.otpExpirySeconds)
     this.credential = new CredentialService(opts.storage)
-    this.registry = new RegistryService(opts.trustedIssuerRegistry, opts.createCredentialRegistry)
+    this.registry = new RegistryService(opts.trustedIssuerRegistry, opts.createCredentialRegistry, {
+      onchain: opts.onchain,
+      requireRegistry: opts.requireTrustedRegistry,
+    })
     this.notification = new NotificationService(opts.emailSender)
   }
 
@@ -285,6 +330,13 @@ export class IssuanceService {
 
     // 7. Record On-Chain
     const receipt = await this.registry.recordIssuance(vc)
+    // Keep the on-chain outcome on the record: a credential that is not recorded cannot be
+    // revoked on-chain, so a failure must be visible instead of only logged (fix P11).
+    const onchain = receipt
+      ? { status: 'recorded', credentialHash: hashVC(vc), txHash: receipt.txHash, blockNumber: receipt.blockNumber }
+      : { status: this.registry.isOnchainConfigured?.() ? 'failed' : 'disabled', credentialHash: hashVC(vc) }
+    if (onchain.status === 'failed') logger.error({ issuanceId: id }, 'credential issued but NOT recorded on-chain')
+    await this.credential.saveIssuance(id, { ...(await this.credential.loadIssuance(id)), onchain })
     if (receipt) {
       await this.credential.saveVC(`${vc.id}.onchain`, { txHash: receipt.txHash, blockNumber: receipt.blockNumber } as any)
     }
@@ -340,6 +392,61 @@ export class IssuanceService {
       issuer: { verificationMethod: issuerProof.verificationMethod },
       otp: exposeOtp ? otp : undefined,
     }
+  }
+
+  /**
+   * Revokes an issued credential: on-chain first (when configured), then in storage.
+   * Only an issuer who signed the credential, or an admin, may revoke, and the request
+   * must carry their EIP-712 signature (fix P13: any session could revoke any credential).
+   */
+  async revoke(id: string, req: RevocationRequest) {
+    const rec = await this.credential.loadIssuance(id)
+    if (!rec) throw new RevocationError('NOT_FOUND', 'Credential not found')
+    if (rec.status === 'REVOKED') throw new RevocationError('ALREADY_REVOKED', 'Credential is already revoked')
+    if (rec.status !== 'ISSUED' && rec.status !== 'CLAIMED') {
+      throw new RevocationError('NOT_ISSUED', `Credential is not issued (status ${rec.status})`)
+    }
+
+    const wallet = req.wallet.toLowerCase()
+    if (req.role !== 'issuer' && req.role !== 'admin') {
+      throw new RevocationError('FORBIDDEN', 'Only issuers or admins can revoke credentials')
+    }
+    const credentialIssuer = (rec.issuerProof?.verificationMethod || '').toLowerCase()
+    if (req.role === 'issuer' && wallet !== credentialIssuer) {
+      throw new RevocationError('FORBIDDEN', 'Only the issuer of this credential (or an admin) can revoke it')
+    }
+
+    const vc = rec.draft
+    const domain = rec.issuerProof?.domain || rec.domain
+    let recovered: string | null = null
+    try {
+      recovered = utils.verifyTypedData(domain, REVOCATION_TYPES, buildRevocationMessage(vc.id, req.reason), req.signature)
+    } catch {
+      recovered = null
+    }
+    if (!recovered || recovered.toLowerCase() !== wallet || req.signerAddress.toLowerCase() !== wallet) {
+      throw new RevocationError('INVALID_SIGNATURE', 'Revocation request is not signed by the authenticated wallet')
+    }
+
+    let onchain: { txHash: string; blockNumber: number } | null
+    try {
+      onchain = await this.registry.revokeOnChain(vc)
+    } catch (err: any) {
+      logger.error({ issuanceId: id, error: err?.message }, 'on-chain revocation failed')
+      throw new RevocationError('ONCHAIN_FAILED', 'On-chain revocation failed; the credential was not revoked')
+    }
+
+    const revokedAt = Date.now()
+    await this.credential.saveIssuance(id, {
+      ...rec,
+      status: 'REVOKED',
+      revokedAt,
+      revocationReason: req.reason,
+      revokedBy: wallet,
+      ...(onchain ? { onchainRevocation: onchain } : {}),
+    })
+
+    return { revoked: true, revokedAt, reason: req.reason, onchain }
   }
 
   async finalize(id: string, otpOrObj: any) {

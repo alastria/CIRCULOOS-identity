@@ -3,22 +3,45 @@ import {
     createTrustedIssuerRegistryClient,
     hashVC,
     createLogger,
+    subjectAddress,
 } from '@circuloos/common'
 import { config } from '../config'
 import { ethers } from 'ethers'
 
 const logger = createLogger('registry-service')
 
+/** Where the issuer backend records credential status on-chain, and the key it signs with. */
+export interface OnchainConfig {
+    diamondAddress?: string
+    rpcUrl?: string
+    signerKey?: string
+}
+
+export interface RegistryServiceOptions {
+    /** Defaults to the app config (DIAMOND address, RPC_URL, issuer private key). */
+    onchain?: OnchainConfig
+    /**
+     * Without a trusted issuer registry, refuse every issuer instead of accepting all of them.
+     * Defaults to true in production: "only trusted issuers issue" must not depend on configuration.
+     */
+    requireRegistry?: boolean
+}
+
 export class RegistryService {
     private trustedIssuerRegistry?: TrustedIssuerRegistryClient
     // Factory for dependency injection/mocking
     private createCredentialRegistryFn?: (address: string, signerOrProvider: any) => any
+    private onchainOverride?: OnchainConfig
+    private requireRegistry: boolean
 
     constructor(
         trustedIssuerRegistry?: TrustedIssuerRegistryClient,
-        createCredentialRegistryFn?: (address: string, signerOrProvider: any) => any
+        createCredentialRegistryFn?: (address: string, signerOrProvider: any) => any,
+        options: RegistryServiceOptions = {}
     ) {
         this.createCredentialRegistryFn = createCredentialRegistryFn
+        this.onchainOverride = options.onchain
+        this.requireRegistry = options.requireRegistry ?? config.nodeEnv === 'production'
 
         if (trustedIssuerRegistry) {
             this.trustedIssuerRegistry = trustedIssuerRegistry
@@ -35,7 +58,8 @@ export class RegistryService {
     }
 
     async isTrustedIssuer(address: string): Promise<boolean> {
-        if (!this.trustedIssuerRegistry) return true // If no registry configured, assume trusted (or handle as policy)
+        // No registry: open in development, closed in production (or when requireRegistry is set)
+        if (!this.trustedIssuerRegistry) return !this.requireRegistry
         try {
             return await this.trustedIssuerRegistry.isTrustedIssuer(address)
         } catch (err: any) {
@@ -52,10 +76,45 @@ export class RegistryService {
         }
     }
 
+    /** Injected settings, or the app config read at call time. */
+    private get onchain(): OnchainConfig {
+        return this.onchainOverride ?? {
+            diamondAddress: config.diamond?.address,
+            rpcUrl: config.blockchain.rpcUrl,
+            signerKey: config.issuer.privateKey,
+        }
+    }
+
+    /** Whether credential status is recorded on-chain at all (address, RPC and signer configured). */
+    isOnchainConfigured(): boolean {
+        const { diamondAddress, rpcUrl, signerKey } = this.onchain
+        return Boolean(diamondAddress && rpcUrl && signerKey)
+    }
+
+    private async credentialRegistry(): Promise<any> {
+        const { diamondAddress, rpcUrl, signerKey } = this.onchain
+        const provider = new ethers.providers.JsonRpcProvider(rpcUrl)
+        const signer = new ethers.Wallet(signerKey!, provider)
+        if (this.createCredentialRegistryFn) return this.createCredentialRegistryFn(diamondAddress!, signer)
+        const { createCredentialRegistry } = await import('../onchain')
+        return createCredentialRegistry(diamondAddress!, signer)
+    }
+
+    /**
+     * Revokes the credential on-chain (CredentialStatusFacet.revokeCredential), signed by the
+     * backend key that recorded it — the contract only lets the recording issuer revoke.
+     * `null` when on-chain status is not configured; throws if the transaction fails.
+     */
+    async revokeOnChain(vc: any): Promise<{ txHash: string; blockNumber: number } | null> {
+        if (!this.isOnchainConfigured()) return null
+        const registry = await this.credentialRegistry()
+        const tx = await registry.revokeCredential(hashVC(vc))
+        const receipt = await tx.wait()
+        return { txHash: receipt.transactionHash, blockNumber: receipt.blockNumber }
+    }
+
     async recordIssuance(vc: any): Promise<{ txHash: string; blockNumber: number } | null> {
-        const registryAddress = config.diamond?.address
-        const rpcUrl = config.blockchain.rpcUrl
-        const signerKey = config.issuer.privateKey
+        const { diamondAddress: registryAddress, rpcUrl, signerKey } = this.onchain
 
         if (!registryAddress || !rpcUrl || !signerKey) {
             return null
@@ -75,7 +134,8 @@ export class RegistryService {
             }
 
             const vcHash = hashVC(vc)
-            const subjectAddr = vc.credentialSubject?.id || vc.credentialSubject?.holderAddress || ethers.constants.AddressZero
+            // The contract takes the subject ADDRESS; credentialSubject.id is a DID (fix P11)
+            const subjectAddr = subjectAddress(vc.credentialSubject)
 
             const tx = await credentialRegistry.recordIssuance(vcHash, subjectAddr)
             const receipt = await tx.wait()

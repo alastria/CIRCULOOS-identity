@@ -76,3 +76,23 @@ to the same holder.
 **Breaking:** marketplace credentials signed before this change no longer verify (their
 signed message lacks the two new fields, and the subject holder is now taken from
 `credentialSubject.id`). All marketplace credentials issued so far were test credentials.
+
+## On-chain status and revocation (plan A2)
+
+- **Only trusted issuers issue.** `prepare` and `mint` check the issuer wallet against the
+  on-chain trusted issuer registry. Without a registry configured, issuance is refused in
+  production (`requireRegistry`, default `NODE_ENV === 'production'`) instead of accepted.
+- **Recorded on-chain at mint.** The issuer backend records `hashVC(vc)` with the holder's
+  address in `CredentialStatusFacet` (signed with the backend key). The outcome is stored on
+  the issuance as `onchain: { status: 'recorded' | 'failed' | 'disabled', credentialHash, txHash? }`;
+  a failure is logged as an error. A credential that is not recorded cannot be revoked
+  on-chain, so verifiers must require `isIssued` (plan A3).
+- **Revocation.** `POST /api/v1/credentials/:id/revoke` with `{ reason, signature, signerAddress }`:
+  - session role `issuer` and the wallet that signed the credential, or role `admin`;
+  - `signature` = EIP-712 over `REVOCATION_TYPES` / `buildRevocationMessage(credentialId, reason)`
+    (`libs/common/src/revocation.ts`) with the issuance's domain, by the session wallet;
+  - revoked on-chain first with the backend key (the contract only lets the recording address
+    revoke); only if that succeeds is the issuance marked `REVOKED`. Errors carry a `code`:
+    `NOT_FOUND` 404, `NOT_ISSUED`/`ALREADY_REVOKED` 409, `FORBIDDEN`/`INVALID_SIGNATURE` 403,
+    `ONCHAIN_FAILED` 502.
+- **Open (P14):** the contract lets any address record a hash; see TEST_SUITE_REPAIR.md.
