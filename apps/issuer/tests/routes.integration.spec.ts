@@ -1,20 +1,16 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 
 vi.mock('@circuloos/common', async () => {
-    const actual = await vi.importActual('@circuloos/common')
+    const actual = await vi.importActual<any>('@circuloos/common')
     return {
-        ...actual as any,
-        loadConfig: () => ({
+        ...actual,
+        // The issuer config (src/config) is now the full typed AppConfig; services read
+        // security.*, issuer.*, eip712.*, appPublicUrl... at import time, so a hand-written
+        // partial object no longer loads. Use the library's own test config instead.
+        loadConfig: () => actual.getTestConfig({
             storage: { dbPath: ':memory:' },
-            email: { host: 'localhost', port: 1025 },
-            issuer: { port: 3000 },
-            http: { host: 'localhost' },
             nodeEnv: 'test',
-            blockchain: { 
-                rpcUrl: 'http://localhost:8545',
-                chainId: 31337
-            },
-            swagger: { enabled: false }
+            swagger: { enabled: false },
         }),
         SqlJsStorageAdapter: class MockStorage {
             constructor() { }
@@ -101,7 +97,11 @@ describe('Issuer Routes Integration', () => {
             expect(res.statusCode).toBe(404)
         })
 
-        it('handles empty object from store as 404', async () => {
+        // OBSOLETE: the "empty object => 404" rule belonged to the FileStore era (loadAll returned
+        // {} for a missing file). Storage adapters now return null when missing and the handlers
+        // only check `if (!vc)` (src/index.ts:144-147, mirrored in tests/fixtures/server.ts; code
+        // as imported in a7732d4). A stored {} is returned as-is.
+        it.skip('handles empty object from store as 404', async () => {
             const storage = (server as any).storage
             // SqlJsStorageAdapter doesn't support writing empty objects easily, but we can try to load non-existent
             // await storage.saveVC('empty', {}) 
@@ -130,7 +130,8 @@ describe('Issuer Routes Integration', () => {
             storage.loadVC = originalLoadVC
         })
 
-        it('handles empty issuance object as 404', async () => {
+        // OBSOLETE: same as above for issuances (src/index.ts:173-176 only checks `if (!rec)`).
+        it.skip('handles empty issuance object as 404', async () => {
             const storage = (server as any).storage
             await storage.saveIssuance('empty', {})
             const res = await server.inject({ method: 'GET', url: '/tmp-filestore/issuances/empty' })

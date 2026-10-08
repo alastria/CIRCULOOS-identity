@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { IssuanceService } from '../../src/services/issuanceService'
 import { IssuanceStatus } from '@circuloos/common'
+import { holderWallet, otherWallet, CLAIM_DOMAIN, signClaim } from '../helpers/holder-signature.helper'
 
 // Mock config
 vi.mock('@circuloos/common', async () => {
@@ -93,7 +94,9 @@ describe('IssuanceService Orchestrator', () => {
             expect(service['credential'].createDraftVC).toHaveBeenCalled()
             expect(service['security'].generateOtpCode).toHaveBeenCalled()
             expect(service['credential'].saveIssuance).toHaveBeenCalled()
-            expect(service['notification'].sendClaimInfo).toHaveBeenCalled()
+            // The claim email is no longer sent in prepare(); it is sent from mint() once the
+            // issuer has signed (see issuanceService.ts "Email is NOT sent here anymore")
+            expect(service['notification'].sendClaimInfo).not.toHaveBeenCalled()
         })
 
         it('validates holder address', async () => {
@@ -115,7 +118,7 @@ describe('IssuanceService Orchestrator', () => {
     describe('mint', () => {
         it('orchestrates mint flow successfully', async () => {
             // Setup mocks
-            const mockIssuance = { id: 'issuance-1', draft: { id: 'vc-1' }, holderAddress: '0xholder', status: IssuanceStatus.DRAFT }
+            const mockIssuance = { id: 'issuance-1', draft: { id: 'vc-1', credentialSubject: { email: 'holder@example.com' } }, holderAddress: '0xholder', status: IssuanceStatus.DRAFT }
             vi.mocked(service['credential'].loadIssuance).mockResolvedValue(mockIssuance)
             vi.mocked(service['security'].verifySignature).mockReturnValue('0xsigner')
 
@@ -125,6 +128,8 @@ describe('IssuanceService Orchestrator', () => {
             expect(service['registry'].isTrustedIssuer).toHaveBeenCalledWith('0xsigner')
             expect(service['credential'].saveVC).toHaveBeenCalled() // Signed VC
             expect(service['registry'].recordIssuance).toHaveBeenCalled()
+            // Claim email moved from prepare() to mint()
+            expect(service['notification'].sendClaimInfo).toHaveBeenCalledWith('holder@example.com', '123456', '0xholder', 'token-123')
         })
 
         it('fails if issuance not found', async () => {
@@ -153,25 +158,30 @@ describe('IssuanceService Orchestrator', () => {
     })
 
     describe('finalize', () => {
+        // Holder signatures are verified with ethers.verifyTypedData against the current
+        // `circuloos-marketplace` claim schema (SecurityService.verifySignature is no longer
+        // involved), so these fixtures carry real signatures from a deterministic test wallet.
+        const HOLDER = holderWallet.address
+
         it('orchestrates finalize flow successfully', async () => {
             const mockIssuance = {
                 id: 'issuance-1',
-                draft: { id: 'vc-1', credentialSubject: { id: '0xholder' } },
+                draft: { id: 'vc-1', credentialSubject: { id: HOLDER } },
                 otpHash: 'hash',
-                holderAddress: '0xholder',
+                holderAddress: HOLDER,
+                domain: CLAIM_DOMAIN,
                 issuerProof: {},
                 status: IssuanceStatus.ISSUED
             }
 
-            vi.mocked(service['security'].verifySessionToken).mockReturnValue({ ok: true, payload: { id: 'issuance-1', holderAddress: '0xholder' } })
+            vi.mocked(service['security'].verifySessionToken).mockReturnValue({ ok: true, payload: { id: 'issuance-1', holderAddress: HOLDER } })
             vi.mocked(service['credential'].loadIssuance).mockResolvedValue(mockIssuance)
             vi.mocked(service['security'].verifyOtpCode).mockReturnValue(true)
-            vi.mocked(service['security'].verifySignature).mockReturnValue('0xholder')
             vi.mocked(service['credential'].loadVC).mockResolvedValue({
                 id: 'vc-1',
                 issuer: 'did:issuer',
                 issuanceDate: '2023-01-01',
-                credentialSubject: { id: '0xholder' },
+                credentialSubject: { id: HOLDER },
                 proof: {
                     type: 'Eip712Signature2023',
                     proofPurpose: 'assertionMethod',
@@ -183,15 +193,17 @@ describe('IssuanceService Orchestrator', () => {
             })
 
             // Create a valid token format (data.signature)
-            const tokenData = Buffer.from(JSON.stringify({ id: 'issuance-1', holderAddress: '0xholder', exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64')
+            const tokenData = Buffer.from(JSON.stringify({ id: 'issuance-1', holderAddress: HOLDER, exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64')
             const tokenSignature = 'a'.repeat(64) // 64 char hex signature
             const validToken = `${tokenData}.${tokenSignature}`
+            const { signature, claimMessage } = await signClaim(holderWallet, validToken)
 
             const result = await service.finalize('issuance-1', {
                 otp: '123456',
                 token: validToken,
-                signature: '0xsig',
-                signer: '0xholder'
+                signature,
+                signer: HOLDER,
+                claimMessage
             })
 
             expect(result.vcId).toBe('vc-1')
@@ -201,22 +213,22 @@ describe('IssuanceService Orchestrator', () => {
         it('sets credentialSubject.id if missing', async () => {
             const mockIssuance = {
                 id: 'issuance-1',
-                draft: { id: 'vc-1', credentialSubject: { holderAddress: '0xholder' } }, // Missing .id
+                draft: { id: 'vc-1', credentialSubject: { holderAddress: HOLDER } }, // Missing .id
                 otpHash: 'hash',
-                holderAddress: '0xholder',
+                holderAddress: HOLDER,
+                domain: CLAIM_DOMAIN,
                 issuerProof: {},
                 status: IssuanceStatus.ISSUED
             }
 
-            vi.mocked(service['security'].verifySessionToken).mockReturnValue({ ok: true, payload: { id: 'issuance-1', holderAddress: '0xholder' } })
+            vi.mocked(service['security'].verifySessionToken).mockReturnValue({ ok: true, payload: { id: 'issuance-1', holderAddress: HOLDER } })
             vi.mocked(service['credential'].loadIssuance).mockResolvedValue(mockIssuance)
             vi.mocked(service['security'].verifyOtpCode).mockReturnValue(true)
-            vi.mocked(service['security'].verifySignature).mockReturnValue('0xholder')
             vi.mocked(service['credential'].loadVC).mockResolvedValue({
                 id: 'vc-1',
                 issuer: 'did:issuer',
                 issuanceDate: '2023-01-01',
-                credentialSubject: { holderAddress: '0xholder' },
+                credentialSubject: { holderAddress: HOLDER },
                 proof: {
                     type: 'Eip712Signature2023',
                     proofPurpose: 'assertionMethod',
@@ -228,43 +240,46 @@ describe('IssuanceService Orchestrator', () => {
             })
 
             // Create a valid token format
-            const tokenData = Buffer.from(JSON.stringify({ id: 'issuance-1', holderAddress: '0xholder', exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64')
+            const tokenData = Buffer.from(JSON.stringify({ id: 'issuance-1', holderAddress: HOLDER, exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64')
             const tokenSignature = 'a'.repeat(64)
             const validToken = `${tokenData}.${tokenSignature}`
+            const { signature, claimMessage } = await signClaim(holderWallet, validToken)
 
-            await service.finalize('issuance-1', { otp: '123456', token: validToken, signature: '0xsig', signer: '0xholder' })
+            await service.finalize('issuance-1', { otp: '123456', token: validToken, signature, signer: HOLDER, claimMessage })
 
-            // Check that credentialSubject.id was set
-            expect((mockIssuance.draft.credentialSubject as any).id).toBe('0xholder')
+            // Check that credentialSubject.id was set (to the recovered signer address)
+            expect((mockIssuance.draft.credentialSubject as any).id).toBe(HOLDER)
         })
 
         it('fails when holder signature does not match credentialSubject', async () => {
             const mockIssuance = {
                 id: 'issuance-1',
-                draft: { id: 'vc-1', credentialSubject: { id: '0xdifferent' } },
+                draft: { id: 'vc-1', credentialSubject: { id: otherWallet.address } },
                 otpHash: 'hash',
-                holderAddress: '0xholder',
+                holderAddress: HOLDER,
+                domain: CLAIM_DOMAIN,
                 issuerProof: {},
                 status: IssuanceStatus.ISSUED
             }
 
-            vi.mocked(service['security'].verifySessionToken).mockReturnValue({ ok: true, payload: { id: 'issuance-1', holderAddress: '0xholder' } })
+            vi.mocked(service['security'].verifySessionToken).mockReturnValue({ ok: true, payload: { id: 'issuance-1', holderAddress: HOLDER } })
             vi.mocked(service['credential'].loadIssuance).mockResolvedValue(mockIssuance)
             vi.mocked(service['security'].verifyOtpCode).mockReturnValue(true)
-            vi.mocked(service['security'].verifySignature).mockReturnValue('0xwrong')
             vi.mocked(service['credential'].loadVC).mockResolvedValue(null)
 
             // Create a valid token format
-            const tokenData = Buffer.from(JSON.stringify({ id: 'issuance-1', holderAddress: '0xholder', exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64')
+            const tokenData = Buffer.from(JSON.stringify({ id: 'issuance-1', holderAddress: HOLDER, exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64')
             const tokenSignature = 'a'.repeat(64)
             const validToken = `${tokenData}.${tokenSignature}`
+            const { signature, claimMessage } = await signClaim(holderWallet, validToken)
 
             await expect(service.finalize('issuance-1', {
                 otp: '123456',
                 token: validToken,
-                signature: '0xsig',
-                signer: '0xwrong'
-            })).rejects.toThrow()
+                signature,
+                signer: HOLDER,
+                claimMessage
+            })).rejects.toThrow('holder signature mismatch')
         })
     })
 })

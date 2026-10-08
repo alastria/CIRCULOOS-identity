@@ -61,9 +61,10 @@ export function verifyCredentialIssuance(
   }
 
   const { types, messageBuilder } = metadata.schema.issuance
-  const message = messageBuilder(vc)
 
   try {
+    // Inside the try: a builder that rejects the VC (e.g. holderAddress ≠ subject id) means "not verified"
+    const message = messageBuilder(vc)
     const recovered = utils.verifyTypedData(domain as any, types, message, signature)
     return recovered
   } catch (err) {

@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { createTestServer } from './fixtures/server'
 import type { FastifyInstance } from 'fastify'
 
+// The fixture server exposes an IStorageAdapter (sql.js, decorated as `storage` and the `store`
+// alias); the file-store writeAtomic/loadAll API was replaced by saveVC/loadVC/saveIssuance/loadIssuance.
 describe('Index.ts VC Routes', () => {
     let server: FastifyInstance
     let origEnv: any
@@ -19,8 +21,8 @@ describe('Index.ts VC Routes', () => {
 
     describe('/tmp-filestore/vcs/:id route', () => {
         it('handles .json extension in id', async () => {
-            const store = (server as any).store
-            await store.writeAtomic('vcs/test.json', { vc: { id: 'test-vc' } })
+            const storage = (server as any).storage
+            await storage.saveVC('test', { vc: { id: 'test-vc' } })
 
             const res = await server.inject({
                 method: 'GET',
@@ -33,22 +35,15 @@ describe('Index.ts VC Routes', () => {
         })
 
         it('logs error when VC load fails', async () => {
-            const store = (server as any).store
-            const originalLoadAll = store.loadAll.bind(store)
-
-            const errorLog: any[] = []
-            const requestMock = {
-                log: {
-                    error: (err: any) => errorLog.push(err)
-                }
-            }
+            const storage = (server as any).storage
+            const originalLoadVC = storage.loadVC
 
             // Force an error
-            store.loadAll = async (path: string) => {
-                if (path.includes('error-vc')) {
+            storage.loadVC = async (id: string) => {
+                if (id.includes('error-vc')) {
                     throw new Error('Forced error')
                 }
-                return originalLoadAll(path)
+                return originalLoadVC.call(storage, id)
             }
 
             const res = await server.inject({
@@ -57,14 +52,15 @@ describe('Index.ts VC Routes', () => {
             })
 
             expect(res.statusCode).toBe(500)
-            store.loadAll = originalLoadAll
+            expect(JSON.parse(res.payload)).toEqual({ error: 'internal' })
+            storage.loadVC = originalLoadVC
         })
     })
 
     describe('/tmp-filestore/issuances/:id route', () => {
         it('handles .json extension in id', async () => {
-            const store = (server as any).store
-            await store.writeAtomic('issuances/test.json', { id: 'test-issuance' })
+            const storage = (server as any).storage
+            await storage.saveIssuance('test', { id: 'test-issuance' })
 
             const res = await server.inject({
                 method: 'GET',
@@ -77,14 +73,14 @@ describe('Index.ts VC Routes', () => {
         })
 
         it('logs error when issuance load fails', async () => {
-            const store = (server as any).store
-            const originalLoadAll = store.loadAll.bind(store)
+            const storage = (server as any).storage
+            const originalLoadIssuance = storage.loadIssuance
 
-            store.loadAll = async (path: string) => {
-                if (path.includes('error-id')) {
+            storage.loadIssuance = async (id: string) => {
+                if (id.includes('error-id')) {
                     throw new Error('Forced error')
                 }
-                return originalLoadAll(path)
+                return originalLoadIssuance.call(storage, id)
             }
 
             const res = await server.inject({
@@ -93,7 +89,8 @@ describe('Index.ts VC Routes', () => {
             })
 
             expect(res.statusCode).toBe(500)
-            store.loadAll = originalLoadAll
+            expect(JSON.parse(res.payload)).toEqual({ error: 'internal' })
+            storage.loadIssuance = originalLoadIssuance
         })
     })
 })

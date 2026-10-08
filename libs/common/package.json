@@ -10,6 +10,10 @@
       "import": "./dist/index.js",
       "require": "./dist/index.js"
     },
+    "./login": {
+      "import": "./dist/login.js",
+      "require": "./dist/login.js"
+    },
     "./eip712": {
       "import": "./dist/eip712/index.js",
       "require": "./dist/eip712/index.js"

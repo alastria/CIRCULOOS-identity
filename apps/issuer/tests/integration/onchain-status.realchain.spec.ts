@@ -1,0 +1,258 @@
+/**
+ * Plan A2 against a REAL local Hardhat node with the identity Diamond:
+ *   A2.1 only a trusted issuer can issue;
+ *   A2.2 issuance is recorded on-chain (fix P11) and revocation is applied on-chain,
+ *        only by the credential's issuer (fix P13).
+ * Every rejection asserts the on-chain state did not change.
+ */
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { Wallet } from 'ethers'
+import {
+  createTrustedIssuerRegistryClient,
+  getCredentialType,
+  hashVC,
+  EMPLOYEE_SCHEMA_ID,
+  REVOCATION_TYPES,
+  buildRevocationMessage,
+  InMemoryLoginChallengeStore,
+  buildLoginTypedData,
+  verifyEmployeeLogin,
+} from '@circuloos/common'
+import { IssuanceService, RevocationError } from '../../src/services/issuanceService'
+import { devWallet, startLocalIdentityChain, type LocalIdentityChain } from './local-chain'
+import { startFakeWeb3Signer } from './fake-web3signer'
+
+vi.mock('../../src/services/notification.service', () => ({
+  NotificationService: vi.fn().mockImplementation(() => ({ sendClaimInfo: vi.fn() })),
+}))
+
+const backendKey = devWallet(1) // the issuer backend's on-chain signer (records and revokes)
+const alastria = devWallet(2) // trusted human issuer (signs credentials in the browser)
+const untrusted = devWallet(3)
+const holder = devWallet(4)
+const ORG = { legalName: 'Khoani B&A S.L.', taxID: 'ESB12345678', addressCountry: 'ES' }
+
+function memoryStorage() {
+  const issuances = new Map<string, any>()
+  const vcs = new Map<string, any>()
+  return {
+    loadIssuance: async (id: string) => issuances.get(id) ?? null,
+    saveIssuance: async (id: string, data: any) => void issuances.set(id, data),
+    loadVC: async (id: string) => vcs.get(id) ?? null,
+    saveVC: async (id: string, vc: any) => void vcs.set(id, vc),
+  }
+}
+
+describe('A2 — trusted issuance and on-chain revocation (real local chain)', () => {
+  let chain: LocalIdentityChain
+  let service: IssuanceService
+
+  beforeAll(async () => {
+    chain = await startLocalIdentityChain()
+    await (await chain.diamond.addTrustedIssuer(alastria.address)).wait()
+    // Since P14 the contract only accepts records from trusted issuers: the backend key that
+    // records (and later revokes) issuances must be registered as one.
+    await (await chain.diamond.addTrustedIssuer(backendKey.address)).wait()
+    service = new IssuanceService({
+      storage: memoryStorage() as any,
+      hmacSecret: 'test-secret',
+      trustedIssuerRegistry: createTrustedIssuerRegistryClient({ address: chain.diamondAddress, rpcUrl: chain.rpcUrl }),
+      onchain: { diamondAddress: chain.diamondAddress, rpcUrl: chain.rpcUrl, signerKey: backendKey.privateKey },
+    })
+  }, 120_000)
+
+  afterAll(async () => {
+    await chain?.stop()
+  })
+
+  async function prepareEmployee() {
+    return service.prepare('ana@khoani.example', holder.address, undefined, undefined, {
+      credentialType: EMPLOYEE_SCHEMA_ID,
+      organization: ORG,
+    })
+  }
+
+  async function issueEmployee(signer: Wallet = alastria) {
+    const prepared = await prepareEmployee()
+    const { types, messageBuilder } = getCredentialType(EMPLOYEE_SCHEMA_ID)!.schema.issuance
+    const signature = await signer._signTypedData(prepared.domain, types, messageBuilder(prepared.draftVc))
+    await service.mint(prepared.id, signature, signer.address, prepared.domain)
+    return prepared
+  }
+
+  async function revocationRequest(signer: Wallet, prepared: any, reason = 'revoked_by_issuer') {
+    const signature = await signer._signTypedData(prepared.domain, REVOCATION_TYPES, buildRevocationMessage(prepared.draftVc.id, reason))
+    return { reason, signature, signerAddress: signer.address }
+  }
+
+  it('A2.1 a wallet that is not a trusted issuer cannot issue, and nothing is recorded on-chain', async () => {
+    const prepared = await prepareEmployee()
+    const { types, messageBuilder } = getCredentialType(EMPLOYEE_SCHEMA_ID)!.schema.issuance
+    const signature = await untrusted._signTypedData(prepared.domain, types, messageBuilder(prepared.draftVc))
+
+    await expect(service.mint(prepared.id, signature, untrusted.address, prepared.domain)).rejects.toThrow(
+      /not listed in the trusted issuer registry/,
+    )
+    expect(await chain.diamond.isIssued(hashVC(prepared.draftVc))).toBe(false)
+    expect((await (service as any).credential.loadIssuance(prepared.id)).status).not.toBe('ISSUED')
+  })
+
+  it('A2.2/P11 a trusted issuance is recorded on-chain for the holder address', async () => {
+    const prepared = await issueEmployee()
+    const credentialHash = hashVC(prepared.draftVc)
+
+    expect(await chain.diamond.isIssued(credentialHash)).toBe(true)
+    const [event] = await chain.diamond.queryFilter(chain.diamond.filters.CredentialIssued(credentialHash))
+    expect(event.args!.subject.toLowerCase()).toBe(holder.address.toLowerCase())
+    expect(event.args!.issuer.toLowerCase()).toBe(backendKey.address.toLowerCase())
+
+    const rec = await (service as any).credential.loadIssuance(prepared.id)
+    expect(rec.onchain).toMatchObject({ status: 'recorded', credentialHash })
+  })
+
+  it('P14 if the backend key is not a trusted issuer, the credential is issued but the failed on-chain record is visible', async () => {
+    const outsider = devWallet(6)
+    const strictService = new IssuanceService({
+      storage: memoryStorage() as any,
+      hmacSecret: 'test-secret',
+      trustedIssuerRegistry: createTrustedIssuerRegistryClient({ address: chain.diamondAddress, rpcUrl: chain.rpcUrl }),
+      onchain: { diamondAddress: chain.diamondAddress, rpcUrl: chain.rpcUrl, signerKey: outsider.privateKey },
+    })
+    const prepared = await strictService.prepare('ana@khoani.example', holder.address, undefined, undefined, {
+      credentialType: EMPLOYEE_SCHEMA_ID,
+      organization: ORG,
+    })
+    const { types, messageBuilder } = getCredentialType(EMPLOYEE_SCHEMA_ID)!.schema.issuance
+    const signature = await alastria._signTypedData(prepared.domain, types, messageBuilder(prepared.draftVc))
+    await strictService.mint(prepared.id, signature, alastria.address, prepared.domain)
+
+    expect(await chain.diamond.isIssued(hashVC(prepared.draftVc))).toBe(false)
+    expect((await (strictService as any).credential.loadIssuance(prepared.id)).onchain.status).toBe('failed')
+  })
+
+  it('A2.2 the issuer revokes it and the chain marks it revoked', async () => {
+    const prepared = await issueEmployee()
+    const credentialHash = hashVC(prepared.draftVc)
+
+    const result = await service.revoke(prepared.id, {
+      wallet: alastria.address,
+      role: 'issuer',
+      ...(await revocationRequest(alastria, prepared)),
+    })
+
+    expect(result.revoked).toBe(true)
+    expect(result.onchain?.txHash).toMatch(/^0x/)
+    expect(await chain.diamond.isRevoked(credentialHash)).toBe(true)
+    expect((await (service as any).credential.loadIssuance(prepared.id)).status).toBe('REVOKED')
+  })
+
+  it.each([
+    ['a holder (role holder)', () => holder, 'holder', 'FORBIDDEN'],
+    ['another trusted issuer who did not sign it', () => untrusted, 'issuer', 'FORBIDDEN'],
+  ])('P13 %s cannot revoke, and the chain is unchanged', async (_label, who, role, code) => {
+    const prepared = await issueEmployee()
+    const signer = who()
+
+    await expect(
+      service.revoke(prepared.id, { wallet: signer.address, role: role as any, ...(await revocationRequest(signer, prepared)) }),
+    ).rejects.toMatchObject({ code })
+    expect(await chain.diamond.isRevoked(hashVC(prepared.draftVc))).toBe(false)
+  })
+
+  it('P13 a revocation request signed by someone else than the authenticated issuer is rejected', async () => {
+    const prepared = await issueEmployee()
+    const forged = await revocationRequest(untrusted, prepared)
+
+    await expect(
+      service.revoke(prepared.id, { wallet: alastria.address, role: 'issuer', ...forged, signerAddress: alastria.address }),
+    ).rejects.toMatchObject({ code: 'INVALID_SIGNATURE' })
+    expect(await chain.diamond.isRevoked(hashVC(prepared.draftVc))).toBe(false)
+  })
+
+  it('an admin may revoke any credential; revoking twice is a clear error', async () => {
+    const prepared = await issueEmployee()
+    const admin = devWallet(5)
+    await service.revoke(prepared.id, { wallet: admin.address, role: 'admin', ...(await revocationRequest(admin, prepared)) })
+    expect(await chain.diamond.isRevoked(hashVC(prepared.draftVc))).toBe(true)
+
+    await expect(
+      service.revoke(prepared.id, { wallet: admin.address, role: 'admin', ...(await revocationRequest(admin, prepared)) }),
+    ).rejects.toMatchObject({ code: 'ALREADY_REVOKED' })
+  })
+
+  it('a draft that was never issued cannot be revoked', async () => {
+    const prepared = await prepareEmployee()
+    await expect(
+      service.revoke(prepared.id, { wallet: alastria.address, role: 'issuer', ...(await revocationRequest(alastria, prepared)) }),
+    ).rejects.toBeInstanceOf(RevocationError)
+  })
+
+  describe('A3 — logging in with an issued employee credential, status read from the chain', () => {
+    async function loginWith(issuance: any) {
+      const issued = await (service as any).credential.loadIssuedCredential(issuance.draftVc.id)
+      const challenges = new InMemoryLoginChallengeStore()
+      const registry = createTrustedIssuerRegistryClient({ address: chain.diamondAddress, rpcUrl: chain.rpcUrl })
+      const challenge = await challenges.issue(holder.address, 'iot-manager')
+      const { domain, types, message } = buildLoginTypedData(issued, challenge)
+      const signature = await holder._signTypedData(domain, types, message)
+      return verifyEmployeeLogin(
+        { credential: issued, signature, nonce: challenge.nonce, audience: 'iot-manager' },
+        {
+          challenges,
+          isTrustedIssuer: (a) => registry.isTrustedIssuer(a),
+          credentialStatus: async (hash) => {
+            const s = await chain.diamond.getCredentialStatus(hash)
+            return { issued: s.issued, revoked: s.revoked, suspended: s.suspended, issuer: s.issuer }
+          },
+        },
+      )
+    }
+
+    it('A3.1 the holder logs in and gets the organisation signed by Alastria', async () => {
+      const prepared = await issueEmployee()
+      expect(await loginWith(prepared)).toMatchObject({ ok: true, holder: holder.address.toLowerCase(), organization: ORG })
+    })
+
+    it('A3.4 after the issuer revokes it on-chain, the login is rejected', async () => {
+      const prepared = await issueEmployee()
+      await service.revoke(prepared.id, { wallet: alastria.address, role: 'issuer', ...(await revocationRequest(alastria, prepared)) })
+      expect(await loginWith(prepared)).toMatchObject({ ok: false, code: 'REVOKED' })
+    })
+  })
+
+  describe('G2 — the issuer backend signs its on-chain writes through Web3Signer', () => {
+    it('records and revokes on-chain with no private key in its configuration', async () => {
+      const web3signer = await startFakeWeb3Signer([backendKey])
+      try {
+        const viaWeb3Signer = new IssuanceService({
+          storage: memoryStorage() as any,
+          hmacSecret: 'test-secret',
+          trustedIssuerRegistry: createTrustedIssuerRegistryClient({ address: chain.diamondAddress, rpcUrl: chain.rpcUrl }),
+          onchain: {
+            diamondAddress: chain.diamondAddress,
+            rpcUrl: chain.rpcUrl,
+            web3signerUrl: web3signer.url,
+            signerAddress: backendKey.address,
+          },
+        })
+        const prepared = await viaWeb3Signer.prepare('ana@khoani.example', holder.address, undefined, undefined, {
+          credentialType: EMPLOYEE_SCHEMA_ID,
+          organization: ORG,
+        })
+        const { types, messageBuilder } = getCredentialType(EMPLOYEE_SCHEMA_ID)!.schema.issuance
+        const signature = await alastria._signTypedData(prepared.domain, types, messageBuilder(prepared.draftVc))
+        await viaWeb3Signer.mint(prepared.id, signature, alastria.address, prepared.domain)
+
+        const credentialHash = hashVC(prepared.draftVc)
+        expect(await chain.diamond.isIssued(credentialHash)).toBe(true)
+        expect((await chain.diamond.getCredentialStatus(credentialHash)).issuer.toLowerCase()).toBe(backendKey.address.toLowerCase())
+
+        await viaWeb3Signer.revoke(prepared.id, { wallet: alastria.address, role: 'issuer', ...(await revocationRequest(alastria, prepared)) })
+        expect(await chain.diamond.isRevoked(credentialHash)).toBe(true)
+        expect(web3signer.requests.length).toBe(2) // record + revoke, both signed by Web3Signer
+      } finally {
+        await web3signer.stop()
+      }
+    })
+  })
+})

@@ -462,7 +462,11 @@
         "companyNamePlaceholder": "Ej: Alastria Blockchain Ecosystem",
         "attributes": "Atributos",
         "addAttribute": "Añadir atributo",
-        "submit": "Enviar Invitación"
+        "submit": "Enviar Invitación",
+        "taxID": "CIF / NIF / VAT de la organización",
+        "taxIDPlaceholder": "Con prefijo de país, ej. ESB12345678",
+        "addressCountry": "País (ISO)",
+        "organizationHint": "El nombre legal, el identificador fiscal y el país quedan firmados en la credencial: no se pueden cambiar después."
       },
       "success": "Invitación enviada correctamente",
       "error": "Error al enviar la invitación",

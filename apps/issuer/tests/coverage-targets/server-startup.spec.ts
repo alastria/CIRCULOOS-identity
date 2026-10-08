@@ -1,6 +1,17 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { testServerStartup, cleanupServerMocks } from '../helpers/server-lifecycle.helper'
 import { patchServerWithMocks, mockConsole, mockProcessExit } from '../fixtures/mocks/fastify.mock'
+import { config } from '../../src/config'
+
+// start() now reports through the shared pino logger (createLogger('issuer') from
+// @circuloos/common) instead of console.log / server.log.error.
+const issuerLogger = vi.hoisted(() => ({
+    info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn(), fatal: vi.fn(), trace: vi.fn()
+}))
+vi.mock('@circuloos/common', async () => {
+    const actual = await vi.importActual<any>('@circuloos/common')
+    return { ...actual, createLogger: () => issuerLogger }
+})
 
 /**
  * Tests to cover server startup code (index.ts lines 115-131)
@@ -37,14 +48,16 @@ describe('Server Startup Coverage (index.ts 115-131)', () => {
         if (startFn) {
             await startFn()
 
-            // Verify listen was called
-            expect(mocks.mockListen).toHaveBeenCalled()
+            // Verify listen was called with the configured port/host
+            expect(mocks.mockListen).toHaveBeenCalledWith({ port: config.issuer.port, host: config.http.host })
 
             // Verify startup message was logged
-            expect(consoleMock.log).toHaveBeenCalled()
-            const logCall = consoleMock.log.mock.calls[0][0]
-            expect(logCall).toContain('Circuloos Issuer API')
-            expect(logCall).toContain(`localhost:`)
+            expect(issuerLogger.info).toHaveBeenCalledWith(
+                `Issuer Service started at http://${config.http.host}:${config.issuer.port}`
+            )
+            expect(issuerLogger.info).toHaveBeenCalledWith(
+                `API Docs: http://${config.http.host}:${config.issuer.port}/api/v1/docs`
+            )
         }
 
         cleanupServerMocks({ consoleMock, listenMock: mocks.mockListen })
@@ -67,8 +80,9 @@ describe('Server Startup Coverage (index.ts 115-131)', () => {
                 expect(err.message).toContain('process.exit(1)')
             }
 
-            // Verify error was logged
-            expect((server.log as any).error).toHaveBeenCalled()
+            // Verify error was logged and the process asked to exit with code 1
+            expect(issuerLogger.fatal).toHaveBeenCalledWith('Failed to start server', expect.any(Error))
+            expect(exitMock).toHaveBeenCalledWith(1)
         }
 
         cleanupServerMocks({ consoleMock, exitMock, listenMock: mocks.mockListen })

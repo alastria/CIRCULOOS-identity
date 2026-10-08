@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { IssuanceService } from '../../src/services/issuanceService'
 import { MockBuilder, ServiceMockBuilder } from '../helpers/mock-builder.helper'
 import { IssuanceStatus } from '@circuloos/common'
+import { holderWallet, otherWallet, signClaim } from '../helpers/holder-signature.helper'
 
 /**
  * Tests to cover remaining service validation paths
@@ -15,13 +16,12 @@ describe('IssuanceService Validation Coverage', () => {
 
     beforeEach(() => {
         mocks = MockBuilder.serviceMocks()
+        // Constructor option renamed `store` -> `storage` (IStorageAdapter)
         service = new IssuanceService({
-            store: mocks.credential,
+            storage: mocks.credential,
             emailSender: mocks.notification,
             trustedIssuerRegistry: mocks.registry
         } as any)
-        // Wait, I should probably check how MockBuilder constructs mocks.
-        // But for now, fixing the constructor call to pass a single object is key.
     })
 
     afterEach(() => {
@@ -42,7 +42,7 @@ describe('IssuanceService Validation Coverage', () => {
 
             await expect(service.finalize('test', {
                 otp: '123456',
-                token: 'valid-token'
+                token: 'valid.token' // '<payload>.<sig>' shape required by validateToken
                 // Missing signature and signer!
             })).rejects.toThrow('missing holder signature')
         })
@@ -60,49 +60,56 @@ describe('IssuanceService Validation Coverage', () => {
 
             await expect(service.finalize('test', {
                 otp: '123456',
-                token: 'valid-token',
+                token: 'valid.token',
                 signature: '0xsig'
                 // Missing signer!
             })).rejects.toThrow('missing holder signature')
         })
     })
 
-    describe('finalize - holder signature mismatch (lines 254-255)', () => {
+    describe('finalize - holder signature mismatch (enforceHolderMatch)', () => {
+        // The holder signature is verified with ethers.verifyTypedData over the current
+        // circuloos-marketplace claim schema (SecurityService.verifySignature is no longer used),
+        // so a REAL signature from the token holder is needed to reach enforceHolderMatch.
+        // Error text changed to 'holder signature mismatch: recovered=... expected=...'.
+        const HOLDER = holderWallet.address
+        const OTHER = otherWallet.address
+        const domain = { name: 'test', version: '1', chainId: 1 }
+
         it('throws when recovered signer does not match credentialSubject.id', async () => {
             const issuance = {
                 id: 'test',
                 draft: {
                     id: 'vc-1',
-                    credentialSubject: { id: '0xexpected-holder' }
+                    credentialSubject: { id: OTHER }
                 },
                 otpHash: 'hash',
-                holderAddress: '0xactual-signer', // Match with token
+                holderAddress: HOLDER, // Match with token
                 issuerProof: {},
                 status: IssuanceStatus.ISSUED
             }
 
             vi.spyOn(service['security'], 'verifySessionToken').mockReturnValue({
                 ok: true,
-                payload: { id: 'test', holderAddress: '0xactual-signer' } // Match!
+                payload: { id: 'test', holderAddress: HOLDER } // Match!
             })
             vi.spyOn(service['credential'], 'loadIssuance').mockResolvedValue(issuance)
             vi.spyOn(service['security'], 'verifyOtpCode').mockReturnValue(true)
             vi.spyOn(service['credential'], 'loadVC').mockResolvedValue(null)
-
-            // Signature recovery returns signer that matches token/holderAddress
-            // but NOT credentialSubject.id
-            vi.spyOn(service['security'], 'verifySignature').mockReturnValue('0xactual-signer')
-            vi.spyOn(service['security'], 'buildDomain').mockReturnValue({
-                name: 'test', version: '1', chainId: 1
-            } as any)
+            vi.spyOn(service['security'], 'buildDomain').mockReturnValue(domain as any)
             vi.spyOn(service['registry'], 'getTrustedRegistryAddress').mockReturnValue(undefined)
+
+            // Signature recovers to the token holder but NOT credentialSubject.id
+            const token = 'valid.token'
+            const { signature, claimMessage } = await signClaim(holderWallet, token, domain)
 
             await expect(service.finalize('test', {
                 otp: '123456',
-                token: 'valid-token',
-                signature: '0xsig',
-                signer: '0xactual-signer' // Matches token holder
-            })).rejects.toThrow('holder signature does not match credentialSubject.id or holderAddress')
+                token,
+                signature,
+                signer: HOLDER, // Matches token holder
+                claimMessage
+            })).rejects.toThrow(`holder signature mismatch: recovered=${HOLDER} expected=${OTHER}`)
         })
 
         it('throws when recovered signer does not match holderAddress', async () => {
@@ -110,35 +117,35 @@ describe('IssuanceService Validation Coverage', () => {
                 id: 'test',
                 draft: {
                     id: 'vc-1',
-                    credentialSubject: { holderAddress: '0xexpected' }
+                    credentialSubject: { holderAddress: OTHER }
                 },
                 otpHash: 'hash',
-                holderAddress: '0xdifferent', // This will be the actual holder
+                holderAddress: HOLDER, // This will be the actual holder
                 issuerProof: {},
                 status: IssuanceStatus.ISSUED
             }
 
             vi.spyOn(service['security'], 'verifySessionToken').mockReturnValue({
                 ok: true,
-                payload: { id: 'test', holderAddress: '0xdifferent' } // Match token with holderAddress
+                payload: { id: 'test', holderAddress: HOLDER } // Match token with holderAddress
             })
             vi.spyOn(service['credential'], 'loadIssuance').mockResolvedValue(issuance)
             vi.spyOn(service['security'], 'verifyOtpCode').mockReturnValue(true)
             vi.spyOn(service['credential'], 'loadVC').mockResolvedValue(null)
+            vi.spyOn(service['security'], 'buildDomain').mockReturnValue(domain as any)
+            vi.spyOn(service['registry'], 'getTrustedRegistryAddress').mockReturnValue(undefined)
 
             // Recovered signature matches signer but NOT credentialSubject.holderAddress
-            vi.spyOn(service['security'], 'verifySignature').mockReturnValue('0xdifferent')
-            vi.spyOn(service['security'], 'buildDomain').mockReturnValue({
-                name: 'test', version: '1', chainId: 1
-            } as any)
-            vi.spyOn(service['registry'], 'getTrustedRegistryAddress').mockReturnValue(undefined)
+            const token = 'valid.token'
+            const { signature, claimMessage } = await signClaim(holderWallet, token, domain)
 
             await expect(service.finalize('test', {
                 otp: '123456',
-                token: 'valid-token',
-                signature: '0xsig',
-                signer: '0xdifferent'  // Matches token
-            })).rejects.toThrow('holder signature does not match')
+                token,
+                signature,
+                signer: HOLDER,  // Matches token
+                claimMessage
+            })).rejects.toThrow(`holder signature mismatch: recovered=${HOLDER} expected=${OTHER}`)
         })
     })
 })

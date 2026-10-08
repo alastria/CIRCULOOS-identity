@@ -1,43 +1,38 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-
-// Mock @circuloos/common with ISSUER_DID as undefined
-vi.mock('@circuloos/common', async () => {
-    const actual = await vi.importActual<any>('@circuloos/common')
-    return {
-        ...actual,
-        config: {
-            ...actual.config,
-            ISSUER_DID: undefined, // This will trigger the fallback
-            TRUSTED_ISSUER_REGISTRY_ADDRESS: '0xtrusted',
-            CREDENTIAL_REGISTRY_ADDRESS: '0xregistry',
-            RPC_URL: 'http://rpc',
-            ISSUER_PRIVATE_KEY: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
-        }
-    }
-})
-
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { IssuanceService } from '../../src/services/issuanceService'
+import { config } from '../../src/config'
 
 /**
- * Cover issuanceService.ts line 46:
- * const issuerDid = config.ISSUER_DID || 'did:example:issuer'
+ * Cover the ISSUER_DID fallback in IssuanceService.prepare():
+ * issuerDid || 'did:example:issuer'  (issuerDid = config.issuer.did)
  *
- * Need to test when config.ISSUER_DID is falsy to hit the fallback
+ * The DID now comes from the issuer typed config (src/config -> loadConfig()), not from the
+ * legacy flat `config.ISSUER_DID` of @circuloos/common, so the test clears config.issuer.did.
  */
 
 describe('IssuanceService Line 46 - ISSUER_DID fallback', () => {
     let service: IssuanceService
     let mockStore: any
+    let originalDid: string | undefined
 
     beforeEach(() => {
+        originalDid = config.issuer.did
+        ;(config.issuer as any).did = undefined // trigger the fallback
+        // IStorageAdapter API (constructor option renamed store -> storage)
         mockStore = {
-            loadAll: vi.fn(),
-            writeAtomic: vi.fn()
+            loadIssuance: vi.fn(),
+            saveIssuance: vi.fn(),
+            loadVC: vi.fn(),
+            saveVC: vi.fn()
         }
-        service = new IssuanceService({ store: mockStore })
+        service = new IssuanceService({ storage: mockStore })
     })
 
-    it('uses fallback did:example:issuer when config.ISSUER_DID is undefined', async () => {
+    afterEach(() => {
+        ;(config.issuer as any).did = originalDid
+    })
+
+    it('uses fallback did:example:issuer when config.issuer.did is undefined', async () => {
 
         // Mock the dependencies
         vi.spyOn(service['credential'], 'createDraftVC').mockReturnValue({

@@ -71,8 +71,9 @@ describe('Playground.ts - Branch Coverage', () => {
             expect(res.statusCode).toBeGreaterThanOrEqual(200)
         })
 
-        it('returns 500 when loadAll returns no draft VC (lines 52-53)', async () => {
-            const store = (server as any).store
+        it('returns 500 when loadIssuance returns no draft VC (lines 52-53)', async () => {
+            // Storage is an IStorageAdapter now (loadIssuance replaced FileStore.loadAll)
+            const storage = (server as any).storage
 
             // First prepare successfully
             const prepareRes = await server.inject({
@@ -89,9 +90,9 @@ describe('Playground.ts - Branch Coverage', () => {
             // Now corrupt the stored issuance by removing the draft
             const prepareData = JSON.parse(prepareRes.payload)
 
-            // Mock loadAll to return record without draft
-            const originalLoadAll = store.loadAll
-            store.loadAll = vi.fn().mockResolvedValue({ id: 'test', otpHash: 'hash' }) // No draft field
+            // Mock loadIssuance to return record without draft
+            const originalLoadIssuance = storage.loadIssuance
+            storage.loadIssuance = vi.fn().mockResolvedValue({ id: 'test', otpHash: 'hash' }) // No draft field
 
             const res = await server.inject({
                 method: 'POST',
@@ -102,7 +103,8 @@ describe('Playground.ts - Branch Coverage', () => {
                 }
             })
 
-            store.loadAll = originalLoadAll
+            expect(storage.loadIssuance).toHaveBeenCalled()
+            storage.loadIssuance = originalLoadIssuance
 
             // Should return 500 because no draft VC
             expect(res.statusCode).toBe(500)

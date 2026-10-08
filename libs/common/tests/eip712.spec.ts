@@ -1,4 +1,4 @@
-/// <reference types="vitest" />
+import { describe, it, expect } from 'vitest'
 import { verifyTypedDataWithFallback, buildEip712Domain } from '../src/eip712'
 import { Wallet } from 'ethers'
 

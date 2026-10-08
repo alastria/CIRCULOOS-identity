@@ -9,14 +9,19 @@ vi.mock('@circuloos/common', async () => {
         ...actual,
         createTrustedIssuerRegistryClient: vi.fn(),
         hashVC: vi.fn(() => '0xhash'),
-        config: {
-            TRUSTED_ISSUER_REGISTRY_ADDRESS: '0xtrusted',
-            CREDENTIAL_REGISTRY_ADDRESS: '0xregistry',
-            RPC_URL: 'http://rpc',
-            ISSUER_PRIVATE_KEY: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
-        }
     }
 })
+
+// RegistryService reads the issuer's typed config (src/config): the on-chain registry is
+// now the Diamond (config.diamond.address) and the signer key is config.issuer.privateKey.
+vi.mock('../../src/config', () => ({
+    config: {
+        diamond: { address: '0x5FbDB2315678afecb367f032d93F642f64180aa3' },
+        // Unreachable local port so the real (non-injected) path fails fast
+        blockchain: { rpcUrl: 'http://127.0.0.1:1' },
+        issuer: { privateKey: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' },
+    }
+}))
 
 describe('RegistryService', () => {
     let service: RegistryService
@@ -71,12 +76,14 @@ describe('RegistryService', () => {
         const mockTx = { wait: vi.fn().mockResolvedValue({ transactionHash: '0xtx', blockNumber: 100 }) }
         mockCredentialRegistry.recordIssuance.mockResolvedValue(mockTx)
 
-        const vc = { id: 'vc-1', credentialSubject: { id: '0xsubject' } }
+        // The contract takes the subject address; a DID subject is reduced to it (fix P11)
+        const subject = '0x' + 'ab'.repeat(20)
+        const vc = { id: 'vc-1', credentialSubject: { id: `did:alastria:quorum:${subject}` } }
         const result = await service.recordIssuance(vc)
 
         expect(result).toEqual({ txHash: '0xtx', blockNumber: 100 })
         expect(createCredentialRegistryFn).toHaveBeenCalled()
-        expect(mockCredentialRegistry.recordIssuance).toHaveBeenCalledWith('0xhash', '0xsubject')
+        expect(mockCredentialRegistry.recordIssuance).toHaveBeenCalledWith('0xhash', subject)
     })
 
     it('handles record issuance failure gracefully', async () => {

@@ -10,6 +10,12 @@ export const issuerSchema = z.object({
     issuer: z.object({
         did: z.string().optional(),
         privateKey: z.string().optional(),
+        /** Web3Signer JSON-RPC URL: when set, on-chain writes are signed there (no raw key). */
+        web3signerUrl: z.string().optional(),
+        /** Address of the issuer backend's on-chain key in Web3Signer (must be a trusted issuer). */
+        onchainSignerAddress: z.string().optional(),
+        /** Human wallets with the admin role in the issuer web (comma-separated ADMIN_ADDRESSES). */
+        adminAddresses: z.array(z.string()).default([]),
         hmacSecret: z.string().optional(),
         port: z.number().int().positive().default(3001),
     }),
@@ -58,6 +64,9 @@ export function loadIssuerConfig(): Partial<IssuerConfig> {
         issuer: {
             did: process.env.ISSUER_DID,
             privateKey: process.env.DIAMOND_OWNER_PRIVATE_KEY || process.env.ISSUER_PRIVATE_KEY || process.env.DEPLOYER_PRIVATE_KEY,
+            web3signerUrl: process.env.WEB3SIGNER_URL,
+            onchainSignerAddress: process.env.ISSUER_ONCHAIN_ADDRESS,
+            adminAddresses: (process.env.ADMIN_ADDRESSES || '').split(',').map((a) => a.trim()).filter(Boolean),
             hmacSecret: process.env.ISSUER_HMAC_SECRET || (isProduction ? undefined : generateDevSecret('ISSUER_HMAC_SECRET')),
             port: process.env.ISSUER_PORT ? Number(process.env.ISSUER_PORT) : 3001,
         },

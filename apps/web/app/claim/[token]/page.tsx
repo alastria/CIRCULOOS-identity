@@ -229,6 +229,8 @@ export default function ClaimPage() {
       setCredentialPreview({
         type: tokenInfo.credentialType || "VerifiableCredential",
         issuer: tokenInfo.issuer || "Alastria Issuer",
+        // Employee credential: organisation legal name, shown in the claim signature
+        ...(tokenInfo.organization ? { worksFor: { legalName: tokenInfo.organization } } : {}),
         holderAddress: tokenInfo.holderAddress,
         attributes: {
           status: tokenInfo.status,
@@ -416,8 +418,9 @@ export default function ClaimPage() {
       // console.log('[DEBUG] Finalize - Expected ChainId:', expectedChainId)
       // console.log('[DEBUG] Finalize - Backend Domain:', JSON.stringify(backendDomain))
 
-      // Use new schema system for beautiful UX
-      const credentialType = 'circuloos-marketplace'
+      // Claim schema matching the credential being claimed (marketplace or employee)
+      const credentialType =
+        credentialPreview?.type === "CirculoosEmployeeCredential" ? "circuloos-employee" : "circuloos-marketplace"
       const schema = getCredentialType(credentialType)
 
       if (!schema) {

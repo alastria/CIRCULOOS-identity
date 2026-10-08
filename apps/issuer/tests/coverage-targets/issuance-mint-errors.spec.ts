@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { IssuanceService } from '../../src/services/issuanceService'
-import { FileStore } from '@circuloos/file-store'
-import { EmailMock, IssuanceStatus } from '@circuloos/common'
+import { EmailMock, IssuanceStatus, SqlJsStorageAdapter } from '@circuloos/common'
 
 /**
  * Covers issuanceService.ts uncovered lines in mint():
@@ -13,7 +12,8 @@ import { EmailMock, IssuanceStatus } from '@circuloos/common'
 
 describe('IssuanceService - Mint Error Coverage', () => {
     let svc: IssuanceService
-    let store: FileStore
+    // IssuanceService now persists through an IStorageAdapter (sql.js) passed as `storage`
+    let store: SqlJsStorageAdapter
     let origEnv: NodeJS.ProcessEnv
 
     beforeEach(() => {
@@ -22,7 +22,7 @@ describe('IssuanceService - Mint Error Coverage', () => {
         process.env.ISSUER_HMAC_SECRET = 'test-secret'
         process.env.TRUSTED_ISSUER_REGISTRY_ADDRESS = '0x0000000000000000000000000000000000000002'
 
-        store = new FileStore('./tmp-filestore-mint-errors')
+        store = new SqlJsStorageAdapter(':memory:')
 
         // Create mock registry client
         const mockRegistry = {
@@ -32,7 +32,7 @@ describe('IssuanceService - Mint Error Coverage', () => {
         }
 
         svc = new IssuanceService({
-            store,
+            storage: store,
             emailSender: EmailMock,
             hmacSecret: 'test-secret',
             trustedIssuerRegistry: mockRegistry as any
@@ -69,9 +69,9 @@ describe('IssuanceService - Mint Error Coverage', () => {
         const testId = prepareResult.id
 
         // Manually update status to CLAIMED (which is invalid for minting)
-        const rec = await store.loadAll(`issuances/${testId}.json`)
+        const rec = await store.loadIssuance(testId)
         rec.status = IssuanceStatus.CLAIMED
-        await store.writeAtomic(`issuances/${testId}.json`, rec)
+        await store.saveIssuance(testId, rec)
 
         await expect(
             svc.mint(testId, '0xsig', '0xsigner')

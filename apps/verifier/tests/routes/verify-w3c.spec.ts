@@ -9,6 +9,7 @@ vi.mock('@circuloos/common', async () => {
     return {
         ...actual,
         verifySignedCredential: vi.fn(),
+        verifyCredentialIssuance: vi.fn(),
         createTrustedIssuerRegistryClient: vi.fn().mockReturnValue({
             isTrustedIssuer: vi.fn().mockResolvedValue(true)
         }),
@@ -26,7 +27,7 @@ vi.mock('../../src/config', () => ({
     }
 }))
 
-import { verifySignedCredential } from '@circuloos/common'
+import { verifyCredentialIssuance } from '@circuloos/common'
 
 describe('Verify Route - W3C Support', () => {
     let server: any
@@ -46,23 +47,23 @@ describe('Verify Route - W3C Support', () => {
     })
 
     it('verifies a W3C VC with embedded proof', async () => {
-        (verifySignedCredential as any).mockReturnValue({
-            issuer: { ok: true, recovered: '0xissuer' },
-            holder: { ok: true }
-        })
+        // Since commit 6a34ad5 the route accepts W3C `proof.proofValue` as the signature
+        // when `proof.signature` is absent (src/routes/verify.ts:96).
+        const issuerAddress = '0x1234567890123456789012345678901234567890'
+        ;(verifyCredentialIssuance as any).mockReturnValue(issuerAddress)
 
         const w3cVc = {
             "@context": ["https://www.w3.org/2018/credentials/v1"],
             "id": "urn:uuid:123",
             "type": ["VerifiableCredential"],
-            "issuer": "did:ethr:0xissuer",
+            "issuer": `did:ethr:${issuerAddress}`,
             "credentialSubject": {
                 "id": "did:ethr:0xsubject"
             },
             "proof": {
                 "type": "EthereumEip712Signature2021",
                 "proofValue": "0xsignature",
-                "verificationMethod": "did:ethr:0xissuer#controller",
+                "verificationMethod": issuerAddress,
                 "created": "2024-01-01T00:00:00Z",
                 "proofPurpose": "assertionMethod",
                 "domain": {
@@ -76,20 +77,24 @@ describe('Verify Route - W3C Support', () => {
         const response = await server.inject({
             method: 'POST',
             url: '/verify',
-            payload: w3cVc
+            payload: { credential: w3cVc }
         })
 
         const body = JSON.parse(response.payload)
         expect(response.statusCode).toBe(200)
-        expect(body.ok).toBe(true)
+        expect(body.valid).toBe(true)
+        expect(body.issuer.address).toBe(issuerAddress)
+        expect(body.checks.signature).toBe('VALID')
 
-        // Verify that verifySignedCredential was called with the normalized structure
-        expect(verifySignedCredential).toHaveBeenCalledWith(
+        // The embedded W3C proof is used as-is: domain + proofValue are passed to the verifier
+        expect(verifyCredentialIssuance).toHaveBeenCalledWith(
+            w3cVc.proof.domain,
             expect.objectContaining({
-                vc: expect.anything(),
-                issuerProof: expect.anything()
+                id: w3cVc.id,
+                proof: expect.objectContaining({ proofValue: '0xsignature' })
             }),
-            expect.anything()
+            '0xsignature',
+            expect.any(String)
         )
     })
 })

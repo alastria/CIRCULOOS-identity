@@ -2,6 +2,7 @@ import { CredentialProof, CredentialProofPurpose, SignedCredential, VC } from '.
 import { verifyCredential } from './eip712'
 import { verifyCredentialIssuance } from './eip712/helpers'
 import { detectCredentialType } from './eip712/registry'
+import { DIDUtils } from './utils/did'
 
 export type CredentialVerificationResult = {
   ok: boolean
@@ -152,7 +153,8 @@ export function verifySignedCredential(
 
     // If holder proof exists, verify it matches credentialSubject.id
     if (holder && holder.ok && holder.recovered) {
-      if (subjectId.toLowerCase() !== holder.recovered.toLowerCase()) {
+      // subjectId is a DID (did:…:0x…); compare the addresses (fix P2)
+      if (DIDUtils.normalizeAddress(subjectId) !== holder.recovered.toLowerCase()) {
         return {
           issuer,
           holder: {

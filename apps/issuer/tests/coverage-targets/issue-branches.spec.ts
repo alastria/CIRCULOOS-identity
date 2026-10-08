@@ -1,6 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { createTestServer } from '../fixtures/server'
 import type { FastifyInstance } from 'fastify'
+import { authCookies } from '../helpers/auth-cookie.helper'
+
+// /issue/prepare, /mint and /finalize are now behind authenticateJWT (auth_token cookie)
+const ISSUER = '0x9999999999999999999999999999999999999999'
+const issuerCookies = () => authCookies(ISSUER, 'issuer')
+const holderCookies = (addr: string) => authCookies(addr, 'holder')
 
 /**
  * Cover issue.ts uncovered branches:
@@ -63,6 +69,7 @@ describe('Issue.ts - Branch Coverage', () => {
             const prepareRes = await server.inject({
                 method: 'POST',
                 url: '/issue/prepare',
+                cookies: issuerCookies(),
                 payload: {
                     email: 'test@example.com',
                     holderAddress: '0x1234567890123456789012345678901234567890'
@@ -76,6 +83,7 @@ describe('Issue.ts - Branch Coverage', () => {
             const res = await server.inject({
                 method: 'POST',
                 url: '/issue/mint',
+                cookies: issuerCookies(),
                 payload: {
                     id: prepareData.id,
                     signature: 'invalid-signature',
@@ -83,16 +91,17 @@ describe('Issue.ts - Branch Coverage', () => {
                 }
             })
 
-            // Should return 400 due to validation error
+            // Should return 400 due to signature verification error
             expect(res.statusCode).toBe(400)
             const data = JSON.parse(res.payload)
-            expect(data).toHaveProperty('error')
+            expect(data.error).toBe('invalid issuer signature')
         })
 
         it('handles mint error when issuance does not exist', async () => {
             const res = await server.inject({
                 method: 'POST',
                 url: '/issue/mint',
+                cookies: issuerCookies(),
                 payload: {
                     id: 'nonexistent-issuance-id',
                     signature: '0xabcd',
@@ -102,7 +111,7 @@ describe('Issue.ts - Branch Coverage', () => {
 
             expect(res.statusCode).toBe(400)
             const data = JSON.parse(res.payload)
-            expect(data).toHaveProperty('error')
+            expect(data.error).toBe('not found')
         })
     })
 
@@ -115,6 +124,7 @@ describe('Issue.ts - Branch Coverage', () => {
             const res = await server.inject({
                 method: 'POST',
                 url: '/issue/finalize',
+                cookies: holderCookies('0x1234567890123456789012345678901234567890'),
                 payload: {
                     id: 'nonexistent-id',
                     otp: '123456',
@@ -139,6 +149,7 @@ describe('Issue.ts - Branch Coverage', () => {
             const prepareRes = await server.inject({
                 method: 'POST',
                 url: '/issue/prepare',
+                cookies: issuerCookies(),
                 payload: {
                     email: 'test@example.com',
                     holderAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd'
@@ -152,6 +163,7 @@ describe('Issue.ts - Branch Coverage', () => {
             const res = await server.inject({
                 method: 'POST',
                 url: '/issue/finalize',
+                cookies: holderCookies('0xabcdefabcdefabcdefabcdefabcdefabcdefabcd'),
                 payload: {
                     id: prepareData.id,
                     otp: '999999',  // Wrong OTP

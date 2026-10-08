@@ -17,13 +17,27 @@ import { api } from "@/lib/api"
 import { useAccount, useSignTypedData, useSignMessage, useChainId, useSwitchChain } from "wagmi"
 import { getEIP712Types, getCredentialType } from "@circuloos/common/eip712"
 
+const EMPLOYEE_SCHEMA_ID = "circuloos-employee"
+
 const CREDENTIAL_TYPES = [
   {
     id: "circuloos-marketplace",
     name: "Circuloos-marketplace",
     description: "Credencial de acceso al marketplace Circuloos",
   },
+  {
+    id: EMPLOYEE_SCHEMA_ID,
+    name: "Circuloos-employee",
+    description: "Credencial de empleado: vincula a la persona con su organización (nombre legal, CIF/VAT y país)",
+  },
 ]
+
+/** EIP-712 schema of a draft built by the issuer: decided by its type, as the backend does. */
+function schemaIdOfDraft(draftVc: any): string {
+  return Array.isArray(draftVc?.type) && draftVc.type.includes("CirculoosEmployeeCredential")
+    ? EMPLOYEE_SCHEMA_ID
+    : "circuloos-marketplace"
+}
 
 export default function IssuerNewPage() {
   const { t } = useI18n()
@@ -34,8 +48,11 @@ export default function IssuerNewPage() {
     email: "",
     wallet: "",
     companyName: "",
+    taxID: "",
+    addressCountry: "",
     credentialType: CREDENTIAL_TYPES[0].id,
   })
+  const isEmployee = formData.credentialType === EMPLOYEE_SCHEMA_ID
 
   const { signTypedDataAsync } = useSignTypedData()
   const { signMessageAsync } = useSignMessage()
@@ -67,7 +84,17 @@ export default function IssuerNewPage() {
       const prepareResponse = await api.issuer.prepare(
         formData.email,
         formData.wallet,
-        formData.companyName
+        isEmployee ? undefined : formData.companyName,
+        isEmployee
+          ? {
+              credentialType: EMPLOYEE_SCHEMA_ID,
+              organization: {
+                legalName: formData.companyName,
+                taxID: formData.taxID,
+                addressCountry: formData.addressCountry,
+              },
+            }
+          : { credentialType: formData.credentialType }
       )
 
       const { id, draftVc, domain } = prepareResponse
@@ -118,8 +145,8 @@ Para cambiar la red:
       // 3. Sign (Issuer Signature) - Using new schema system
       toast.info(t("issuer.new.signingPrompt"))
 
-      // Get the beautiful schema for circuloos-marketplace
-      const credentialType = 'circuloos-marketplace'
+      // Schema of the draft the issuer built (marketplace or employee)
+      const credentialType = schemaIdOfDraft(draftVc)
       const schema = getCredentialType(credentialType)
 
       if (!schema) {
@@ -150,6 +177,8 @@ Para cambiar la red:
         email: "",
         wallet: "",
         companyName: "",
+        taxID: "",
+        addressCountry: "",
         credentialType: CREDENTIAL_TYPES[0].id,
       })
     } catch (err: any) {
@@ -277,6 +306,35 @@ Para cambiar la red en MetaMask:
                   required
                 />
               </div>
+
+              {isEmployee && (
+                <div className="grid gap-4 sm:grid-cols-[2fr_1fr]">
+                  <div className="space-y-2">
+                    <Label htmlFor="taxID">{t("issuer.new.form.taxID")}</Label>
+                    <Input
+                      id="taxID"
+                      type="text"
+                      placeholder={t("issuer.new.form.taxIDPlaceholder")}
+                      value={formData.taxID}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, taxID: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="addressCountry">{t("issuer.new.form.addressCountry")}</Label>
+                    <Input
+                      id="addressCountry"
+                      type="text"
+                      maxLength={2}
+                      placeholder="ES"
+                      value={formData.addressCountry}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, addressCountry: e.target.value.toUpperCase() }))}
+                      required
+                    />
+                  </div>
+                  <p className="text-sm text-muted-foreground sm:col-span-2">{t("issuer.new.form.organizationHint")}</p>
+                </div>
+              )}
 
               {/* Email */}
               <div className="space-y-2">

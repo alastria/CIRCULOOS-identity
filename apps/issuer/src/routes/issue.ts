@@ -11,7 +11,23 @@ const prepareSchema = {
     required: ["email", "holderAddress"],
     properties: {
       email: { type: "string", format: "email", description: "User email address" },
-      companyName: { type: "string", description: "Organization name" },
+      companyName: { type: "string", description: "Organization name (marketplace credential, display only)" },
+      credentialType: {
+        type: "string",
+        enum: ["circuloos-marketplace", "circuloos-employee"],
+        description: "EIP-712 schema of the credential (default circuloos-marketplace)",
+      },
+      organization: {
+        type: "object",
+        description: "Employee credential only: the holder's organisation, signed by the issuer",
+        properties: {
+          legalName: { type: "string" },
+          taxID: { type: "string", description: "Country prefix + identifier, e.g. ESB12345678" },
+          addressCountry: { type: "string", description: "ISO 3166-1 alpha-2" },
+        },
+        additionalProperties: false,
+      },
+      employeeCredentialId: { type: "string", description: "Marketplace only: issued employee credential of the same holder" },
       holderAddress: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$", description: "Ethereum address of the holder" },
     },
   },

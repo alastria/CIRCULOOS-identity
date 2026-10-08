@@ -7,6 +7,24 @@ import { AuthController } from '../src/controllers/authController'
 import { authenticateJWT } from '../src/middleware/auth.middleware'
 import { SqlJsStorageAdapter } from '@circuloos/common'
 
+// AuthController / authenticateJWT now read the typed issuer config (src/config, resolved once
+// by loadConfig()) instead of process.env.JWT_SECRET / DOMAIN / CHAIN_ID / NODE_ENV. The SIWE
+// domain and URI are derived from config.appPublicUrl, so 'https://localhost' reproduces the
+// 'localhost' / 'URI: https://localhost' message used throughout this file.
+vi.mock('../src/config', () => ({
+  config: {
+    nodeEnv: 'test',
+    appPublicUrl: 'https://localhost',
+    blockchain: { chainId: 31337 },
+    issuer: { privateKey: undefined },
+    security: {
+      jwtSecret: 'test-jwt-secret-for-integration-testing-purposes',
+      jwtExpiry: '1h',
+      nonceExpirySeconds: 300,
+    },
+  }
+}))
+
 describe('Authentication Integration Tests', () => {
   let app: FastifyInstance
   let nonceService: NonceService
@@ -24,12 +42,14 @@ describe('Authentication Integration Tests', () => {
       getNonce: vi.fn(),
       markNonceAsUsed: vi.fn().mockResolvedValue(undefined),
       deleteNonce: vi.fn().mockResolvedValue(undefined),
-      cleanupExpiredNonces: vi.fn().mockResolvedValue(0)
+      cleanupExpiredNonces: vi.fn().mockResolvedValue(0),
+      // Role resolution reads synced trusted issuers from storage
+      getTrustedIssuers: vi.fn().mockResolvedValue([])
     }
 
     // Initialize services
     nonceService = new NonceService(mockStorage as any)
-    authController = new AuthController(nonceService)
+    authController = new AuthController(nonceService, mockStorage as any)
 
     // Set up environment
     process.env.JWT_SECRET = 'test-jwt-secret-for-integration-testing-purposes'
@@ -92,7 +112,8 @@ describe('Authentication Integration Tests', () => {
       expect(challengeResponse.statusCode).toBe(200)
       const { nonce } = JSON.parse(challengeResponse.body)
       expect(nonce).toBeDefined()
-      expect(nonce).toHaveLength(64)
+      // NonceService now issues 16 random bytes (32 hex chars)
+      expect(nonce).toMatch(/^[0-9a-f]{32}$/)
 
       // Step 2: Sign SIWE message
       const domain = 'localhost'
@@ -334,9 +355,16 @@ Issued At: ${createdAt.toISOString()}`
 
   describe('Nonce Expiry', () => {
     it('should reject expired nonce', async () => {
+      // Expiry is enforced by the storage layer (SqlJsStorageAdapter.getNonce drops expired
+      // nonces); NonceService.getNonce no longer exposes expiresAt. Use the real adapter here.
+      const realStorage = new SqlJsStorageAdapter(':memory:')
+      nonceService = new NonceService(realStorage)
+      authController = new AuthController(nonceService, realStorage)
+
       const address = testWallet.address
       const nonce = 'expired-nonce'
       const createdAt = new Date(Date.now() - 20 * 60 * 1000) // 20 minutes ago
+      await realStorage.saveNonce(address, nonce, Date.now() - 5 * 60 * 1000) // Expired 5 minutes ago
 
       const siweMessage = `localhost wants you to sign in with your Ethereum account:
 ${address}
@@ -351,26 +379,16 @@ Issued At: ${createdAt.toISOString()}`
 
       const signature = await testWallet.signMessage(siweMessage)
 
-      // Nonce exists but is expired
-      mockStorage.getNonce.mockResolvedValue({
-        address,
-        nonce,
-        expiresAt: Math.floor(Date.now() / 1000) - 300, // Expired 5 minutes ago
-        used: false,
-        createdAt
-      })
-
       const response = await app.inject({
         method: 'POST',
         url: '/auth/verify',
         payload: { address, signature, nonce }
       })
 
-      // The controller checks if nonce exists, not if it's expired
-      // In a real implementation, you'd add expiry check in the controller
-      // For now, we're testing that the nonce service can detect expired nonces
-      const storedNonce = await nonceService.getNonce(address, nonce)
-      expect(storedNonce?.expiresAt).toBeLessThan(Math.floor(Date.now() / 1000))
+      expect(response.statusCode).toBe(401)
+      expect(JSON.parse(response.body).error).toBe('Invalid or expired nonce')
+      expect(response.cookies.find((c: any) => c.name === 'auth_token')).toBeUndefined()
+      expect(await nonceService.getNonce(address, nonce)).toBeNull()
     })
   })
 
@@ -445,7 +463,9 @@ Issued At: ${createdAt.toISOString()}`
 
       // In test environment, secure should be false
       // In production, it should be true
-      expect(authCookie.secure).toBe(false)
+      // (light-my-request only reports `secure` when the attribute is present)
+      expect(authCookie.secure).toBeUndefined()
+      expect(String(response.headers['set-cookie'])).not.toMatch(/;\s*Secure/i)
     })
   })
 

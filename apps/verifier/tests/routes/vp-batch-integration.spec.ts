@@ -2,19 +2,22 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { buildTestServer } from '../helpers/test-server'
 import path from 'path'
 import fs from 'fs'
+import os from 'os'
 import { Wallet } from 'ethers'
 import { signVP } from '../helpers/vp-helpers'
 
 describe('VP Batch Integration', () => {
   let server: any
+  let tmpDir: string
   let dbPath: string
+  let challengeDbPath: string
   let wallet: Wallet
 
   beforeEach(async () => {
-    // Create temp DB
-    const tmpDir = path.join(process.cwd(), 'apps/verifier/tmp-test')
-    fs.mkdirSync(tmpDir, { recursive: true })
-    dbPath = path.join(tmpDir, `batch-integration-${Date.now()}.sqlite`)
+    // Create an isolated temp dir per test (portable: independent of cwd and OS)
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'verifier-batch-integration-'))
+    dbPath = path.join(tmpDir, 'batch.sqlite')
+    challengeDbPath = path.join(tmpDir, 'challenges.sqlite')
 
     // Build test server with batching enabled
     server = await buildTestServer({
@@ -22,7 +25,8 @@ describe('VP Batch Integration', () => {
         maxBatchSize: 10,
         batchIntervalMs: 60000,
         dbPath
-      }
+      },
+      challengeService: { dbPath: challengeDbPath }
     })
 
     // Create test wallet
@@ -30,10 +34,10 @@ describe('VP Batch Integration', () => {
   })
 
   afterEach(async () => {
+    // server.close() runs the helper's onClose hook, which closes the SQLite
+    // handles; only then can the files be removed (Windows locks open files).
     await server.close()
-    if (fs.existsSync(dbPath)) {
-      fs.unlinkSync(dbPath)
-    }
+    fs.rmSync(tmpDir, { recursive: true, force: true })
   })
 
   describe('Full Flow: Challenge -> VP Verification -> Batching -> Proof', () => {
@@ -356,7 +360,8 @@ describe('VP Batch Integration', () => {
     it('should handle batch service unavailable', async () => {
       // Build server without batch service
       const serverNoBatch = await buildTestServer({
-        batchService: null
+        batchService: null,
+        challengeService: { dbPath: path.join(tmpDir, 'challenges-no-batch.sqlite') }
       })
 
       const response = await serverNoBatch.inject({

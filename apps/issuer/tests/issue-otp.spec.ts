@@ -1,12 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import server from '../src/index'
 import { EmailMock, clearSent, getSentEmails, signCredential, buildEip712Domain } from '@circuloos/common'
-import { FileStore } from '@circuloos/file-store'
 import { Wallet } from 'ethers'
+import { authCookies } from './helpers/auth-cookie.helper'
 
 describe('issuer otp flow', () => {
   console.log('[TEST] issuer otp flow')
-  const store = new FileStore('./tmp-test-issuer')
 
   beforeAll(async () => {
     clearSent()
@@ -21,8 +20,10 @@ describe('issuer otp flow', () => {
   it('prepare and finalize', async () => {
   console.log('[TEST] issuer otp flow: prepare and finalize')
     const holderWallet = Wallet.createRandom()
+    const issuerWallet = Wallet.createRandom()
+    // Issue routes live under /api/v1/issue and require a JWT session cookie
     // call prepare
-    const res = await server.inject({ method: 'POST', url: '/issue/prepare', payload: { email: 'a@b.test', holderAddress: holderWallet.address } })
+    const res = await server.inject({ method: 'POST', url: '/api/v1/issue/prepare', cookies: authCookies(issuerWallet.address, 'issuer'), payload: { email: 'a@b.test', holderAddress: holderWallet.address } })
     expect(res.statusCode).toBe(200)
     const body = JSON.parse(res.payload)
     expect(body.id).toBeDefined()
@@ -35,7 +36,8 @@ describe('issuer otp flow', () => {
     const wrongSignature = '0x' + '0'.repeat(130) // dummy signature
     const bad = await server.inject({
       method: 'POST',
-      url: '/issue/finalize',
+      url: '/api/v1/issue/finalize',
+      cookies: authCookies(holderWallet.address, 'holder'),
       payload: { 
         id: body.id, 
         otp: '000000', 

@@ -1,4 +1,4 @@
-/// <reference types="vitest" />
+import { describe, it, expect } from 'vitest'
 import { encodeEIP712Jwt, decodeEIP712Jwt } from '../src/jwt'
 
 describe('jwt encode/decode', () => {

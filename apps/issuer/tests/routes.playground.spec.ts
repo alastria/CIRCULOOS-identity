@@ -1,13 +1,20 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { createTestServer } from './fixtures/server'
 import type { FastifyInstance } from 'fastify'
+import { config } from '../src/config'
 
 describe('Playground Routes', () => {
     let server: FastifyInstance
     let origEnv: any
+    // Playground routes read the typed config (config.nodeEnv / config.diamond.address)
+    // instead of process.env.NODE_ENV / CREDENTIAL_REGISTRY_ADDRESS at request time.
+    let origNodeEnv: string
+    let origDiamond: string | undefined
 
     beforeEach(async () => {
         origEnv = { ...process.env }
+        origNodeEnv = config.nodeEnv
+        origDiamond = config.diamond.address
         process.env.ISSUER_HMAC_SECRET = 'test-secret'
         server = createTestServer()
         await server.ready()
@@ -15,6 +22,8 @@ describe('Playground Routes', () => {
 
     afterEach(async () => {
         process.env = origEnv
+        ;(config as any).nodeEnv = origNodeEnv
+        ;(config.diamond as any).address = origDiamond
         await server.close()
     })
 
@@ -58,7 +67,7 @@ describe('Playground Routes', () => {
 
     describe('/issue-anchor', () => {
         it('returns forbidden in production', async () => {
-            process.env.NODE_ENV = 'production'
+            ;(config as any).nodeEnv = 'production'
             const res = await server.inject({
                 method: 'POST',
                 url: '/playground/issue-anchor',
@@ -66,10 +75,11 @@ describe('Playground Routes', () => {
             })
 
             expect(res.statusCode).toBe(403)
+            expect(JSON.parse(res.payload)).toEqual({ error: 'forbidden' })
         })
 
         it('returns error when vc missing', async () => {
-            process.env.NODE_ENV = 'development'
+            ;(config as any).nodeEnv = 'development'
             const res = await server.inject({
                 method: 'POST',
                 url: '/playground/issue-anchor',
@@ -80,8 +90,8 @@ describe('Playground Routes', () => {
         })
 
         it('returns error when registry not configured', async () => {
-            process.env.NODE_ENV = 'development'
-            delete process.env.CREDENTIAL_REGISTRY_ADDRESS
+            ;(config as any).nodeEnv = 'development'
+            ;(config.diamond as any).address = undefined
 
             const res = await server.inject({
                 method: 'POST',

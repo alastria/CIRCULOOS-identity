@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { SecurityService } from '../../src/services/security.service'
 import * as common from '@circuloos/common'
+import { config as issuerConfig } from '../../src/config'
 
 vi.mock('@circuloos/common', async () => {
     const actual = await vi.importActual<any>('@circuloos/common')
@@ -12,15 +13,19 @@ vi.mock('@circuloos/common', async () => {
         createToken: vi.fn(),
         verifyToken: vi.fn(),
         verifyCredential: vi.fn(),
-        config: {
-            ISSUER_HMAC_SECRET: 'default-secret',
-            OTP_EXPIRY_SECONDS: 300,
-            EIP712_DOMAIN_NAME: 'TestDomain',
-            EIP712_DOMAIN_VERSION: '1',
-            CHAIN_ID: 123
-        }
     }
 })
+
+// SecurityService now reads defaults from the issuer's typed config (src/config,
+// built by loadConfig()) instead of the legacy flat `config` export of @circuloos/common.
+vi.mock('../../src/config', () => ({
+    config: {
+        issuer: { hmacSecret: 'default-secret' },
+        security: { otpExpirySeconds: 300 },
+        eip712: { domainName: 'TestDomain', domainVersion: '1' },
+        blockchain: { chainId: 123 },
+    }
+}))
 
 describe('SecurityService', () => {
     let service: SecurityService
@@ -118,19 +123,19 @@ describe('SecurityService', () => {
 
     it('uses hardcoded 300 when both params and config are falsy', () => {
         // Mock config to have falsy values
-        const originalConfig = (common as any).config
-        ;(common as any).config = {
-            ...originalConfig,
-            ISSUER_HMAC_SECRET: '',
-            OTP_EXPIRY_SECONDS: 0
-        }
+        const cfg = issuerConfig as any
+        const originalHmac = cfg.issuer.hmacSecret
+        const originalOtp = cfg.security.otpExpirySeconds
+        cfg.issuer.hmacSecret = ''
+        cfg.security.otpExpirySeconds = 0
 
         const testService = new SecurityService('', 0)
-        // Should fallback to hardcoded value 300
+        // Should fallback to hardcoded values
         expect(testService['otpExpirySeconds']).toBe(300)
-        expect(testService['hmacSecret']).toBeTruthy()
+        expect(testService['hmacSecret']).toBe('dev-secret')
 
         // Restore
-        ;(common as any).config = originalConfig
+        cfg.issuer.hmacSecret = originalHmac
+        cfg.security.otpExpirySeconds = originalOtp
     })
 })

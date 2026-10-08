@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { IssuanceService } from '../../src/services/issuanceService'
 import { IssuanceStatus } from '@circuloos/common'
+import { logger } from '../../src/logger'
+import { config } from '../../src/config'
+import { holderWallet, otherWallet, CLAIM_DOMAIN, signClaim } from '../helpers/holder-signature.helper'
 
 // Mock config
 vi.mock('@circuloos/common', async () => {
@@ -90,136 +93,112 @@ describe('IssuanceService Edge Cases', () => {
     })
 
     describe('finalize edge cases', () => {
-        it('logs debug info when signature verification fails in development', async () => {
-            const consoleSpy = vi.spyOn(console, 'debug').mockImplementation(() => { })
-            process.env.NODE_ENV = 'development'
+        // Holder signatures are now verified with ethers.verifyTypedData against the
+        // `circuloos-marketplace` claim schema (not SecurityService.verifySignature), so
+        // fixtures are real signatures over the current claim types (see holder-signature.helper).
+        const HOLDER = holderWallet.address
 
-            const mockIssuance = {
+        function issuedRecord(extra: Record<string, any> = {}) {
+            return {
                 id: 'test',
-                draft: { id: 'vc-1', credentialSubject: { id: '0xholder' } },
+                draft: { id: 'vc-1', credentialSubject: { id: HOLDER } },
                 otpHash: 'hash',
-                holderAddress: '0xholder',
+                holderAddress: HOLDER,
+                domain: CLAIM_DOMAIN,
                 issuerProof: {},
-                status: IssuanceStatus.ISSUED
+                status: IssuanceStatus.ISSUED,
+                ...extra,
             }
+        }
 
+        function stubTokenAndOtp(rec: any) {
             vi.spyOn(service['security'], 'verifySessionToken').mockReturnValue({
                 ok: true,
-                payload: { id: 'test', holderAddress: '0xholder' }
+                payload: { id: 'test', holderAddress: HOLDER }
             })
-            vi.spyOn(service['credential'], 'loadIssuance').mockResolvedValue(mockIssuance)
+            vi.spyOn(service['credential'], 'loadIssuance').mockResolvedValue(rec)
             vi.spyOn(service['security'], 'verifyOtpCode').mockReturnValue(true)
-            vi.spyOn(service['security'], 'verifySignature').mockReturnValue(null) // Fails verification
+        }
+
+        it('logs a warning and throws when the holder signature cannot be verified', async () => {
+            const warnSpy = vi.spyOn(logger, 'warn')
+            stubTokenAndOtp(issuedRecord())
             vi.spyOn(service['credential'], 'loadVC').mockResolvedValue(null)
 
-            const validToken = createValidToken({ id: 'test', holderAddress: '0xholder' })
+            const validToken = createValidToken({ id: 'test', holderAddress: HOLDER })
             await expect(service.finalize('test', {
                 otp: '123',
                 token: validToken,
-                signature: 'sig',
-                signer: '0xholder'
+                signature: 'sig', // not a valid EIP-712 signature
+                signer: HOLDER
             })).rejects.toThrow('invalid signature')
 
-            expect(consoleSpy).toHaveBeenCalled()
-            consoleSpy.mockRestore()
+            expect(warnSpy).toHaveBeenCalledWith(
+                expect.objectContaining({ error: expect.any(String) }),
+                'Schema registry verification failed, trying legacy'
+            )
+            warnSpy.mockRestore()
         })
 
-        it('logs debug info when signer mismatch in development', async () => {
-            const consoleSpy = vi.spyOn(console, 'debug').mockImplementation(() => { })
-            process.env.NODE_ENV = 'development'
-
-            const mockIssuance = {
-                id: 'test',
-                draft: { id: 'vc-1', credentialSubject: { id: '0xholder' } },
-                otpHash: 'hash',
-                holderAddress: '0xholder',
-                issuerProof: {},
-                status: IssuanceStatus.ISSUED
-            }
-
-            vi.spyOn(service['security'], 'verifySessionToken').mockReturnValue({
-                ok: true,
-                payload: { id: 'test', holderAddress: '0xholder' }
-            })
-            vi.spyOn(service['credential'], 'loadIssuance').mockResolvedValue(mockIssuance)
-            vi.spyOn(service['security'], 'verifyOtpCode').mockReturnValue(true)
-            vi.spyOn(service['security'], 'verifySignature').mockReturnValue('0xwrong') // Different address
+        it('logs debug info when signer mismatch', async () => {
+            const debugSpy = vi.spyOn(logger, 'debug')
+            stubTokenAndOtp(issuedRecord())
             vi.spyOn(service['credential'], 'loadVC').mockResolvedValue(null)
 
-            const validToken = createValidToken({ id: 'test', holderAddress: '0xholder' })
+            const validToken = createValidToken({ id: 'test', holderAddress: HOLDER })
+            // Signed by a different key than the declared signer
+            const { signature, claimMessage } = await signClaim(otherWallet, validToken, CLAIM_DOMAIN, HOLDER)
             await expect(service.finalize('test', {
                 otp: '123',
                 token: validToken,
-                signature: 'sig',
-                signer: '0xholder'
+                signature,
+                signer: HOLDER,
+                claimMessage
             })).rejects.toThrow('signature signer mismatch')
 
-            expect(consoleSpy).toHaveBeenCalled()
-            consoleSpy.mockRestore()
+            expect(debugSpy).toHaveBeenCalledWith(
+                { recovered: otherWallet.address, expected: HOLDER },
+                'Finalize signer mismatch'
+            )
+            debugSpy.mockRestore()
         })
 
         it('throws error when VC has no holder identification', async () => {
-            const mockIssuance = {
-                id: 'test',
-                draft: { id: 'vc-1', credentialSubject: {} }, // No id or holderAddress!
-                otpHash: 'hash',
-                holderAddress: '0xholder',
-                issuerProof: {},
-                status: IssuanceStatus.ISSUED
-            }
-
-            vi.spyOn(service['security'], 'verifySessionToken').mockReturnValue({
-                ok: true,
-                payload: { id: 'test', holderAddress: '0xholder' }
-            })
-            vi.spyOn(service['credential'], 'loadIssuance').mockResolvedValue(mockIssuance)
-            vi.spyOn(service['security'], 'verifyOtpCode').mockReturnValue(true)
-            vi.spyOn(service['security'], 'verifySignature').mockReturnValue('0xholder')
+            stubTokenAndOtp(issuedRecord({ draft: { id: 'vc-1', credentialSubject: {} } })) // No id or holderAddress!
             vi.spyOn(service['credential'], 'loadVC').mockResolvedValue(null)
             vi.spyOn(service['credential'], 'buildProof').mockReturnValue({} as any)
 
-            const validToken = createValidToken({ id: 'test', holderAddress: '0xholder' })
+            const validToken = createValidToken({ id: 'test', holderAddress: HOLDER })
+            const { signature, claimMessage } = await signClaim(holderWallet, validToken)
             await expect(service.finalize('test', {
                 otp: '123',
                 token: validToken,
-                signature: 'sig',
-                signer: '0xholder'
+                signature,
+                signer: HOLDER,
+                claimMessage
             })).rejects.toThrow('credential missing holder identification')
         })
 
         it('re-throws custom error message from validation', async () => {
-            const mockIssuance = {
-                id: 'test',
-                draft: { id: 'vc-1', credentialSubject: { id: '0xdifferent' } },
-                otpHash: 'hash',
-                holderAddress: '0xholder',
-                issuerProof: {},
-                status: IssuanceStatus.ISSUED
-            }
-
-            vi.spyOn(service['security'], 'verifySessionToken').mockReturnValue({
-                ok: true,
-                payload: { id: 'test', holderAddress: '0xholder' }
-            })
-            vi.spyOn(service['credential'], 'loadIssuance').mockResolvedValue(mockIssuance)
-            vi.spyOn(service['security'], 'verifyOtpCode').mockReturnValue(true)
-            vi.spyOn(service['security'], 'verifySignature').mockReturnValue('0xwrong')
+            // Valid holder signature, but the credential subject belongs to someone else
+            stubTokenAndOtp(issuedRecord({ draft: { id: 'vc-1', credentialSubject: { id: otherWallet.address } } }))
             vi.spyOn(service['credential'], 'loadVC').mockResolvedValue(null)
             vi.spyOn(service['credential'], 'buildProof').mockReturnValue({} as any)
 
-            const validToken = createValidToken({ id: 'test', holderAddress: '0xholder' })
+            const validToken = createValidToken({ id: 'test', holderAddress: HOLDER })
+            const { signature, claimMessage } = await signClaim(holderWallet, validToken)
             await expect(service.finalize('test', {
                 otp: '123',
                 token: validToken,
-                signature: 'sig',
-                signer: '0xwrong'
-            })).rejects.toThrow()
+                signature,
+                signer: HOLDER,
+                claimMessage
+            })).rejects.toThrow('holder signature mismatch')
         })
 
-        it('handles error without .message property in finalize (line 264)', async () => {
+        it('handles error without .message property in finalize (enforceHolderMatch catch)', async () => {
             // Create a mock VC with a credentialSubject that throws when accessed
-            const mockIssuance = {
-                id: 'test',
+            const rec = issuedRecord({
                 draft: {
                     id: 'vc-1',
                     get credentialSubject() {
@@ -227,126 +206,91 @@ describe('IssuanceService Edge Cases', () => {
                         throw 42
                     }
                 },
-                otpHash: 'hash',
-                holderAddress: '0xholder',
-                status: IssuanceStatus.ISSUED
-            }
-
-            vi.spyOn(service['security'], 'verifySessionToken').mockReturnValue({
-                ok: true,
-                payload: { id: 'test', holderAddress: '0xholder' }
             })
-            vi.spyOn(service['credential'], 'loadIssuance').mockResolvedValue(mockIssuance)
-            vi.spyOn(service['security'], 'verifyOtpCode').mockReturnValue(true)
-            vi.spyOn(service['security'], 'verifySignature').mockReturnValue('0xholder')
+            delete (rec as any).issuerProof
+            stubTokenAndOtp(rec)
 
-            const validToken = createValidToken({ id: 'test', holderAddress: '0xholder' })
+            const validToken = createValidToken({ id: 'test', holderAddress: HOLDER })
+            // claimMessage provided so the VC subject is first touched in enforceHolderMatch
+            const { signature, claimMessage } = await signClaim(holderWallet, validToken)
             await expect(service.finalize('test', {
                 otp: '123',
                 token: validToken,
-                signature: 'sig',
-                signer: '0xholder'
+                signature,
+                signer: HOLDER,
+                claimMessage
             })).rejects.toThrow('42')
         })
 
-        it('throws error when issuerProof is missing in both VC and rec (lines 269-270)', async () => {
-            const mockIssuance = {
-                id: 'test',
-                draft: { id: 'vc-1', credentialSubject: { id: '0xholder' } },
-                otpHash: 'hash',
-                holderAddress: '0xholder',
-                // NO issuerProof
-                status: IssuanceStatus.ISSUED
-            }
-
-            vi.spyOn(service['security'], 'verifySessionToken').mockReturnValue({
-                ok: true,
-                payload: { id: 'test', holderAddress: '0xholder' }
-            })
-            vi.spyOn(service['credential'], 'loadIssuance').mockResolvedValue(mockIssuance)
-            vi.spyOn(service['security'], 'verifyOtpCode').mockReturnValue(true)
-            vi.spyOn(service['security'], 'verifySignature').mockReturnValue('0xholder')
+        it('throws error when issuerProof is missing in both VC and rec', async () => {
+            const rec = issuedRecord()
+            delete (rec as any).issuerProof // NO issuerProof
+            stubTokenAndOtp(rec)
             vi.spyOn(service['credential'], 'loadVC').mockResolvedValue(null) // No existing VC
             vi.spyOn(service['credential'], 'buildProof').mockReturnValue({} as any)
 
-            const validToken = createValidToken({ id: 'test', holderAddress: '0xholder' })
+            const validToken = createValidToken({ id: 'test', holderAddress: HOLDER })
+            const { signature, claimMessage } = await signClaim(holderWallet, validToken)
             await expect(service.finalize('test', {
                 otp: '123',
                 token: validToken,
-                signature: 'sig',
-                signer: '0xholder'
+                signature,
+                signer: HOLDER,
+                claimMessage
             })).rejects.toThrow('missing issuer proof')
         })
 
-        it('uses rec.issuerProof when existing VC is null (line 269)', async () => {
-            const mockIssuance = {
-                id: 'test',
-                draft: { id: 'vc-1', credentialSubject: { id: '0xholder' } },
-                otpHash: 'hash',
-                holderAddress: '0xholder',
-                issuerProof: { type: 'proof', signature: '0xproof' },
-                status: IssuanceStatus.ISSUED
-            }
-
-            vi.spyOn(service['security'], 'verifySessionToken').mockReturnValue({
-                ok: true,
-                payload: { id: 'test', holderAddress: '0xholder' }
-            })
-            vi.spyOn(service['credential'], 'loadIssuance').mockResolvedValue(mockIssuance)
-            vi.spyOn(service['security'], 'verifyOtpCode').mockReturnValue(true)
-            vi.spyOn(service['security'], 'verifySignature').mockReturnValue('0xholder')
+        it('uses rec.issuerProof when existing VC is null', async () => {
+            const issuerProof = { type: 'proof', signature: '0xproof' }
+            stubTokenAndOtp(issuedRecord({ issuerProof }))
             vi.spyOn(service['credential'], 'loadVC').mockResolvedValue(null) // existing is null
             vi.spyOn(service['credential'], 'saveVC').mockResolvedValue(undefined)
             vi.spyOn(service['credential'], 'saveIssuance').mockResolvedValue(undefined)
             vi.spyOn(service['credential'], 'buildProof').mockReturnValue({} as any)
 
-            const validToken = createValidToken({ id: 'test', holderAddress: '0xholder' })
+            const validToken = createValidToken({ id: 'test', holderAddress: HOLDER })
+            const { signature, claimMessage } = await signClaim(holderWallet, validToken)
             const result = await service.finalize('test', {
                 otp: '123',
                 token: validToken,
-                signature: 'sig',
-                signer: '0xholder'
+                signature,
+                signer: HOLDER,
+                claimMessage
             })
 
             expect(result.vcId).toBe('vc-1')
+            const [, savedVp] = vi.mocked(service['credential'].saveVC).mock.calls[0] as any[]
+            expect(savedVp.verifiableCredential[0].proof).toEqual(issuerProof)
         })
 
-        it('covers line 227: uses clientDomain from otpOrObj when provided', async () => {
-            const mockIssuance = {
-                id: 'test',
-                draft: { id: 'vc-1', credentialSubject: { id: '0xholder' } },
-                otpHash: 'hash',
-                holderAddress: '0xholder',
-                issuerProof: { type: 'proof', signature: '0xproof' },
-                status: IssuanceStatus.ISSUED
-            }
-
-            vi.spyOn(service['security'], 'verifySessionToken').mockReturnValue({
-                ok: true,
-                payload: { id: 'test', holderAddress: '0xholder' }
-            })
-            vi.spyOn(service['credential'], 'loadIssuance').mockResolvedValue(mockIssuance)
-            vi.spyOn(service['security'], 'verifyOtpCode').mockReturnValue(true)
-            vi.spyOn(service['security'], 'verifySignature').mockReturnValue('0xholder')
+        it('uses clientDomain from otpOrObj when provided', async () => {
+            stubTokenAndOtp(issuedRecord({ issuerProof: { type: 'proof', signature: '0xproof' } }))
             vi.spyOn(service['credential'], 'loadVC').mockResolvedValue(null)
             vi.spyOn(service['credential'], 'saveVC').mockResolvedValue(undefined)
             vi.spyOn(service['credential'], 'saveIssuance').mockResolvedValue(undefined)
             vi.spyOn(service['credential'], 'buildProof').mockReturnValue({} as any)
 
-            // Pass domain as part of otpOrObj
-            const validToken = createValidToken({ id: 'test', holderAddress: '0xholder' })
+            // Pass domain as part of otpOrObj (differs from the stored one)
+            const clientDomain = { name: 'custom', version: '1', chainId: 1, verifyingContract: '0x000000000000000000000000000000000000abcd' }
+            const validToken = createValidToken({ id: 'test', holderAddress: HOLDER })
+            const { signature, claimMessage } = await signClaim(holderWallet, validToken, clientDomain)
             const result = await service.finalize('test', {
                 otp: '123',
                 token: validToken,
-                signature: 'sig',
-                signer: '0xholder',
-                domain: { name: 'custom', version: '1', chainId: 1, verifyingContract: '0xabc' }
+                signature,
+                signer: HOLDER,
+                claimMessage,
+                domain: clientDomain
             } as any)
 
             expect(result.vcId).toBe('vc-1')
+            expect(service['credential'].buildProof).toHaveBeenCalledWith(signature, HOLDER, clientDomain, 'authentication')
         })
 
-        it('covers line 231: catch block in console.debug', async () => {
+        // OBSOLETE: finalize() no longer wraps console.debug in a try/catch; debug output goes
+        // through the pino logger (src/logger.ts; logger.debug calls in src/services/issuanceService.ts:341-383).
+        // Nothing left to cover (code as imported in a7732d4).
+        it.skip('covers line 231: catch block in console.debug', async () => {
             // Mock console.debug to throw an error
             const originalDebug = console.debug
             console.debug = vi.fn(() => {
@@ -429,10 +373,9 @@ describe('IssuanceService Edge Cases', () => {
             service['registry'].getTrustedRegistryAddress = originalGetAddress
         })
 
-        it('covers lines 126-127: debug log in development mode', async () => {
-            const consoleSpy = vi.spyOn(console, 'debug').mockImplementation(() => { })
-            const originalEnv = process.env.NODE_ENV
-            process.env.NODE_ENV = 'development'
+        it('logs debug info on issuer signer mismatch', async () => {
+            // Debug output moved from console.debug (dev only) to the pino logger
+            const debugSpy = vi.spyOn(logger, 'debug')
 
             const mockIssuance = {
                 id: 'test',
@@ -452,10 +395,9 @@ describe('IssuanceService Edge Cases', () => {
             vi.spyOn(service['security'], 'verifySignature').mockReturnValue('0xwrong')
 
             await expect(service.mint('test', '0xsig', '0xright')).rejects.toThrow('issuer signer mismatch')
-            expect(consoleSpy).toHaveBeenCalled()
+            expect(debugSpy).toHaveBeenCalledWith({ recovered: '0xwrong', expected: '0xright' }, 'Signer mismatch')
 
-            consoleSpy.mockRestore()
-            process.env.NODE_ENV = originalEnv
+            debugSpy.mockRestore()
         })
 
         it('covers line 119: catch block in console.debug', async () => {
@@ -525,8 +467,10 @@ describe('IssuanceService Edge Cases', () => {
         })
 
         it('covers line 169: does not expose OTP in production', async () => {
-            const originalEnv = process.env.NODE_ENV
-            process.env.NODE_ENV = 'production'
+            // exposeOtp now reads the typed config (config.nodeEnv, resolved once at import)
+            // instead of process.env.NODE_ENV at call time
+            const originalEnv = config.nodeEnv
+            ;(config as any).nodeEnv = 'production'
 
             const mockIssuance = {
                 id: 'test',
@@ -557,9 +501,8 @@ describe('IssuanceService Edge Cases', () => {
             const result = await service.mint('test', '0xsig', '0xsigner')
 
             // In production, OTP should be undefined
+            ;(config as any).nodeEnv = originalEnv
             expect(result.otp).toBeUndefined()
-
-            process.env.NODE_ENV = originalEnv
         })
     })
 
@@ -600,9 +543,10 @@ describe('IssuanceService Edge Cases', () => {
         it('covers line 205: does not throw when expiresAt is undefined', async () => {
             const mockIssuance = {
                 id: 'test',
-                draft: { id: 'vc-1', credentialSubject: { id: '0xholder' } },
+                draft: { id: 'vc-1', credentialSubject: { id: holderWallet.address } },
                 otpHash: 'hash',
-                holderAddress: '0xholder',
+                holderAddress: holderWallet.address,
+                domain: CLAIM_DOMAIN, // stored domain used to verify the real holder signature
                 issuerProof: { type: 'proof' },
                 // No expiresAt field
                 status: IssuanceStatus.ISSUED
@@ -610,21 +554,23 @@ describe('IssuanceService Edge Cases', () => {
 
             vi.spyOn(service['security'], 'verifySessionToken').mockReturnValue({
                 ok: true,
-                payload: { id: 'test', holderAddress: '0xholder' }
+                payload: { id: 'test', holderAddress: holderWallet.address }
             })
             vi.spyOn(service['credential'], 'loadIssuance').mockResolvedValue(mockIssuance)
             vi.spyOn(service['security'], 'verifyOtpCode').mockReturnValue(true)
-            vi.spyOn(service['security'], 'verifySignature').mockReturnValue('0xholder')
             vi.spyOn(service['credential'], 'loadVC').mockResolvedValue(null)
             vi.spyOn(service['credential'], 'saveVC').mockResolvedValue(undefined)
             vi.spyOn(service['credential'], 'saveIssuance').mockResolvedValue(undefined)
             vi.spyOn(service['credential'], 'buildProof').mockReturnValue({} as any)
 
+            const token = createValidToken({ id: 'test', holderAddress: holderWallet.address })
+            const { signature, claimMessage } = await signClaim(holderWallet, token)
             const result = await service.finalize('test', {
                 otp: '123',
-                token: createValidToken({ id: 'test', holderAddress: '0xholder' }),
-                signature: 'sig',
-                signer: '0xholder'
+                token,
+                signature,
+                signer: holderWallet.address,
+                claimMessage
             })
 
             expect(result.vcId).toBe('vc-1')

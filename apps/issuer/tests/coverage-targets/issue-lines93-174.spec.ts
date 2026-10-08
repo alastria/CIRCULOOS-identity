@@ -77,7 +77,11 @@ describe('Issue.ts - Lines 93 and 174', () => {
         decoratedStore.loadAll = originalLoadAll
     })
 
-    it('covers line 93: debug returns 404 when store.loadAll returns empty object', async () => {
+    // OBSOLETE: the /issue/debug/:id endpoint no longer exists - src/routes/debug.ts is empty and
+    // src/routes/issue.ts registers only /, /info/*, /prepare, /mint, /finalize (code as imported
+    // in a7732d4). issueRoutes also now requires an `issueController` option, so this bare
+    // FileStore-decorated server cannot even boot the plugin.
+    it.skip('covers line 93: debug returns 404 when store.loadAll returns empty object', async () => {
         // FileStore returns {} when file not found, but we need to test null/undefined
         // This tests the default FileStore behavior (which returns {})
         const res = await server.inject({

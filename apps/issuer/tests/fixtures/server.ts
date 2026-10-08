@@ -1,5 +1,6 @@
 import Fastify from "fastify"
 import cors from "@fastify/cors"
+import cookie from "@fastify/cookie"
 import swagger from "@fastify/swagger"
 import swaggerUI from "@fastify/swagger-ui"
 import { SqlJsStorageAdapter, EmailMock } from '@circuloos/common'
@@ -17,6 +18,10 @@ export function createTestServer() {
 
         // enable CORS
         server.register(cors, { origin: true })
+
+        // Cookies: issue routes are protected by authenticateJWT, which reads the
+        // HttpOnly `auth_token` cookie (mirrors src/index.ts)
+        server.register(cookie)
 
         // Swagger
         const swaggerEnabled = process.env.SWAGGER_ENABLED !== "false"

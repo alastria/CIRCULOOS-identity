@@ -20,12 +20,33 @@ vi.mock('jsonwebtoken', () => ({
   }
 }))
 
+// AuthController now logs through the shared pino logger (createLogger('auth')) instead of console
+const authLogger = vi.hoisted(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }))
+vi.mock('@circuloos/common', async () => {
+  const actual = await vi.importActual<any>('@circuloos/common')
+  return { ...actual, createLogger: () => authLogger }
+})
+
+// Settings now come from the issuer typed config (src/config, built once by loadConfig())
+// instead of process.env.JWT_SECRET / DOMAIN / CHAIN_ID / NODE_ENV read at request time.
+vi.mock('../../src/config', () => ({
+  config: {
+    nodeEnv: 'test',
+    appPublicUrl: 'http://localhost',
+    blockchain: { chainId: 31337 },
+    issuer: { privateKey: undefined },
+    security: { jwtSecret: 'test-secret-key-for-testing-purposes', jwtExpiry: '1h' },
+  }
+}))
+
 import { ethers } from 'ethers'
 import jwt from 'jsonwebtoken'
+import { config } from '../../src/config'
 
 describe('AuthController', () => {
   let authController: AuthController
   let mockNonceService: any
+  let mockStorage: any
   let mockRequest: Partial<FastifyRequest>
   let mockReply: Partial<FastifyReply>
 
@@ -36,7 +57,12 @@ describe('AuthController', () => {
       markAsUsed: vi.fn()
     }
 
-    authController = new AuthController(mockNonceService as NonceService)
+    // Role resolution now reads trusted issuers from storage (synced from chain)
+    mockStorage = {
+      getTrustedIssuers: vi.fn().mockResolvedValue([])
+    }
+
+    authController = new AuthController(mockNonceService as NonceService, mockStorage)
 
     // Mock Fastify request and reply
     mockRequest = {
@@ -50,10 +76,9 @@ describe('AuthController', () => {
       clearCookie: vi.fn().mockReturnThis()
     }
 
-    // Set up environment variables
-    process.env.JWT_SECRET = 'test-secret-key-for-testing-purposes'
-    process.env.DOMAIN = 'localhost'
-    process.env.CHAIN_ID = '31337'
+    // Reset mutable config between tests
+    ;(config as any).nodeEnv = 'test'
+    ;(config as any).security.jwtSecret = 'test-secret-key-for-testing-purposes'
   })
 
   afterEach(() => {
@@ -102,6 +127,9 @@ describe('AuthController', () => {
 
       // Verify nonce was marked as used
       expect(mockNonceService.markAsUsed).toHaveBeenCalledWith(validAddress, validNonce)
+
+      // Role resolved from the trusted-issuer table (not listed -> holder)
+      expect(mockStorage.getTrustedIssuers).toHaveBeenCalledWith({ active: true })
 
       // Verify JWT was created
       expect(jwt.sign).toHaveBeenCalledWith(
@@ -216,8 +244,6 @@ describe('AuthController', () => {
         throw new Error('Invalid signature')
       })
 
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
       await authController.verifySIWA(
         mockRequest as FastifyRequest<{ Body: any }>,
         mockReply as FastifyReply
@@ -228,8 +254,7 @@ describe('AuthController', () => {
         error: 'Invalid signature format'
       })
       expect(mockNonceService.markAsUsed).not.toHaveBeenCalled()
-
-      consoleErrorSpy.mockRestore()
+      expect(authLogger.error).toHaveBeenCalledWith('Signature verification failed:', expect.any(Error))
     })
 
     it('should reject request when recovered address does not match', async () => {
@@ -267,7 +292,7 @@ describe('AuthController', () => {
 
     it('should handle missing JWT_SECRET gracefully', async () => {
       const createdAt = new Date()
-      delete process.env.JWT_SECRET
+      ;(config as any).security.jwtSecret = undefined
 
       mockRequest.body = {
         address: validAddress,
@@ -285,8 +310,6 @@ describe('AuthController', () => {
 
       vi.mocked(ethers.utils.verifyMessage).mockReturnValue(validAddress)
 
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
       await authController.verifySIWA(
         mockRequest as FastifyRequest<{ Body: any }>,
         mockReply as FastifyReply
@@ -296,10 +319,8 @@ describe('AuthController', () => {
       expect(mockReply.send).toHaveBeenCalledWith({
         error: 'Server configuration error'
       })
-      expect(consoleErrorSpy).toHaveBeenCalledWith('JWT_SECRET is not configured')
-
-      consoleErrorSpy.mockRestore()
-      process.env.JWT_SECRET = 'test-secret-key-for-testing-purposes'
+      expect(authLogger.error).toHaveBeenCalledWith('JWT_SECRET is not configured')
+      expect(jwt.sign).not.toHaveBeenCalled()
     })
 
     it('should use correct SIWE message format (EIP-4361)', async () => {
@@ -401,8 +422,7 @@ describe('AuthController', () => {
 
   describe('Cookie Options', () => {
     it('should set secure cookie in production', async () => {
-      const originalEnv = process.env.NODE_ENV
-      process.env.NODE_ENV = 'production'
+      ;(config as any).nodeEnv = 'production'
 
       const createdAt = new Date()
       mockRequest.body = {
@@ -436,18 +456,10 @@ describe('AuthController', () => {
           sameSite: 'strict'
         })
       )
-
-      // Restore environment
-      if (originalEnv) {
-        process.env.NODE_ENV = originalEnv
-      } else {
-        delete process.env.NODE_ENV
-      }
     })
 
     it('should not set secure cookie in development', async () => {
-      const originalEnv = process.env.NODE_ENV
-      process.env.NODE_ENV = 'development'
+      ;(config as any).nodeEnv = 'development'
 
       const createdAt = new Date()
       mockRequest.body = {
@@ -481,13 +493,6 @@ describe('AuthController', () => {
           sameSite: 'strict'
         })
       )
-
-      // Restore environment
-      if (originalEnv) {
-        process.env.NODE_ENV = originalEnv
-      } else {
-        delete process.env.NODE_ENV
-      }
     })
   })
 })

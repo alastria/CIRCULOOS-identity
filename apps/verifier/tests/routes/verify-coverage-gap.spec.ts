@@ -15,6 +15,9 @@ vi.mock('../../src/config', () => ({
 }))
 
 // Mock common
+// NOTE: POST /verify is now the simplified route (src/routes/verify.ts): body `{ credential }`,
+// issuer signature checked with `verifyCredentialIssuance`, trust only via an injected
+// `fastify.trustedIssuerRegistry`, on-chain status only via `onchainService.isIssued/isRevoked`.
 vi.mock('@circuloos/common', async () => {
     const actual = await vi.importActual('@circuloos/common')
     return {
@@ -24,11 +27,26 @@ vi.mock('@circuloos/common', async () => {
             issuer: { ok: true, recovered: '0xissuer' },
             holder: { ok: true, recovered: '0xholder' }
         }),
+        verifyCredentialIssuance: vi.fn().mockReturnValue('0xissuer'),
         hashVC: vi.fn().mockReturnValue('0xhash')
     }
 })
 
-import { verifySignedCredential, createTrustedIssuerRegistryClient } from '@circuloos/common'
+import { verifySignedCredential, verifyCredentialIssuance, createTrustedIssuerRegistryClient } from '@circuloos/common'
+
+const buildCredential = (id: string) => ({
+    "@context": ["https://www.w3.org/2018/credentials/v1"],
+    id,
+    type: ["VerifiableCredential"],
+    issuer: "did:ethr:0xissuer",
+    issuanceDate: "2023-01-01T00:00:00Z",
+    credentialSubject: { id: "did:ethr:0xholder" },
+    proof: {
+        type: "Eip712Signature2023",
+        signature: "0xsig",
+        domain: { name: "Circuloos", version: "1", chainId: 31337 }
+    }
+})
 
 describe('Verify Routes - Coverage Gap', () => {
     let server: FastifyInstance
@@ -40,6 +58,7 @@ describe('Verify Routes - Coverage Gap', () => {
                 issuer: { ok: true, recovered: '0xissuer' },
                 holder: { ok: true, recovered: '0xholder' }
             })
+            ; (verifyCredentialIssuance as any).mockReturnValue('0xissuer')
     })
 
     afterEach(async () => {
@@ -50,59 +69,31 @@ describe('Verify Routes - Coverage Gap', () => {
         // Setup config to allow creation
         config.trustedRegistry.address = '0xregistry'
 
-        // Decorate server manually to simulate service injection if we want? 
-        // Or rely on createTrustedIssuerRegistryClient.
-        // Code: if (decorated) return (trustedRegistry = decorated)
-        // If we decorate, line 24 hits. Line 22 hits on second call.
-
         const mockRegistry = { isTrustedIssuer: vi.fn().mockResolvedValue(true) }
         server.decorate('trustedIssuerRegistry', mockRegistry)
 
         server.register(verifyRoutes)
         await server.ready()
 
-        // First call - initializes trustedRegistry from decorator
+        // First call - uses the injected trustedIssuerRegistry
         await server.inject({
             method: 'POST',
             url: '/verify',
-            body: {
-                "@context": ["https://www.w3.org/2018/credentials/v1"],
-                id: "urn:uuid:test-1",
-                type: ["VerifiableCredential"],
-                issuer: "did:ethr:0xissuer",
-                issuanceDate: "2023-01-01T00:00:00Z",
-                credentialSubject: { id: "did:ethr:0xholder" },
-                proof: {
-                    type: "Eip712Signature2023",
-                    signature: "0xsig",
-                    domain: { name: "Circuloos", version: "1", chainId: 31337 }
-                }
-            }
+            body: { credential: buildCredential("urn:uuid:test-1") }
         })
 
-        // Second call - should hit line 22 "if (trustedRegistry) return trustedRegistry"
+        // Second call - same injected instance is reused
         await server.inject({
             method: 'POST',
             url: '/verify',
-            body: {
-                "@context": ["https://www.w3.org/2018/credentials/v1"],
-                id: "urn:uuid:test-2",
-                type: ["VerifiableCredential"],
-                issuer: "did:ethr:0xissuer",
-                issuanceDate: "2023-01-01T00:00:00Z",
-                credentialSubject: { id: "did:ethr:0xholder" },
-                proof: {
-                    type: "Eip712Signature2023",
-                    signature: "0xsig",
-                    domain: { name: "Circuloos", version: "1", chainId: 31337 }
-                }
-            }
+            body: { credential: buildCredential("urn:uuid:test-2") }
         })
 
         // If coverage shows line 22 covered, we succeeded.
     })
 
-    it('covers lines 63-64: handles populated trustedIssuers/Holders', async () => {
+    // OBSOLETE: POST /verify no longer passes config.trustedIssuers/trustedHolders to a verifier (it calls verifyCredentialIssuance(domain, vc, signature, type), src/routes/verify.ts:113); issuer trust is only checked via fastify.trustedIssuerRegistry
+    it.skip('covers lines 63-64: handles populated trustedIssuers/Holders', async () => {
         config.trustedIssuers = ['0xissuer']
         config.trustedHolders = ['0xholder']
 
@@ -112,19 +103,7 @@ describe('Verify Routes - Coverage Gap', () => {
         await server.inject({
             method: 'POST',
             url: '/verify',
-            body: {
-                "@context": ["https://www.w3.org/2018/credentials/v1"],
-                id: "urn:uuid:test-1",
-                type: ["VerifiableCredential"],
-                issuer: "did:ethr:0xissuer",
-                issuanceDate: "2023-01-01T00:00:00Z",
-                credentialSubject: { id: "did:ethr:0xholder" },
-                proof: {
-                    type: "Eip712Signature2023",
-                    signature: "0xsig",
-                    domain: { name: "Circuloos", version: "1", chainId: 31337 }
-                }
-            }
+            body: buildCredential("urn:uuid:test-1")
         })
 
         expect(verifySignedCredential).toHaveBeenCalledWith(
@@ -136,7 +115,8 @@ describe('Verify Routes - Coverage Gap', () => {
         )
     })
 
-    it('covers lines 63-64: handles empty trustedIssuers/Holders (undefined)', async () => {
+    // OBSOLETE: same as above - config.trustedIssuers/trustedHolders are no longer read by src/routes/verify.ts
+    it.skip('covers lines 63-64: handles empty trustedIssuers/Holders (undefined)', async () => {
         config.trustedIssuers = []
         config.trustedHolders = []
 
@@ -146,19 +126,7 @@ describe('Verify Routes - Coverage Gap', () => {
         await server.inject({
             method: 'POST',
             url: '/verify',
-            body: {
-                "@context": ["https://www.w3.org/2018/credentials/v1"],
-                id: "urn:uuid:test-1",
-                type: ["VerifiableCredential"],
-                issuer: "did:ethr:0xissuer",
-                issuanceDate: "2023-01-01T00:00:00Z",
-                credentialSubject: { id: "did:ethr:0xholder" },
-                proof: {
-                    type: "Eip712Signature2023",
-                    signature: "0xsig",
-                    domain: { name: "Circuloos", version: "1", chainId: 31337 }
-                }
-            }
+            body: buildCredential("urn:uuid:test-1")
         })
 
         expect(verifySignedCredential).toHaveBeenCalledWith(
@@ -171,37 +139,25 @@ describe('Verify Routes - Coverage Gap', () => {
     })
 
     it('covers line 71: handles holderResult undefined (no holder verification)', async () => {
-        ; (verifySignedCredential as any).mockReturnValue({
-            issuer: { ok: true, recovered: '0xissuer' },
-            holder: undefined // No holder result
-        })
-
+        // POST /verify verifies only the issuer proof; a VC without holder proof proceeds
         server.register(verifyRoutes)
         await server.ready()
 
+        const credential = buildCredential("urn:uuid:test-1")
         const res = await server.inject({
             method: 'POST',
             url: '/verify',
-            body: {
-                "@context": ["https://www.w3.org/2018/credentials/v1"],
-                id: "urn:uuid:test-1",
-                type: ["VerifiableCredential"],
-                issuer: "did:ethr:0xissuer",
-                issuanceDate: "2023-01-01T00:00:00Z",
-                credentialSubject: { id: "did:ethr:0xholder" },
-                proof: {
-                    type: "Eip712Signature2023",
-                    signature: "0xsig",
-                    domain: { name: "Circuloos", version: "1", chainId: 31337 }
-                }
-            }
+            body: { credential }
         })
 
         expect(res.statusCode).toBe(200)
-        // Should proceed
+        const body = JSON.parse(res.payload)
+        expect(body.valid).toBe(true)
+        expect(body.holder).toEqual({ did: credential.credentialSubject.id })
     })
 
-    it('covers line 71: handles holderResult.ok = false', async () => {
+    // OBSOLETE: holder-proof verification was removed from POST /verify (src/routes/verify.ts:78-205 never checks a holder proof); holder signatures are verified by POST /verify/presentation
+    it.skip('covers line 71: handles holderResult.ok = false', async () => {
         ; (verifySignedCredential as any).mockReturnValue({
             issuer: { ok: true, recovered: '0xissuer' },
             holder: { ok: false, reason: 'Holder mismatch' }
@@ -213,19 +169,7 @@ describe('Verify Routes - Coverage Gap', () => {
         const res = await server.inject({
             method: 'POST',
             url: '/verify',
-            body: {
-                "@context": ["https://www.w3.org/2018/credentials/v1"],
-                id: "urn:uuid:test-1",
-                type: ["VerifiableCredential"],
-                issuer: "did:ethr:0xissuer",
-                issuanceDate: "2023-01-01T00:00:00Z",
-                credentialSubject: { id: "did:ethr:0xholder" },
-                proof: {
-                    type: "Eip712Signature2023",
-                    signature: "0xsig",
-                    domain: { name: "Circuloos", version: "1", chainId: 31337 }
-                }
-            }
+            body: buildCredential("urn:uuid:test-1")
         })
 
         expect(res.statusCode).toBe(400)
@@ -244,26 +188,16 @@ describe('Verify Routes - Coverage Gap', () => {
         const res = await server.inject({
             method: 'POST',
             url: '/verify',
-            body: {
-                "@context": ["https://www.w3.org/2018/credentials/v1"],
-                id: "urn:uuid:test-1",
-                type: ["VerifiableCredential"],
-                issuer: "did:ethr:0xissuer",
-                issuanceDate: "2023-01-01T00:00:00Z",
-                credentialSubject: { id: "did:ethr:0xholder" },
-                proof: {
-                    type: "Eip712Signature2023",
-                    signature: "0xsig",
-                    domain: { name: "Circuloos", version: "1", chainId: 31337 }
-                }
-            }
+            body: { credential: buildCredential("urn:uuid:test-1") }
         })
 
         expect(res.statusCode).toBe(200)
+        expect(JSON.parse(res.payload).checks.trustedIssuer).toBe('N/A')
         expect(createTrustedIssuerRegistryClient).not.toHaveBeenCalled()
     })
 
-    it('covers line 117: skips subject validation if subject is empty string', async () => {
+    // OBSOLETE: on-chain subject validation (onchainService.store.loadAll) was removed from POST /verify; src/routes/verify.ts:155-178 only calls isIssued/isRevoked
+    it.skip('covers line 117: skips subject validation if subject is empty string', async () => {
         const mockOnchain = {
             isIssued: vi.fn().mockResolvedValue(true),
             isRevoked: vi.fn().mockResolvedValue(false),
@@ -279,26 +213,15 @@ describe('Verify Routes - Coverage Gap', () => {
         const res = await server.inject({
             method: 'POST',
             url: '/verify',
-            body: {
-                "@context": ["https://www.w3.org/2018/credentials/v1"],
-                id: "urn:uuid:test-1",
-                type: ["VerifiableCredential"],
-                issuer: "did:ethr:0xissuer",
-                issuanceDate: "2023-01-01T00:00:00Z",
-                credentialSubject: { id: "did:ethr:0xholder" },
-                proof: {
-                    type: "Eip712Signature2023",
-                    signature: "0xsig",
-                    domain: { name: "Circuloos", version: "1", chainId: 31337 }
-                }
-            }
+            body: buildCredential("urn:uuid:test-1")
         })
 
         expect(res.statusCode).toBe(200)
         expect(mockOnchain.store.loadAll).toHaveBeenCalled()
     })
 
-    it('covers line 117: validates subject when present (mismatch case)', async () => {
+    // OBSOLETE: on-chain subject validation (onchainService.store.loadAll) was removed from POST /verify; src/routes/verify.ts:155-178 only calls isIssued/isRevoked
+    it.skip('covers line 117: validates subject when present (mismatch case)', async () => {
         const mockOnchain = {
             isIssued: vi.fn().mockResolvedValue(true),
             isRevoked: vi.fn().mockResolvedValue(false),
@@ -314,19 +237,7 @@ describe('Verify Routes - Coverage Gap', () => {
         const res = await server.inject({
             method: 'POST',
             url: '/verify',
-            body: {
-                "@context": ["https://www.w3.org/2018/credentials/v1"],
-                id: "urn:uuid:test-1",
-                type: ["VerifiableCredential"],
-                issuer: "did:ethr:0xissuer",
-                issuanceDate: "2023-01-01T00:00:00Z",
-                credentialSubject: { id: "did:ethr:0xholder" },
-                proof: {
-                    type: "Eip712Signature2023",
-                    signature: "0xsig",
-                    domain: { name: "Circuloos", version: "1", chainId: 31337 }
-                }
-            }
+            body: buildCredential("urn:uuid:test-1")
         })
 
         expect(res.statusCode).toBe(400)
@@ -349,23 +260,15 @@ describe('Verify Routes - Coverage Gap', () => {
         const res = await server.inject({
             method: 'POST',
             url: '/verify',
-            body: {
-                "@context": ["https://www.w3.org/2018/credentials/v1"],
-                id: "urn:uuid:test-1",
-                type: ["VerifiableCredential"],
-                issuer: "did:ethr:0xissuer",
-                issuanceDate: "2023-01-01T00:00:00Z",
-                credentialSubject: { id: "did:ethr:0xholder" },
-                proof: {
-                    type: "Eip712Signature2023",
-                    signature: "0xsig",
-                    domain: { name: "Circuloos", version: "1", chainId: 31337 }
-                }
-            }
+            body: { credential: buildCredential("urn:uuid:test-1") }
         })
 
         expect(res.statusCode).toBe(200)
-        expect(JSON.parse(res.payload).onchain).toBeDefined()
+        // On-chain results are now reported in `checks` (the old `onchain` field no longer exists)
+        const body = JSON.parse(res.payload)
+        expect(body.valid).toBe(true)
+        expect(body.checks.onChainStatus).toBe('VALID')
+        expect(body.checks.notRevoked).toBe('VALID')
+        expect(mockOnchain.isIssued).toHaveBeenCalledWith('0xhash')
     })
 })
-

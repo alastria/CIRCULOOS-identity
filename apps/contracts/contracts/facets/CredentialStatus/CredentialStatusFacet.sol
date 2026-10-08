@@ -3,20 +3,24 @@ pragma solidity ^0.8.18;
 
 import { LibCredentialStatus } from "../../libraries/LibCredentialStatus.sol";
 import { ICredentialStatus } from "./ICredentialStatus.sol";
+import { LibPausable } from "../../libraries/LibPausable.sol";
 
 contract CredentialStatusFacet is ICredentialStatus {
     
     function issueCredential(bytes32 vcHash, address subject) public override {
+        LibPausable.enforceNotPaused();
         LibCredentialStatus.issue(vcHash, msg.sender);
         emit CredentialIssued(vcHash, msg.sender, subject, block.timestamp);
     }
 
     function revokeCredential(bytes32 vcHash) public override {
+        LibPausable.enforceNotPaused();
         LibCredentialStatus.revoke(vcHash, msg.sender);
         emit CredentialRevoked(vcHash, msg.sender, block.timestamp);
     }
 
     function batchRevokeCredential(bytes32[] calldata vcHashes) external override {
+        LibPausable.enforceNotPaused();
         LibCredentialStatus.batchRevoke(vcHashes, msg.sender);
         for (uint256 i = 0; i < vcHashes.length; i++) {
             emit CredentialRevoked(vcHashes[i], msg.sender, block.timestamp);
@@ -24,6 +28,7 @@ contract CredentialStatusFacet is ICredentialStatus {
     }
 
     function updateCredentialStatus(bytes32 vcHash, bool suspended) external override {
+        LibPausable.enforceNotPaused();
         LibCredentialStatus.updateStatus(vcHash, suspended, msg.sender);
         if (suspended) {
             emit CredentialSuspended(vcHash, msg.sender, block.timestamp);

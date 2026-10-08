@@ -16,7 +16,7 @@ describe('Issue Prepare Error Coverage', () => {
         it('handles validation errors gracefully', async () => {
             const res = await server.inject({
                 method: 'POST',
-                url: '/issue/prepare',
+                url: '/api/v1/issue/prepare', // routes moved under /api/v1
                 payload: {
                     email: 'invalid-email', // Invalid email format
                     holderAddress: 'not-an-address' // Invalid address
@@ -24,7 +24,8 @@ describe('Issue Prepare Error Coverage', () => {
             })
 
             expect(res.statusCode).toBe(400)
-            expect(JSON.parse(res.payload)).toHaveProperty('error')
+            // Validation errors are formatted by the global error handler
+            expect(JSON.parse(res.payload).code).toBe('VALIDATION_ERROR')
         })
     })
 })

@@ -3,12 +3,18 @@ import {
   buildVC,
   verifySignedCredential,
   signCredential,
+  signCredentialIssuance,
   buildEip712Domain,
   buildCredentialProof,
   hashVC,
   type VC
 } from '../src/index'
 import { Wallet } from 'ethers'
+
+// buildVC converts a bare 0x holder address into a DID (W3C: credentialSubject.id must be a URI),
+// using DID_METHOD/DID_NETWORK with defaults alastria/quorum (src/issuance.ts).
+const holderDid = (address: string) =>
+  `did:${process.env.DID_METHOD || 'alastria'}:${process.env.DID_NETWORK || 'quorum'}:${address}`
 
 describe('W3C Compliance Enhancements', () => {
   const testIssuerWallet = Wallet.createRandom()
@@ -25,7 +31,7 @@ describe('W3C Compliance Enhancements', () => {
 
       const vc = buildVC(vcData)
 
-      expect(vc.credentialSubject.id).toBe(testHolderWallet.address)
+      expect(vc.credentialSubject.id).toBe(holderDid(testHolderWallet.address))
       expect((vc.credentialSubject as any).email).toBe('test@example.com')
       expect((vc.credentialSubject as any).name).toBe('John Doe')
 
@@ -62,7 +68,7 @@ describe('W3C Compliance Enhancements', () => {
 
       const vc = buildVC(vcData)
 
-      expect(vc.credentialSubject.id).toBe(testHolderWallet.address)
+      expect(vc.credentialSubject.id).toBe(holderDid(testHolderWallet.address))
       expect((vc.credentialSubject as any).profile.name).toBe('Alice Smith')
       expect((vc.credentialSubject as any).profile.skills).toEqual(['TypeScript', 'Blockchain', 'W3C'])
       expect((vc.credentialSubject as any).certifications).toHaveLength(2)
@@ -75,14 +81,19 @@ describe('W3C Compliance Enhancements', () => {
         holderAddress: testHolderWallet.address
       })
 
-      expect((vc as any)['@context']).toContain('https://www.w3.org/2018/credentials/v1')
+      // VC Data Model 2.0 context (buildVC moved from VCDM 1.1 to 2.0)
+      expect((vc as any)['@context']).toContain('https://www.w3.org/ns/credentials/v2')
       expect((vc as any).type).toContain('VerifiableCredential')
-      expect(vc.issuanceDate).toBeDefined()
-      expect(new Date(vc.issuanceDate).getTime()).toBeCloseTo(Date.now(), -2) // Within 100ms
+      // VCDM 2.0 uses validFrom/validUntil instead of issuanceDate/expirationDate
+      expect((vc as any).validFrom).toBeDefined()
+      expect(new Date((vc as any).validFrom).getTime()).toBeCloseTo(Date.now(), -2) // Within 100ms
       expect(vc.issuer).toBeDefined()
     })
   })
 
+  // Issuer (assertionMethod) proofs are verified against the EIP-712 schema registry
+  // (src/verifier.ts -> verifyCredentialIssuance), so they must be produced with
+  // signCredentialIssuance; the legacy signCredential is @deprecated (src/eip712.ts).
   describe('verifySignedCredential with W3C compliance', () => {
     let signedCredential: any
 
@@ -92,7 +103,7 @@ describe('W3C Compliance Enhancements', () => {
         holderAddress: testHolderWallet.address
       })
 
-      const signature = await signCredential(testIssuerWallet.privateKey, testDomain, vc)
+      const signature = await signCredentialIssuance(testIssuerWallet.privateKey, testDomain, vc)
       const issuerProof = buildCredentialProof({
         signature,
         signer: testIssuerWallet.address,
@@ -125,7 +136,7 @@ describe('W3C Compliance Enhancements', () => {
     it('should handle non-W3C-compliant credential gracefully', async () => {
       // Create credential without credentialSubject.id
       const nonCompliantVC = buildVC({ email: 'noncompliant@test.com' })
-      const signature = await signCredential(testIssuerWallet.privateKey, testDomain, nonCompliantVC)
+      const signature = await signCredentialIssuance(testIssuerWallet.privateKey, testDomain, nonCompliantVC)
       const nonCompliantSigned = {
         vc: nonCompliantVC,
         issuerProof: buildCredentialProof({
@@ -150,21 +161,12 @@ describe('W3C Compliance Enhancements', () => {
       // Manually corrupt the credentialSubject.id
       invalidIdVC.credentialSubject.id = 'invalid-address'
 
-      const signature = await signCredential(testIssuerWallet.privateKey, testDomain, invalidIdVC)
-      const invalidSigned = {
-        vc: invalidIdVC,
-        issuerProof: buildCredentialProof({
-          signature,
-          signer: testIssuerWallet.address,
-          domain: testDomain,
-          proofPurpose: 'assertionMethod'
-        })
-      }
-
-      const result = await verifySignedCredential(invalidSigned, { requireW3CCompliance: true })
-
-      // Should still verify signature, but W3C compliance may fail
-      expect(result.issuer.ok).toBe(true)
+      // Since fix P1 (docs/TEST_SUITE_REPAIR.md) the issuer signs the holder derived from
+      // credentialSubject.id; a subject id that is not an address cannot be signed at all,
+      // instead of producing a valid signature that ignores the corrupted id.
+      await expect(
+        signCredentialIssuance(testIssuerWallet.privateKey, testDomain, invalidIdVC)
+      ).rejects.toThrow(/credentialSubject\.id is not an Ethereum address/)
     })
   })
 
@@ -239,7 +241,7 @@ describe('W3C Compliance Enhancements', () => {
       })
 
       // Step 2: Create issuer signature
-      const issuerSignature = await signCredential(issuerWallet.privateKey, domain, vc)
+      const issuerSignature = await signCredentialIssuance(issuerWallet.privateKey, domain, vc)
       const issuerProof = buildCredentialProof({
         signature: issuerSignature,
         signer: issuerWallet.address,
@@ -278,7 +280,7 @@ describe('W3C Compliance Enhancements', () => {
       }
 
       // Step 5: Verify credential structure
-      expect(vc.credentialSubject.id).toBe(holderWallet.address)
+      expect(vc.credentialSubject.id).toBe(holderDid(holderWallet.address))
       expect((vc.credentialSubject as any).email).toBe('complete@lifecycle.test')
       expect((vc.credentialSubject as any).name).toBe('Complete Test User')
       expect((vc.credentialSubject as any).department).toBe('Quality Assurance')

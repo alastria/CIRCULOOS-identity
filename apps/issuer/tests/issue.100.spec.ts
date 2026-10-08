@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import server from '../src/index'
 
+// Routes moved under /api/v1/issue (src/index.ts registers issueRoutes with that prefix).
+// Schema validation runs before the authenticateJWT preHandler, so invalid payloads are
+// rejected with 400 by the global error handler ({ code: 'VALIDATION_ERROR', message, details }).
 describe('Issue.ts 100% Coverage', () => {
     let origEnv: any
 
@@ -16,7 +19,7 @@ describe('Issue.ts 100% Coverage', () => {
         it('catches and returns error with message', async () => {
             const res = await server.inject({
                 method: 'POST',
-                url: '/issue/prepare',
+                url: '/api/v1/issue/prepare',
                 payload: {
                     email: 'invalid-format', // Will cause validation error
                     holderAddress: 'not-valid-address'
@@ -25,13 +28,13 @@ describe('Issue.ts 100% Coverage', () => {
 
             expect(res.statusCode).toBe(400)
             const data = JSON.parse(res.payload)
-            expect(data).toHaveProperty('error')
-            expect(typeof data.error).toBe('string')
+            expect(data.code).toBe('VALIDATION_ERROR')
+            expect(typeof data.message).toBe('string')
         })
         it('catches and logs error, returns 400 with error message', async () => {
             const res = await server.inject({
                 method: 'POST',
-                url: '/issue/prepare',
+                url: '/api/v1/issue/prepare',
                 payload: {
                     email: '', // Empty email will cause validation error
                     holderAddress: ''
@@ -40,21 +43,22 @@ describe('Issue.ts 100% Coverage', () => {
 
             expect(res.statusCode).toBe(400)
             const data = JSON.parse(res.payload)
-            expect(data).toHaveProperty('error')
-            expect(typeof data.error).toBe('string')
-            expect(data.error.length).toBeGreaterThan(0)
+            expect(data.code).toBe('VALIDATION_ERROR')
+            expect(typeof data.message).toBe('string')
+            expect(data.message.length).toBeGreaterThan(0)
         })
 
         it('handles missing required fields in prepare', async () => {
             const res = await server.inject({
                 method: 'POST',
-                url: '/issue/prepare',
+                url: '/api/v1/issue/prepare',
                 payload: {} // Missing all required fields
             })
 
             expect(res.statusCode).toBe(400)
             const data = JSON.parse(res.payload)
-            expect(data).toHaveProperty('error')
+            expect(data.code).toBe('VALIDATION_ERROR')
+            expect(data).toHaveProperty('details')
         })
     })
 

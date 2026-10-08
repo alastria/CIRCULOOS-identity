@@ -9,6 +9,7 @@ import { SqlJsStorageAdapter } from '@circuloos/common'
 import authRoutes from '../src/routes/auth'
 import credentialsRoutes from '../src/routes/credentials'
 import { authenticateJWT } from '../src/middleware/auth.middleware'
+import { config } from '../src/config'
 
 // Mock dependencies
 const storage = new SqlJsStorageAdapter(':memory:')
@@ -34,10 +35,6 @@ describe('SIWA Authentication Flow', () => {
     let authToken: string
 
     beforeAll(async () => {
-        process.env.JWT_SECRET = 'test-secret'
-        process.env.DOMAIN = 'localhost'
-        process.env.CHAIN_ID = '2020'
-
         server = fastify()
         server.register(cookie, { secret: 'test-secret' })
 
@@ -83,14 +80,17 @@ describe('SIWA Authentication Flow', () => {
         const { nonce, issuedAt } = JSON.parse(challengeRes.body)
 
         // 2. Sign Message
-        const domain = 'localhost'
-        const chainId = '2020'
+        // The backend rebuilds the SIWE message from the typed config (config.appPublicUrl,
+        // config.blockchain.chainId) instead of process.env.DOMAIN / CHAIN_ID
+        const appUrl = config.appPublicUrl
+        const domain = new URL(appUrl).host
+        const chainId = config.blockchain.chainId.toString()
         const siweMessage = `${domain} wants you to sign in with your Ethereum account:
 ${wallet.address}
 
 Quiero autenticarme en Alastria VC Platform
 
-URI: https://${domain}
+URI: ${appUrl}
 Version: 1
 Chain ID: ${chainId}
 Nonce: ${nonce}

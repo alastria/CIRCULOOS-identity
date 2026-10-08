@@ -1,5 +1,5 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
-import { IssuanceService } from '../services/issuanceService'
+import { IssuanceService, RevocationError } from '../services/issuanceService'
 import { authService } from '../services/authService'
 import { PDFService } from '../services/pdf.service'
 import { IssuanceRepository } from '../repositories/issuanceRepository'
@@ -164,7 +164,9 @@ export class IssueController {
                 expiresAt: rec.expiresAt,
                 domain: rec.domain,
                 credentialType,
-                issuer: issuer || 'Unknown'
+                issuer: issuer || 'Unknown',
+                // Employee credential: shown to the holder and included in the claim message
+                organization: draftVc?.credentialSubject?.worksFor?.legalName || undefined
             })
         } catch (err: any) {
             request.log.error(err)
@@ -183,20 +185,28 @@ export class IssueController {
                 return reply.code(401).send({ error: 'Unauthorized: No valid session found. Please authenticate first.' })
             }
 
-            // Verify issuer is trusted (if registry exists)
+            // Verify issuer is trusted (if registry exists). Without a registry, production refuses:
+            // "only trusted issuers issue" must not depend on configuration.
             if (this.registry) {
                 const isTrusted = await this.registry.isTrustedIssuer(issuerWallet)
                 if (!isTrusted) {
                     return reply.code(403).send({ error: 'Issuer address is not authorized. The wallet must be registered in the Trusted Issuer Registry.' })
                 }
+            } else if (config.nodeEnv === 'production') {
+                return reply.code(403).send({ error: 'No trusted issuer registry configured: issuance is disabled.' })
             }
 
             // Call issuance service with JWT-authenticated issuer
-            const result = await this.issuanceService.prepare(body.email, body.holderAddress, body.companyName)
+            const result = await this.issuanceService.prepare(body.email, body.holderAddress, body.companyName, undefined, {
+                credentialType: body.credentialType,
+                organization: body.organization,
+                employeeCredentialId: body.employeeCredentialId,
+            })
             return reply.send(result)
         } catch (err: any) {
             request.log.error(err)
-            return reply.code(400).send({ error: err.message })
+            // OrganizationValidationError carries a machine-readable code (MISSING_TAX_ID, ...)
+            return reply.code(400).send({ error: err.message, ...(err.code ? { code: err.code } : {}) })
         }
     }
 
@@ -496,31 +506,23 @@ export class IssueController {
                 return reply.code(401).send({ error: 'Authentication required' })
             }
 
-            // Load the issuance
+            // Authorisation, signature check and on-chain revocation (fix P13)
+            const result = await this.issuanceService.revoke(id, {
+                wallet: userWallet,
+                role: request.user!.role,
+                reason,
+                signature,
+                signerAddress,
+            })
             const issuance = await this.storage.loadIssuance(id)
-            if (!issuance) {
-                return reply.code(404).send({ error: 'Credential not found' })
-            }
-
-            // Verify the signer is the issuer
-            if (signerAddress.toLowerCase() !== userWallet.toLowerCase()) {
-                return reply.code(403).send({ error: 'Only the issuer can revoke this credential' })
-            }
-
-            // Update issuance status to REVOKED
-            issuance.status = 'REVOKED'
-            issuance.revokedAt = Date.now()
-            issuance.revocationReason = reason
-            issuance.revokedBy = signerAddress.toLowerCase()
-            await this.storage.saveIssuance(id, issuance)
 
             // If there's a credential hash, update blockchain_credentials table as well
             if (issuance.credentialHash && typeof this.storage.updateCredentialRevocation === 'function') {
                 await this.storage.updateCredentialRevocation({
                     credentialHash: issuance.credentialHash,
                     revoker: signerAddress,
-                    blockNumber: 0, // Application-level revocation (not on-chain yet)
-                    txHash: '', // No transaction yet
+                    blockNumber: result.onchain?.blockNumber ?? 0,
+                    txHash: result.onchain?.txHash ?? '',
                     timestamp: new Date(),
                     reason
                 })
@@ -528,10 +530,13 @@ export class IssueController {
 
             return reply.send({
                 revoked: true,
-                revokedAt: issuance.revokedAt,
-                reason: issuance.revocationReason
+                revokedAt: result.revokedAt,
+                reason: result.reason
             })
         } catch (err: any) {
+            if (err instanceof RevocationError) {
+                return reply.code(err.httpStatus).send({ error: err.message, code: err.code })
+            }
             request.log.error(err)
             return reply.code(500).send({ error: 'Failed to revoke credential' })
         }
