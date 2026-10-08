@@ -81,6 +81,30 @@ describe('Web3SignerSigner', () => {
     await expect(signer._signTypedData({}, {}, {})).rejects.toThrow(/not implemented/)
   })
 
+  it('populates fee-less transactions as legacy at the network gas price (Red-B: 0, no EIP-1559 tip)', async () => {
+    let feeDataAsked = false
+    const provider: any = {
+      _isProvider: true,
+      getGasPrice: async () => BigNumber.from(0),
+      getFeeData: async () => {
+        feeDataAsked = true
+        return { maxFeePerGas: BigNumber.from(3e9), maxPriorityFeePerGas: BigNumber.from(1.5e9), gasPrice: BigNumber.from(0) }
+      },
+      getTransactionCount: async () => 3,
+      estimateGas: async () => BigNumber.from(50_000),
+      getNetwork: async () => ({ chainId: 2020, name: 'redb' }),
+      resolveName: async (name: string) => name,
+    }
+    const signer = new Web3SignerSigner(url, key.address, provider)
+
+    const tx = await signer.populateTransaction({ to: '0x' + '12'.repeat(20), data: '0x' })
+
+    expect(tx.type).toBe(0)
+    expect(BigNumber.from(tx.gasPrice).toNumber()).toBe(0)
+    expect(tx.maxFeePerGas).toBeUndefined()
+    expect(feeDataAsked).toBe(false)
+  })
+
   it('rejects an invalid address at construction', () => {
     expect(() => new Web3SignerSigner(url, 'not-an-address')).toThrow(/address/)
   })

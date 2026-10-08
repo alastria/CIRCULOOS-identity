@@ -20,7 +20,11 @@
     "deploy:dev": "hardhat run --network dev scripts/deploy/deploy-dev.ts",
     "deploy:dev:init": "hardhat run --network dev scripts/deploy/deploy-dev.ts -- --init",
     "docker:health": "node scripts/docker/healthcheck.mjs",
-    "info": "ts-node scripts/utils/print-node-info.ts"
+    "info": "ts-node scripts/utils/print-node-info.ts",
+    "redb:deploy": "hardhat run --network redb scripts/redb/deploy-redb.ts",
+    "redb:trusted-issuers": "hardhat run --network redb scripts/redb/add-trusted-issuers-redb.ts",
+    "redb:verify": "hardhat run --network redb scripts/redb/verify-redb.ts",
+    "redb:smoke": "hardhat run --network redb scripts/redb/smoke-redb.ts"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-network-helpers": "^1.0.12",

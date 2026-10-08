@@ -21,7 +21,8 @@ const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   networks: {
     hardhat: {
-      chainId: 31337,
+      // HARDHAT_CHAIN_ID lets a local node pose as Red-B (2020) for the A4 deploy rehearsal
+      chainId: parseInt(process.env.HARDHAT_CHAIN_ID || "31337"),
       accounts: { 
         count: 10, 
       },
@@ -41,6 +42,17 @@ const config: HardhatUserConfig = {
       timeout: 120000,
     },
     // Development/Production environment
+    /**
+     * Alastria Red-B (chainId 2020), plan A4. No accounts on purpose: the scripts in
+     * scripts/redb sign through Web3Signer. REDB_RPC_URL is never defaulted (the private
+     * regular node is only reachable from the VPS). REDB_CHAIN_ID exists only so the local
+     * rehearsal can point this network at a Hardhat node.
+     */
+    redb: {
+      url: process.env.REDB_RPC_URL || "",
+      chainId: parseInt(process.env.REDB_CHAIN_ID || "2020"),
+      timeout: 120000,
+    },
     dev: {
       url: process.env.DEV_RPC_URL || process.env.RPC_URL || "",
       chainId: parseInt(process.env.DEV_CHAIN_ID || process.env.CHAIN_ID || "1"),

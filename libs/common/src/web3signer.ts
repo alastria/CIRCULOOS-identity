@@ -29,6 +29,20 @@ export class Web3SignerSigner extends Signer {
     return this.address
   }
 
+  /**
+   * Transactions without explicit fee fields are sent as legacy transactions at the network's
+   * own eth_gasPrice. On Red-B that is 0; left to ethers v5, an EIP-1559 network would get a
+   * 1.5 gwei priority fee that an unfunded account cannot pay.
+   */
+  async populateTransaction(transaction: utils.Deferrable<providers.TransactionRequest>): Promise<providers.TransactionRequest> {
+    const tx = await utils.resolveProperties(transaction)
+    if (tx.type == null && tx.gasPrice == null && tx.maxFeePerGas == null && tx.maxPriorityFeePerGas == null) {
+      if (!this.provider) throw new Error('Web3SignerSigner: a provider is required to populate a transaction')
+      return super.populateTransaction({ ...tx, type: 0, gasPrice: await this.provider.getGasPrice() })
+    }
+    return super.populateTransaction(tx)
+  }
+
   async signTransaction(transaction: providers.TransactionRequest): Promise<string> {
     const tx = await utils.resolveProperties(transaction)
     const hex = (v: any) => BigNumber.from(v).toHexString().replace(/^0x0+(?=[0-9a-f])/, '0x')

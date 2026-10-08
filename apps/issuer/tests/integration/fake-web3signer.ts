@@ -27,20 +27,20 @@ export async function startFakeWeb3Signer(keys: Wallet[]): Promise<FakeWeb3Signe
       const p = rpc.params[0]
       const key = byAddress.get(String(p.from).toLowerCase())
       if (!key) return reply({ error: { code: -32000, message: 'unknown account' } })
-      reply({
-        result: await key.signTransaction({
-          to: p.to,
-          data: p.data,
-          value: p.value,
-          gasLimit: p.gas,
-          gasPrice: p.gasPrice,
-          maxFeePerGas: p.maxFeePerGas,
-          maxPriorityFeePerGas: p.maxPriorityFeePerGas,
-          type: p.maxFeePerGas ? 2 : undefined,
-          nonce: p.nonce !== undefined ? BigNumber.from(p.nonce).toNumber() : undefined,
-          chainId: BigNumber.from(p.chainId).toNumber(),
-        }),
-      })
+      // Only the fields present (ethers v5 rejects EIP-1559 keys on a legacy tx, even undefined)
+      const tx: Record<string, any> = { chainId: BigNumber.from(p.chainId).toNumber() }
+      if (p.to) tx.to = p.to
+      if (p.data) tx.data = p.data
+      if (p.value) tx.value = p.value
+      if (p.gas) tx.gasLimit = p.gas
+      if (p.nonce !== undefined) tx.nonce = BigNumber.from(p.nonce).toNumber()
+      if (p.maxFeePerGas) Object.assign(tx, { type: 2, maxFeePerGas: p.maxFeePerGas, maxPriorityFeePerGas: p.maxPriorityFeePerGas })
+      else if (p.gasPrice !== undefined) tx.gasPrice = p.gasPrice
+      try {
+        reply({ result: await key.signTransaction(tx) })
+      } catch (err: any) {
+        reply({ error: { code: -32000, message: err?.message ?? String(err) } })
+      }
     })
   })
   await new Promise<void>((r) => server.listen(0, '127.0.0.1', () => r()))
