@@ -14,6 +14,9 @@ import {
   EMPLOYEE_SCHEMA_ID,
   REVOCATION_TYPES,
   buildRevocationMessage,
+  InMemoryLoginChallengeStore,
+  buildLoginTypedData,
+  verifyEmployeeLogin,
 } from '@circuloos/common'
 import { IssuanceService, RevocationError } from '../../src/services/issuanceService'
 import { devWallet, startLocalIdentityChain, type LocalIdentityChain } from './local-chain'
@@ -181,5 +184,39 @@ describe('A2 — trusted issuance and on-chain revocation (real local chain)', (
     await expect(
       service.revoke(prepared.id, { wallet: alastria.address, role: 'issuer', ...(await revocationRequest(alastria, prepared)) }),
     ).rejects.toBeInstanceOf(RevocationError)
+  })
+
+  describe('A3 — logging in with an issued employee credential, status read from the chain', () => {
+    async function loginWith(issuance: any) {
+      const issued = await (service as any).credential.loadIssuedCredential(issuance.draftVc.id)
+      const challenges = new InMemoryLoginChallengeStore()
+      const registry = createTrustedIssuerRegistryClient({ address: chain.diamondAddress, rpcUrl: chain.rpcUrl })
+      const challenge = await challenges.issue(holder.address, 'iot-manager')
+      const { domain, types, message } = buildLoginTypedData(issued, challenge, chain.chainId)
+      const signature = await holder._signTypedData(domain, types, message)
+      return verifyEmployeeLogin(
+        { credential: issued, signature, nonce: challenge.nonce, audience: 'iot-manager' },
+        {
+          challenges,
+          chainId: chain.chainId,
+          isTrustedIssuer: (a) => registry.isTrustedIssuer(a),
+          credentialStatus: async (hash) => {
+            const s = await chain.diamond.getCredentialStatus(hash)
+            return { issued: s.issued, revoked: s.revoked, suspended: s.suspended, issuer: s.issuer }
+          },
+        },
+      )
+    }
+
+    it('A3.1 the holder logs in and gets the organisation signed by Alastria', async () => {
+      const prepared = await issueEmployee()
+      expect(await loginWith(prepared)).toMatchObject({ ok: true, holder: holder.address.toLowerCase(), organization: ORG })
+    })
+
+    it('A3.4 after the issuer revokes it on-chain, the login is rejected', async () => {
+      const prepared = await issueEmployee()
+      await service.revoke(prepared.id, { wallet: alastria.address, role: 'issuer', ...(await revocationRequest(alastria, prepared)) })
+      expect(await loginWith(prepared)).toMatchObject({ ok: false, code: 'REVOKED' })
+    })
   })
 })

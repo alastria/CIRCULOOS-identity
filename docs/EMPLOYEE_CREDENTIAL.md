@@ -102,3 +102,35 @@ signed message lacks the two new fields, and the subject holder is now taken fro
   **Operational requirement:** the issuer backend key (`DIAMOND_OWNER_PRIVATE_KEY` /
   `ISSUER_PRIVATE_KEY`) must be registered as a trusted issuer, otherwise every issuance is
   issued but `onchain.status = 'failed'` (and cannot be revoked on-chain).
+
+## Logging in with the employee credential (plan A3)
+
+`libs/common/src/login.ts` — used directly by relying parties (e.g. the IoT fleet panel, as a git
+dependency) and exposed by the verifier as `POST /api/v1/login/challenge` and `/login/verify`.
+
+1. The relying party issues a single-use challenge for the holder's wallet and its own
+   **audience** (`LoginChallengeStore.issue(holder, audience)`; `InMemoryLoginChallengeStore` for a
+   single instance — several instances need a shared store with an atomic consume).
+2. The holder signs `buildLoginTypedData(vc, challenge, chainId)` (EIP-712, domain `CirculoosLogin`)
+   with their wallet. The message binds the audience, the nonce, the holder, the credential id,
+   `hashVC(vc)` and the organisation tax ID.
+3. `verifyEmployeeLogin({ credential, signature, nonce, audience }, deps)` checks, in order:
+
+| Check | Failure code |
+|---|---|
+| Challenge exists, same audience, not expired — consumed whatever the outcome | `CHALLENGE_INVALID`, `CHALLENGE_EXPIRED` |
+| The credential is a `CirculoosEmployeeCredential` with an issuer proof | `NOT_EMPLOYEE_CREDENTIAL`, `MISSING_PROOF` |
+| Issuer signature, verified with the **employee schema forced** (not detected from `type`) | `INVALID_ISSUER_SIGNATURE` |
+| Issuer in the trusted issuer registry | `UNTRUSTED_ISSUER` |
+| `validFrom` ≤ now ≤ `validUntil` | `NOT_YET_VALID`, `EXPIRED` |
+| Login signature, **rebuilt server-side** from the stored challenge and the credential, by the credential holder | `HOLDER_MISMATCH` |
+| On-chain status: recorded, by a trusted issuer (P14), not revoked, not suspended — no status source fails closed | `STATUS_UNAVAILABLE`, `NOT_RECORDED`, `STATUS_ISSUER_UNTRUSTED`, `REVOKED`, `SUSPENDED` |
+
+On success it returns `{ holder, holderDid, organization: { legalName, taxID, addressCountry },
+credentialId, credentialHash, issuer }`. Relying parties match organisations on `taxID`.
+
+Altering the credential in any way changes `hashVC` and no longer matches the on-chain record
+(`NOT_RECORDED`), including fields outside the issuer signature such as `type`.
+
+`/verify` and `/verify/presentation` are unchanged and **must not be used for authentication**
+(advisory P3 remains open for them).

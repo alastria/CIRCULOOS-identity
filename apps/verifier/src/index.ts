@@ -5,6 +5,7 @@ import helmet from "@fastify/helmet"
 import swagger from "@fastify/swagger"
 import swaggerUI from "@fastify/swagger-ui"
 import simplifiedVerifyRoutes from './routes/verify'
+import loginRoutes from './routes/login'
 import vpRoutes from './routes/vp'
 import issuersRoutes from './routes/issuers'
 import playgroundRoutes from './routes/playground'
@@ -235,6 +236,10 @@ server.addHook('onClose', async () => {
 // Register API routes
 server.register(simplifiedVerifyRoutes, { prefix: '/api/v1' })
 console.log('✅ API routes registered: /api/v1/verify')
+
+// Employee-credential login with a signed single-use challenge (plan A3)
+server.register(loginRoutes, { prefix: '/api/v1' })
+console.log('✅ API routes registered: /api/v1/login')
 
 // server.register(vpRoutes, { prefix: '/api/v1' })
 // server.register(issuersRoutes, { prefix: '/api/v1/issuers' })
