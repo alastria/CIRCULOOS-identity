@@ -192,13 +192,12 @@ describe('A2 — trusted issuance and on-chain revocation (real local chain)', (
       const challenges = new InMemoryLoginChallengeStore()
       const registry = createTrustedIssuerRegistryClient({ address: chain.diamondAddress, rpcUrl: chain.rpcUrl })
       const challenge = await challenges.issue(holder.address, 'iot-manager')
-      const { domain, types, message } = buildLoginTypedData(issued, challenge, chain.chainId)
+      const { domain, types, message } = buildLoginTypedData(issued, challenge)
       const signature = await holder._signTypedData(domain, types, message)
       return verifyEmployeeLogin(
         { credential: issued, signature, nonce: challenge.nonce, audience: 'iot-manager' },
         {
           challenges,
-          chainId: chain.chainId,
           isTrustedIssuer: (a) => registry.isTrustedIssuer(a),
           credentialStatus: async (hash) => {
             const s = await chain.diamond.getCredentialStatus(hash)

@@ -111,7 +111,8 @@ dependency) and exposed by the verifier as `POST /api/v1/login/challenge` and `/
 1. The relying party issues a single-use challenge for the holder's wallet and its own
    **audience** (`LoginChallengeStore.issue(holder, audience)`; `InMemoryLoginChallengeStore` for a
    single instance — several instances need a shared store with an atomic consume).
-2. The holder signs `buildLoginTypedData(vc, challenge, chainId)` (EIP-712, domain `CirculoosLogin`)
+2. The holder signs `buildLoginTypedData(vc, challenge)` (EIP-712, domain `CirculoosLogin` **without
+   chainId**, so MetaMask signs it on any network — Red-B is not reachable from holders' browsers)
    with their wallet. The message binds the audience, the nonce, the holder, the credential id,
    `hashVC(vc)` and the organisation tax ID.
 3. `verifyEmployeeLogin({ credential, signature, nonce, audience }, deps)` checks, in order:

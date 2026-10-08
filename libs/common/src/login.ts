@@ -4,7 +4,7 @@
  * Flow:
  *   1. The relying party issues a single-use challenge for the holder's wallet and its own
  *      audience (`LoginChallengeStore.issue`).
- *   2. The holder signs `buildLoginTypedData(vc, challenge, chainId)` with their wallet and sends
+ *   2. The holder signs `buildLoginTypedData(vc, challenge)` with their wallet and sends
  *      the credential, the signature and the nonce.
  *   3. The relying party calls `verifyEmployeeLogin`, which rebuilds the signed message itself
  *      from the stored challenge and the credential (it never trusts a client-supplied message),
@@ -100,10 +100,17 @@ export class InMemoryLoginChallengeStore implements LoginChallengeStore {
 
 // ---------------------------------------------------------------- typed data
 
-/** What the holder signs to log in. Rebuilt server-side from the stored challenge for verification. */
-export function buildLoginTypedData(vc: any, challenge: Pick<LoginChallenge, 'nonce' | 'audience' | 'holder'>, chainId: number) {
+/**
+ * What the holder signs to log in. Rebuilt server-side from the stored challenge for verification.
+ *
+ * The domain has no chainId on purpose (decision D5): MetaMask refuses to sign EIP-712 data whose
+ * chainId differs from the active network, and Red-B is not reachable from holders' browsers.
+ * Nothing here is replayable on another chain anyway: the signature binds a single-use nonce,
+ * the relying party's audience and the exact credential hash.
+ */
+export function buildLoginTypedData(vc: any, challenge: Pick<LoginChallenge, 'nonce' | 'audience' | 'holder'>) {
   return {
-    domain: { name: LOGIN_DOMAIN_NAME, version: LOGIN_DOMAIN_VERSION, chainId },
+    domain: { name: LOGIN_DOMAIN_NAME, version: LOGIN_DOMAIN_VERSION },
     types: LOGIN_TYPES,
     primaryType: LOGIN_PRIMARY_TYPE,
     message: {
@@ -130,8 +137,6 @@ export interface CredentialStatusRecord {
 
 export interface LoginVerificationDeps {
   challenges: LoginChallengeStore
-  /** Chain id used in the login typed-data domain (the relying party's network). */
-  chainId: number
   /** Trusted issuer registry lookup (e.g. TrustedIssuerFacet.isTrustedIssuer). */
   isTrustedIssuer(address: string): Promise<boolean>
   /** On-chain status (e.g. CredentialStatusFacet.getCredentialStatus). Without it, logins fail closed. */
@@ -215,7 +220,7 @@ export async function verifyEmployeeLogin(input: LoginInput, deps: LoginVerifica
   } catch {
     return fail('INVALID_ISSUER_SIGNATURE', 'credential subject is inconsistent')
   }
-  const { domain, types, message } = buildLoginTypedData(vc, { ...challenge, holder }, deps.chainId)
+  const { domain, types, message } = buildLoginTypedData(vc, { ...challenge, holder })
   let signer: string | null = null
   try {
     signer = utils.verifyTypedData(domain, types, message, input.signature).toLowerCase()

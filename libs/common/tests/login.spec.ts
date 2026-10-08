@@ -50,7 +50,6 @@ describe('A3 — employee login verification', () => {
     status = new Map()
     deps = {
       challenges,
-      chainId: CHAIN_ID,
       isTrustedIssuer: async (address) => address.toLowerCase() === issuer.address.toLowerCase(),
       credentialStatus: async (hash) => status.get(hash) ?? { issued: false, revoked: false, suspended: false, issuer: '0x' + '00'.repeat(20) },
       now: () => now,
@@ -64,7 +63,7 @@ describe('A3 — employee login verification', () => {
 
   async function login(vc: any, signer: Wallet = holder, opts: { audience?: string; challengeAudience?: string; nonce?: string } = {}) {
     const challenge = await challenges.issue(signer.address, opts.challengeAudience ?? AUDIENCE)
-    const { domain, types, message } = buildLoginTypedData(vc, challenge, CHAIN_ID)
+    const { domain, types, message } = buildLoginTypedData(vc, challenge)
     const signature = await signer._signTypedData(domain, types, message)
     return verifyEmployeeLogin({ credential: vc, signature, nonce: opts.nonce ?? challenge.nonce, audience: opts.audience ?? AUDIENCE }, deps)
   }
@@ -85,11 +84,16 @@ describe('A3 — employee login verification', () => {
     })
   })
 
+  it('D5: the login typed data has no chainId, so the holder can sign it from any network in MetaMask', () => {
+    const { domain } = buildLoginTypedData({ id: 'urn:uuid:x', credentialSubject: {} }, { nonce: '0x01', audience: AUDIENCE, holder: holder.address })
+    expect(domain).toEqual({ name: 'CirculoosLogin', version: '1' })
+  })
+
   it('A3.1 also accepts the credential wrapped in the presentation stored after the claim', async () => {
     const vc = await issue()
     record(vc)
     const challenge = await challenges.issue(holder.address, AUDIENCE)
-    const { domain, types, message } = buildLoginTypedData(vc, challenge, CHAIN_ID)
+    const { domain, types, message } = buildLoginTypedData(vc, challenge)
     const signature = await holder._signTypedData(domain, types, message)
 
     const result = await verifyEmployeeLogin(
@@ -109,7 +113,7 @@ describe('A3 — employee login verification', () => {
     const vc = await issue()
     record(vc)
     const challenge = await challenges.issue(holder.address, AUDIENCE)
-    const { domain, types, message } = buildLoginTypedData(vc, challenge, CHAIN_ID)
+    const { domain, types, message } = buildLoginTypedData(vc, challenge)
     const signature = await holder._signTypedData(domain, types, message)
     const input = { credential: vc, signature, nonce: challenge.nonce, audience: AUDIENCE }
 
@@ -121,7 +125,7 @@ describe('A3 — employee login verification', () => {
     const vc = await issue()
     record(vc)
     const challenge = await challenges.issue(holder.address, AUDIENCE)
-    const { domain, types, message } = buildLoginTypedData(vc, challenge, CHAIN_ID)
+    const { domain, types, message } = buildLoginTypedData(vc, challenge)
     const signature = await holder._signTypedData(domain, types, message)
     now = new Date(now.getTime() + 121_000)
 
@@ -213,7 +217,7 @@ describe('A3 — employee login verification', () => {
     const vc = await issue()
     record(vc)
     const challenge = await challenges.issue(holder.address, AUDIENCE)
-    const { domain, types, message } = buildLoginTypedData(vc, challenge, CHAIN_ID)
+    const { domain, types, message } = buildLoginTypedData(vc, challenge)
     // The holder signs a message for a different credential hash: the server rebuilds the real one
     const signature = await holder._signTypedData(domain, types, { ...message, credentialHash: '0x' + '11'.repeat(32) })
 
@@ -227,7 +231,7 @@ describe('A3 — employee login verification', () => {
     const vc = await issue()
     record(vc)
     const challenge = await challenges.issue(holder.address, AUDIENCE)
-    const { domain, types, message } = buildLoginTypedData(vc, challenge, CHAIN_ID)
+    const { domain, types, message } = buildLoginTypedData(vc, challenge)
     const badSignature = await other._signTypedData(domain, types, message)
     const goodSignature = await holder._signTypedData(domain, types, message)
 

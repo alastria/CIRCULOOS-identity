@@ -13,7 +13,7 @@ import { config } from '../config'
  * credential to whoever presents it (signed single-use challenge), and checks expiry, issuer trust
  * and on-chain status. See libs/common/src/login.ts.
  *
- *   POST /login/challenge { holderAddress, audience } → { nonce, audience, holder, expiresAt, chainId }
+ *   POST /login/challenge { holderAddress, audience } → { nonce, audience, holder, expiresAt }
  *   POST /login/verify    { credential, signature, nonce, audience } → 200 { ok: true, holder, organization, … }
  *                                                                     | 401 { ok: false, code, reason }
  *
@@ -22,7 +22,6 @@ import { config } from '../config'
  */
 export interface LoginRoutesOptions {
   challenges?: LoginChallengeStore
-  chainId?: number
   isTrustedIssuer?: (address: string) => Promise<boolean>
   /** Explicitly `undefined` disables on-chain status (logins then fail closed). */
   credentialStatus?: (credentialHash: string) => Promise<CredentialStatusRecord>
@@ -45,7 +44,6 @@ function credentialStatusFromConfig(): LoginRoutesOptions['credentialStatus'] {
 
 const loginRoutes: FastifyPluginAsync<LoginRoutesOptions> = async (fastify, opts) => {
   const challenges = opts.challenges ?? new InMemoryLoginChallengeStore({ ttlSeconds: config.challenge?.ttlSeconds ?? 300 })
-  const chainId = opts.chainId ?? config.blockchain.chainId
   const credentialStatus = 'credentialStatus' in opts ? opts.credentialStatus : credentialStatusFromConfig()
   const isTrustedIssuer =
     opts.isTrustedIssuer ??
@@ -70,8 +68,7 @@ const loginRoutes: FastifyPluginAsync<LoginRoutesOptions> = async (fastify, opts
     },
   }, async (request) => {
     const { holderAddress, audience } = request.body as { holderAddress: string; audience: string }
-    const challenge = await challenges.issue(holderAddress, audience)
-    return { ...challenge, chainId }
+    return challenges.issue(holderAddress, audience)
   })
 
   fastify.post('/login/verify', {
@@ -91,7 +88,7 @@ const loginRoutes: FastifyPluginAsync<LoginRoutesOptions> = async (fastify, opts
     },
   }, async (request, reply) => {
     const body = request.body as { credential: any; signature: string; nonce: string; audience: string }
-    const result = await verifyEmployeeLogin(body, { challenges, chainId, isTrustedIssuer, credentialStatus })
+    const result = await verifyEmployeeLogin(body, { challenges, isTrustedIssuer, credentialStatus })
     return reply.code(result.ok ? 200 : 401).send(result)
   })
 }

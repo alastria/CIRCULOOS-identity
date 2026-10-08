@@ -43,7 +43,6 @@ describe('Login routes (A3)', () => {
     vc = await issuedCredential()
     const options: LoginRoutesOptions = {
       challenges: new InMemoryLoginChallengeStore(),
-      chainId: CHAIN_ID,
       isTrustedIssuer: async (a) => a.toLowerCase() === issuer.address.toLowerCase(),
       credentialStatus: async (hash) => ({ issued: hash === hashVC(vc), revoked: false, suspended: false, issuer: issuer.address }),
       ...overrides,
@@ -64,7 +63,7 @@ describe('Login routes (A3)', () => {
   }
 
   async function verify(signer: Wallet, challenge: any) {
-    const { domain, types, message } = buildLoginTypedData(vc, challenge, challenge.chainId)
+    const { domain, types, message } = buildLoginTypedData(vc, challenge)
     const signature = await signer._signTypedData(domain, types, message)
     return server.inject({
       method: 'POST',
@@ -76,9 +75,10 @@ describe('Login routes (A3)', () => {
   describe('with on-chain status available', () => {
     beforeEach(async () => build())
 
-    it('issues a challenge bound to the holder and audience, with the chain id to sign with', async () => {
+    it('issues a challenge bound to the holder and audience (no chain id: D5)', async () => {
       const challenge = await challengeFor(holder.address)
-      expect(challenge).toMatchObject({ audience: 'iot-manager', holder: holder.address.toLowerCase(), chainId: CHAIN_ID })
+      expect(challenge).toMatchObject({ audience: 'iot-manager', holder: holder.address.toLowerCase() })
+      expect(challenge.chainId).toBeUndefined()
       expect(challenge.nonce).toMatch(/^0x[0-9a-f]{64}$/)
     })
 
@@ -96,7 +96,7 @@ describe('Login routes (A3)', () => {
 
     it('A3.3 replaying the same login → 401 CHALLENGE_INVALID', async () => {
       const challenge = await challengeFor(holder.address)
-      const { domain, types, message } = buildLoginTypedData(vc, challenge, CHAIN_ID)
+      const { domain, types, message } = buildLoginTypedData(vc, challenge)
       const payload = { credential: vc, signature: await holder._signTypedData(domain, types, message), nonce: challenge.nonce, audience: 'iot-manager' }
 
       expect((await server.inject({ method: 'POST', url: '/api/v1/login/verify', payload })).statusCode).toBe(200)
