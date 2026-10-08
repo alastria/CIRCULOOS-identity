@@ -96,6 +96,26 @@ WEB3SIGNER_URL=http://127.0.0.1:<port> OWNER_ADDRESS=<owner> \
 MANIFEST_PATH=<path>/deployed-redb.json pnpm redb:deploy
 ```
 
+**Done 2026-10-08 12:51 UTC** — run from Pablo's machine through SSH tunnels to the private
+node and to the identity Web3Signer (decision D8 revised: no repository copy or dependencies on
+the VPS, keys never leave it), from commit `15a98a7` with a clean tree.
+
+| Contract | Address on Red-B |
+|---|---|
+| **Diamond** | **`0x227840022759D9a7f8c291d50Cde478863A7aDd9`** |
+| Owner | `0x2F77f56dc5AEcA83914b87dB28A6D3CA2bfcDcA0` (Web3Signer) |
+| DiamondCutFacet | `0xEA17c653dcffB827C208192117845385c808C2FC` |
+| DiamondInit | `0x06A5eFb79F9Df81C8985Ab1d5AEA3530143121bA` |
+| DiamondLoupeFacet | `0x15dE887d90D7d0Ff299C6592dD8236959BCa4272` |
+| OwnershipFacet | `0xb3a47fa88a50fb70a0076b677F6fA3692141E74c` |
+| TrustedIssuerFacet | `0x8812D2c68A60280244394E3e2997eAd15cFfD5A4` |
+| CredentialStatusFacet | `0x60628A8b797799FAE38e943d916dAa18e9FF7D75` |
+| PausableFacet | `0xa85bc98136976E21242d1208644A701107AE039b` |
+
+Manifest with the 9 transaction hashes: `apps/contracts/deployments/redb/deployed-redb.json`.
+A4.5 verification run right after: all 22 checks passed (bytecode of the 6 contracts equals the
+compiled artifacts, exact selector routing, owner, ERC-165, not paused, no trusted issuer yet).
+
 ### A4.4 🔴 Trusted issuers
 ```bash
 … TRUSTED_ISSUERS=<backend key>,<alastria issuer 1>,… pnpm redb:trusted-issuers

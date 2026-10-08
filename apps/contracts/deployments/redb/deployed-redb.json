@@ -1,0 +1,114 @@
+{
+  "network": "redb",
+  "chainId": 2020,
+  "diamondAddress": "0x227840022759D9a7f8c291d50Cde478863A7aDd9",
+  "owner": "0x2F77f56dc5AEcA83914b87dB28A6D3CA2bfcDcA0",
+  "diamondCutFacet": "0xEA17c653dcffB827C208192117845385c808C2FC",
+  "diamondInit": "0x06A5eFb79F9Df81C8985Ab1d5AEA3530143121bA",
+  "facets": {
+    "DiamondLoupeFacet": {
+      "address": "0x15dE887d90D7d0Ff299C6592dD8236959BCa4272",
+      "selectors": [
+        "0xcdffacc6",
+        "0x52ef6b2c",
+        "0xadfca15e",
+        "0x7a0ed627",
+        "0x01ffc9a7"
+      ]
+    },
+    "OwnershipFacet": {
+      "address": "0xb3a47fa88a50fb70a0076b677F6fA3692141E74c",
+      "selectors": [
+        "0x8da5cb5b",
+        "0xf2fde38b"
+      ]
+    },
+    "TrustedIssuerFacet": {
+      "address": "0x8812D2c68A60280244394E3e2997eAd15cFfD5A4",
+      "selectors": [
+        "0xc4566bdd",
+        "0x2a6f9c61",
+        "0x5e689206",
+        "0xef2ed1a4",
+        "0xb93d28eb",
+        "0x92c54daf"
+      ]
+    },
+    "CredentialStatusFacet": {
+      "address": "0x60628A8b797799FAE38e943d916dAa18e9FF7D75",
+      "selectors": [
+        "0x4ce736b4",
+        "0x383fcff0",
+        "0x163aa631",
+        "0x4294857f",
+        "0x49a21051",
+        "0x0e28a934",
+        "0xb75c7dc6",
+        "0xca6eec78",
+        "0xcdc78a9d"
+      ]
+    },
+    "PausableFacet": {
+      "address": "0xa85bc98136976E21242d1208644A701107AE039b",
+      "selectors": [
+        "0x6c11c21c",
+        "0x46fbf68e",
+        "0x8456cb59",
+        "0x5c975abb",
+        "0xf865af08",
+        "0x3f4ba83a"
+      ]
+    }
+  },
+  "git": {
+    "commit": "15a98a73abc27f84bd6be66ad26d32e3fd894740",
+    "dirty": false
+  },
+  "deployedAt": "2026-10-08T12:51:26.668Z",
+  "transactions": [
+    {
+      "step": "deploy DiamondCutFacet",
+      "hash": "0xba31f7ad426c702ace2a41d9c9802a249e65203f0e63135ebf40f091154b9128",
+      "contract": "0xEA17c653dcffB827C208192117845385c808C2FC"
+    },
+    {
+      "step": "deploy Diamond",
+      "hash": "0x7a548d644312952085417dda9a71670d9063d3c14bd4681e2f476515a900d71b",
+      "contract": "0x227840022759D9a7f8c291d50Cde478863A7aDd9"
+    },
+    {
+      "step": "deploy DiamondInit",
+      "hash": "0x8be7d1f540612fec8ce2a0db41cc4c93ac65f1c4887ce89f3e7201bad2399bc5",
+      "contract": "0x06A5eFb79F9Df81C8985Ab1d5AEA3530143121bA"
+    },
+    {
+      "step": "deploy DiamondLoupeFacet",
+      "hash": "0xcb95bdcb564f011a12f3f858a6083a508daab534b62ffab933b71bc3f3a3baa8",
+      "contract": "0x15dE887d90D7d0Ff299C6592dD8236959BCa4272"
+    },
+    {
+      "step": "deploy OwnershipFacet",
+      "hash": "0x9b758bb31743b01dfa02dd40a4bbc770188d314cb23b96ba9e9d4afc4c981d29",
+      "contract": "0xb3a47fa88a50fb70a0076b677F6fA3692141E74c"
+    },
+    {
+      "step": "deploy TrustedIssuerFacet",
+      "hash": "0x950990c1053af81932a09e1a6faa4cc4dce20b1d0bc3fc95ee574c6482fdc215",
+      "contract": "0x8812D2c68A60280244394E3e2997eAd15cFfD5A4"
+    },
+    {
+      "step": "deploy CredentialStatusFacet",
+      "hash": "0x528f0d51dc0985d0f48484104df3ebcde930fda5f5f05a4683bc7a2d4221ed19",
+      "contract": "0x60628A8b797799FAE38e943d916dAa18e9FF7D75"
+    },
+    {
+      "step": "deploy PausableFacet",
+      "hash": "0x60d82445fc03d72a52ea4693d28f1cbb195b260f47e1bcc3e0a8de35591699ea",
+      "contract": "0xa85bc98136976E21242d1208644A701107AE039b"
+    },
+    {
+      "step": "diamondCut (facets + DiamondInit.init)",
+      "hash": "0x2e19963742f70df76a517b5139b0da1d2d9a19873aae4955e726ec23150ca497"
+    }
+  ]
+}
