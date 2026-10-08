@@ -4,6 +4,7 @@ pragma solidity ^0.8.18;
 import { LibAttestationBatch } from "../../libraries/LibAttestationBatch.sol";
 import { LibAttestationBatchStorage } from "../../storage/LibAttestationBatchStorage.sol";
 import { IAttestationBatch } from "./IAttestationBatch.sol";
+import { LibPausable } from "../../libraries/LibPausable.sol";
 
 /**
  * @title AttestationBatchFacet
@@ -20,6 +21,7 @@ contract AttestationBatchFacet is IAttestationBatch {
         uint64 vpCount,
         string calldata ipfsCid
     ) external override returns (uint256 batchId) {
+        LibPausable.enforceNotPaused();
         batchId = LibAttestationBatch.submitBatch(merkleRoot, vpCount, ipfsCid, msg.sender);
 
         emit BatchAttested(batchId, merkleRoot, vpCount, msg.sender, block.timestamp);
@@ -53,6 +55,7 @@ contract AttestationBatchFacet is IAttestationBatch {
         bytes32[] calldata proof,
         uint256 index
     ) external returns (bool valid) {
+        LibPausable.enforceNotPaused();
         valid = LibAttestationBatch.verifyInclusion(batchId, vpHash, proof, index);
 
         if (valid) {
