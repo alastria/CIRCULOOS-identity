@@ -56,6 +56,22 @@ The real Web3Signer is exercised for the first time in A4.1 (signature check) an
 4. Check: `eth_accounts` lists both addresses; a test `eth_signTransaction` recovers the right
    address. No transaction sent.
 
+**Done 2026-10-08.** On the VPS (host and paths recorded in the private ops runbook):
+
+| Item | Value |
+|---|---|
+| Service | `<signer-unit>.service` (enabled), a dedicated unprivileged user, `127.0.0.1:<signer-port>`, `--chain-id=2020`, access logs on |
+| Keys (generated on the VPS) | owner `0x2F77f56dc5AEcA83914b87dB28A6D3CA2bfcDcA0` · issuer backend `0xD3fD4Fbd479D1984b9E4FB5aDe42b67Cbf15bA92` |
+| Keystores | `<signer-dir>/keystore/{owner,backend}.json` (V3, scrypt), `600`, service user only |
+| Password | only in Vault (`127.0.0.1:<vault-port>`, the IoT panel's instance): KV v2 `<vault-kv-path>`; read-only policy and AppRole `<vault-approle>` (token TTL 300 s); copied to `tmpfs` (`<runtime-dir>`) by `ExecStartPre`, removed on stop |
+| Binaries | shared read-only with the IoT panel's signers (`<shared-binaries-dir>/{jre,web3signer}`) to save disk |
+| JVM heap | `-Xmx512m`: the two scrypt keystores are decrypted in parallel; 256m failed with `OutOfMemoryError` |
+
+Checks: `eth_accounts` lists both keys; a test transaction (chainId 2020, not broadcast) signed by
+each key recovers the right address; stopping the service removes the runtime password; the IoT
+panel's signers and both Vault instances stay active. **Depends on that Vault being unsealed**
+(manual unseal after a reboot, same as the panel's Red-B signer).
+
 ### A4.2 Read-only checks on Red-B (from the VPS)
 `eth_chainId` = `0x7e4`, `eth_gasPrice` = `0x0`, `web3_clientVersion` = `besu/22.10.3`, the node's
 block height equals the public endpoint's.
