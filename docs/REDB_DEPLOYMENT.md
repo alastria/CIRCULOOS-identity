@@ -100,6 +100,12 @@ MANIFEST_PATH=<path>/deployed-redb.json pnpm redb:deploy
 node and to the identity Web3Signer (decision D8 revised: no repository copy or dependencies on
 the VPS, keys never leave it), from commit `15a98a7` with a clean tree.
 
+> **Traceability.** The manifest records `15a98a7`, the local commit that was deployed. Before
+> publishing the branch, its history was rewritten only to replace infrastructure details in this
+> document with placeholders; the deployed code is published unchanged as **`39084ad`**
+> (`git diff 15a98a7 39084ad` touches only this file). The verification compares the on-chain
+> bytecode with the compiled artifacts, so it holds for either commit.
+
 | Contract | Address on Red-B |
 |---|---|
 | **Diamond** | **`0x227840022759D9a7f8c291d50Cde478863A7aDd9`** |
