@@ -5,6 +5,7 @@ import { NonceService } from '../services/nonce.service'
 import { SqlJsStorageAdapter, createLogger } from '@circuloos/common'
 import { BlockchainSyncService } from '../services/blockchainSyncService'
 import { config } from '../config'
+import { adminAddresses } from '../services/admin'
 
 const logger = createLogger('auth')
 
@@ -151,20 +152,9 @@ Issued At: ${issuedAt}`
   private async determineRole(address: string): Promise<'holder' | 'issuer' | 'admin'> {
     const normalizedAddress = address.toLowerCase()
 
-    // Get Diamond owner address (auto-derived from DIAMOND_OWNER_PRIVATE_KEY)
-    const ownerPrivateKey = config.issuer.privateKey
-    if (ownerPrivateKey) {
-      try {
-        const ownerWallet = new ethers.Wallet(ownerPrivateKey)
-        const ownerAddress = ownerWallet.address.toLowerCase()
-
-        // Check if Diamond owner (highest priority - auto admin)
-        if (normalizedAddress === ownerAddress) {
-          return 'admin'
-        }
-      } catch (err) {
-        logger.warn('Failed to derive owner address from DIAMOND_OWNER_PRIVATE_KEY:', err)
-      }
+    // Admins: ADMIN_ADDRESSES, plus the address derived from a configured private key (dev)
+    if (adminAddresses(config.issuer).includes(normalizedAddress)) {
+      return 'admin'
     }
 
     // Check if issuer (query SQLite3 - synced from blockchain events)

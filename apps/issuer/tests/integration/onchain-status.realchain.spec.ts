@@ -20,6 +20,7 @@ import {
 } from '@circuloos/common'
 import { IssuanceService, RevocationError } from '../../src/services/issuanceService'
 import { devWallet, startLocalIdentityChain, type LocalIdentityChain } from './local-chain'
+import { startFakeWeb3Signer } from './fake-web3signer'
 
 vi.mock('../../src/services/notification.service', () => ({
   NotificationService: vi.fn().mockImplementation(() => ({ sendClaimInfo: vi.fn() })),
@@ -216,6 +217,42 @@ describe('A2 — trusted issuance and on-chain revocation (real local chain)', (
       const prepared = await issueEmployee()
       await service.revoke(prepared.id, { wallet: alastria.address, role: 'issuer', ...(await revocationRequest(alastria, prepared)) })
       expect(await loginWith(prepared)).toMatchObject({ ok: false, code: 'REVOKED' })
+    })
+  })
+
+  describe('G2 — the issuer backend signs its on-chain writes through Web3Signer', () => {
+    it('records and revokes on-chain with no private key in its configuration', async () => {
+      const web3signer = await startFakeWeb3Signer([backendKey])
+      try {
+        const viaWeb3Signer = new IssuanceService({
+          storage: memoryStorage() as any,
+          hmacSecret: 'test-secret',
+          trustedIssuerRegistry: createTrustedIssuerRegistryClient({ address: chain.diamondAddress, rpcUrl: chain.rpcUrl }),
+          onchain: {
+            diamondAddress: chain.diamondAddress,
+            rpcUrl: chain.rpcUrl,
+            web3signerUrl: web3signer.url,
+            signerAddress: backendKey.address,
+          },
+        })
+        const prepared = await viaWeb3Signer.prepare('ana@khoani.example', holder.address, undefined, undefined, {
+          credentialType: EMPLOYEE_SCHEMA_ID,
+          organization: ORG,
+        })
+        const { types, messageBuilder } = getCredentialType(EMPLOYEE_SCHEMA_ID)!.schema.issuance
+        const signature = await alastria._signTypedData(prepared.domain, types, messageBuilder(prepared.draftVc))
+        await viaWeb3Signer.mint(prepared.id, signature, alastria.address, prepared.domain)
+
+        const credentialHash = hashVC(prepared.draftVc)
+        expect(await chain.diamond.isIssued(credentialHash)).toBe(true)
+        expect((await chain.diamond.getCredentialStatus(credentialHash)).issuer.toLowerCase()).toBe(backendKey.address.toLowerCase())
+
+        await viaWeb3Signer.revoke(prepared.id, { wallet: alastria.address, role: 'issuer', ...(await revocationRequest(alastria, prepared)) })
+        expect(await chain.diamond.isRevoked(credentialHash)).toBe(true)
+        expect(web3signer.requests.length).toBe(2) // record + revoke, both signed by Web3Signer
+      } finally {
+        await web3signer.stop()
+      }
     })
   })
 })

@@ -4,6 +4,7 @@ import {
     hashVC,
     createLogger,
     subjectAddress,
+    Web3SignerSigner,
 } from '@circuloos/common'
 import { config } from '../config'
 import { ethers } from 'ethers'
@@ -14,7 +15,11 @@ const logger = createLogger('registry-service')
 export interface OnchainConfig {
     diamondAddress?: string
     rpcUrl?: string
+    /** Raw private key — local development only. */
     signerKey?: string
+    /** Web3Signer (preferred, required on Red-B): on-chain writes are signed there by `signerAddress`. */
+    web3signerUrl?: string
+    signerAddress?: string
 }
 
 export interface RegistryServiceOptions {
@@ -82,19 +87,33 @@ export class RegistryService {
             diamondAddress: config.diamond?.address,
             rpcUrl: config.blockchain.rpcUrl,
             signerKey: config.issuer.privateKey,
+            web3signerUrl: config.issuer.web3signerUrl,
+            signerAddress: config.issuer.onchainSignerAddress,
         }
+    }
+
+    /** Web3Signer when configured; otherwise the raw development key. */
+    private hasSigner(): boolean {
+        const { signerKey, web3signerUrl, signerAddress } = this.onchain
+        return Boolean((web3signerUrl && signerAddress) || signerKey)
+    }
+
+    private signer(provider: ethers.providers.JsonRpcProvider): ethers.Signer {
+        const { signerKey, web3signerUrl, signerAddress } = this.onchain
+        if (web3signerUrl && signerAddress) return new Web3SignerSigner(web3signerUrl, signerAddress, provider)
+        return new ethers.Wallet(signerKey!, provider)
     }
 
     /** Whether credential status is recorded on-chain at all (address, RPC and signer configured). */
     isOnchainConfigured(): boolean {
-        const { diamondAddress, rpcUrl, signerKey } = this.onchain
-        return Boolean(diamondAddress && rpcUrl && signerKey)
+        const { diamondAddress, rpcUrl } = this.onchain
+        return Boolean(diamondAddress && rpcUrl && this.hasSigner())
     }
 
     private async credentialRegistry(): Promise<any> {
-        const { diamondAddress, rpcUrl, signerKey } = this.onchain
+        const { diamondAddress, rpcUrl } = this.onchain
         const provider = new ethers.providers.JsonRpcProvider(rpcUrl)
-        const signer = new ethers.Wallet(signerKey!, provider)
+        const signer = this.signer(provider)
         if (this.createCredentialRegistryFn) return this.createCredentialRegistryFn(diamondAddress!, signer)
         const { createCredentialRegistry } = await import('../onchain')
         return createCredentialRegistry(diamondAddress!, signer)
@@ -114,24 +133,12 @@ export class RegistryService {
     }
 
     async recordIssuance(vc: any): Promise<{ txHash: string; blockNumber: number } | null> {
-        const { diamondAddress: registryAddress, rpcUrl, signerKey } = this.onchain
-
-        if (!registryAddress || !rpcUrl || !signerKey) {
+        if (!this.isOnchainConfigured()) {
             return null
         }
 
         try {
-            const provider = new ethers.providers.JsonRpcProvider(rpcUrl)
-            const signer = new ethers.Wallet(signerKey, provider)
-
-            let credentialRegistry: any
-            if (this.createCredentialRegistryFn) {
-                credentialRegistry = this.createCredentialRegistryFn(registryAddress, signer)
-            } else {
-                // Dynamic import to avoid circular deps if any, or just standard import
-                const { createCredentialRegistry } = await import('../onchain')
-                credentialRegistry = createCredentialRegistry(registryAddress, signer)
-            }
+            const credentialRegistry = await this.credentialRegistry()
 
             const vcHash = hashVC(vc)
             // The contract takes the subject ADDRESS; credentialSubject.id is a DID (fix P11)

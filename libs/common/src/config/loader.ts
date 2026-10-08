@@ -104,6 +104,7 @@ export function getTestConfig(overrides?: Partial<AppConfig>): AppConfig {
             did: 'did:ethr:0x1234567890123456789012345678901234567890',
             privateKey: '0x' + '1'.repeat(64),
             hmacSecret: 'test-hmac-secret-min-32-characters',
+            adminAddresses: [],
             port: 3001,
         },
         security: {
