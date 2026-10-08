@@ -1,8 +1,7 @@
 # Test suite repair (2026-10-07)
 
-> **Disclosure note.** P1, P3, P4, P11, P13, P14 and the committed secrets are security issues,
-> tracked in private GitHub security advisories. This file describes them: publish this branch only
-> together with the fixes and the advisories.
+> **Disclosure.** P1, P3, P4, P11, P13, P14 and the committed secrets are security issues. Their
+> GitHub security advisories were published on 2026-10-08 together with this branch (PR #12).
 
 Branch `feat/employee-credential`, based on `details-en` (`6a34ad5`). Test files only: no production
 code under `src/` was changed. Done before adding the employee credential, so that work has a
@@ -75,6 +74,7 @@ longer called).
 | P13 | `apps/issuer/src/controllers/issueController.ts` `revokeCredential` | Any authenticated session (even a holder) could revoke any credential; the request signature was never checked; revocation was database-only. | **Fixed (A2)**: role issuer (and signer of the credential) or admin, EIP-712 `CredentialRevocation` signature verified, revoked on-chain first. |
 | P14 | `apps/contracts` `CredentialStatusFacet.issueCredential` | Unrestricted: any address can record a credential hash first and then controls its revocation. | **Fixed (contract)**: `issueCredential`/`recordIssuance` revert with `NotTrustedIssuer(caller)` unless the caller is in the trusted issuer registry; the recording issuer can still revoke after being removed. Verifiers also check the recorded issuer (A3). |
 | P15 | `apps/web/app/admin/my-keys/page.tsx` | Revokes on-chain from the admin wallet, but issuances are recorded by the backend key, so the contract rejects it (`NotIssuer`). | Open — use the issuer API to revoke. |
+| P16 | `libs/common/src/login.ts`, package root | Imported on its own, the login module did not register the employee EIP-712 schema (every login would fail with `INVALID_ISSUER_SIGNATURE`); the package root runs the issuer `loadConfig()` at import time. | **Fixed**: `login.ts` registers the schemas; relying parties import `@circuloos/common/login`. |
 | P12 | `apps/issuer/src/services/credential.service.ts` `loadVC` | After the claim, finalize() stores a presentation (no `id`) under the VC id; `loadVC` discards objects without `id`. | A claimed credential cannot be loaded with `loadVC`; `loadIssuedCredential` was added for the employee reference. |
 
 P3 (verification for login) is planned for phase A3. P1–P3 sat exactly where the employee credential and the login verification (plan phases A1/A3) are
@@ -84,20 +84,21 @@ built; they will be fixed there, with their own failing tests first.
 
 | Item | Tracked in |
 |---|---|
-| P1 | Security advisory GHSA-7xhc-9xpf-4wq2 (draft, private) |
+| P1 | Security advisory GHSA-7xhc-9xpf-4wq2 (published 2026-10-08) |
 | P2 | Issue #2 |
-| P3 | Security advisory GHSA-qfm6-qx8j-3f47 (draft, private) |
-| P4 | Security advisory GHSA-g564-24x2-wgq2 (draft, private) |
+| P3 | Security advisory GHSA-qfm6-qx8j-3f47 (published 2026-10-08) |
+| P4 | Security advisory GHSA-g564-24x2-wgq2 (published 2026-10-08) |
 | P5 | Issue #3 |
 | P6 | Issue #4 |
 | P7 | Issue #5 |
 | P8 | Issue #6 |
 | P9 | Issue #7 |
 | P10 | Issue #8 |
-| P11 | Security advisory GHSA-p35x-973w-c6ww (draft, private) |
+| P11 | Security advisory GHSA-p35x-973w-c6ww (published 2026-10-08) |
 | P12 | Issue #9 |
-| P13 | Security advisory GHSA-f348-g9qr-p33q (draft, private) |
-| P14 | Security advisory GHSA-mprv-v6hr-mqwx (draft, private) |
+| P13 | Security advisory GHSA-f348-g9qr-p33q (published 2026-10-08) |
+| P14 | Security advisory GHSA-mprv-v6hr-mqwx (published 2026-10-08) |
 | P15 | Issue #11 |
-| Committed secrets (`.env.docker`, `details-en`) | Security advisory GHSA-rmvr-9wfj-373x (draft, private) |
+| P16 | Fixed in PR #12 (found while preparing the IoT panel integration) |
+| Committed secrets (`.env.docker`, `details-en`) | Security advisory GHSA-rmvr-9wfj-373x (published 2026-10-08) |
 | Test suite drift | Issue #10 |
